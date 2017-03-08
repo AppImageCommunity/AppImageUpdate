@@ -14,7 +14,7 @@ script:
   - mv appimageupdategui AppImageUpdate.AppDir/usr/bin/
   - wget -c https://github.com/probonopd/zsync-curl/releases/download/_binaries/zsync_curl -O AppImageUpdate.AppDir/usr/bin/zsync_curl
   - chmod a+x AppImageUpdate.AppDir/usr/bin/zsync_curl
-  - cp -r appimageupdategui/ui AppImageUpdate.AppDir/usr/bin/
+  - cp -r ./ui AppImageUpdate.AppDir/usr/bin/
   - wget https://github.com/probonopd/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
   - chmod a+x appimagetool*.AppImage
   - ./appimagetool*.AppImage ./AppImageUpdate.AppDir
