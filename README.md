@@ -1,4 +1,4 @@
-# AppImageUpdate
+# AppImageUpdate [![discourse](https://img.shields.io/badge/forum-discourse-orange.svg)](http://discourse.appimage.org) [![Build Status](https://travis-ci.org/probonopd/AppImageUpdate.svg)](https://travis-ci.org/probonopd/AppImageUpdate) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/probonopd/AppImageKit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZT9CL8M5TJU72)
 
 Copyright (c) 2004-17 Simon Peter <probono@puredarwin.org> and contributors.
 
