@@ -11,3 +11,21 @@ install:
 script:
   - valac --pkg 'gtk+-3.0' --pkg 'gmodule-2.0' --pkg posix main.vala progress.vala -o appimageupdategui -v
   - strip appimageupdategui
+  - mv appimageupdategui AppImageUpdate.AppDir/usr/bin/
+  - wget -c https://github.com/probonopd/zsync-curl/releases/download/_binaries/zsync_curl -O AppImageUpdate.AppDir/usr/bin/zsync_curl
+  - chmod a+x AppImageUpdate.AppDir/usr/bin/zsync_curl
+  - cp -r appimageupdategui/ui AppImageUpdate.AppDir/usr/bin/
+  - wget https://github.com/probonopd/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+  - chmod a+x appimagetool*.AppImage
+  - ./appimagetool*.AppImage ./AppImageUpdate.AppDir
+  - ls -lh
+  
+  after_success:
+  - ls -lh out/* # Assuming you have some files in out/ that you would like to upload
+  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - bash ./upload.sh out/*
+
+branches:
+  except:
+    - # Do not build tags that we create when we upload to GitHub Releases
+    - /^(?i:continuous)$/
