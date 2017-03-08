@@ -32,6 +32,10 @@ NEW=$(ls Subsurface-*.AppImage | sort -V | tail -n 1)
 
 Notice how quick the update was. Combined with fully automated continuous or nightly builds, this should make software "fluid", as users can get the latest development versions very rapidly.
 
+If you have the optional appimaged daemon installed, then it can use AppImageUpdate enable right-click updates in the launcher:
+
+![screenshot from 2016-10-15 16-37-05](https://cloud.githubusercontent.com/assets/2480569/19410850/0390fe9c-92f6-11e6-9882-3ca6d360a190.jpg)
+
 ## Motivation
 
 ### Use cases
