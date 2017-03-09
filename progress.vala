@@ -103,8 +103,9 @@ public class ProgressWindow : Window {
             int extra_args = 0;
 
             string[] spawn_args = new string[8 + files_to_be_updated.length + extra_args];
-	    spawn_args[0] = "appimageupdate";
-	    spawn_args[1] = this.file_name;
+	    spawn_args[0] = "pkexec";
+	    spawn_args[1] = "appimageupdate";
+	    spawn_args[2] = this.file_name;
 
 	    string[] spawn_env = Environ.get ();
 	    int standard_error;
