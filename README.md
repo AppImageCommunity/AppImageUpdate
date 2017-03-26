@@ -4,6 +4,8 @@ Copyright (c) 2004-17 Simon Peter <probono@puredarwin.org> and contributors.
 
 AppImageUpdate lets you update AppImages in a decentral way using information embedded in the AppImage itself. No central repository is involved. This enables upstream application projects to release AppImages that can be updated easily. Since AppImageKit uses delta updates, the downloads are very small and efficient.
 
+![](https://lh3.googleusercontent.com/-VrA9Q6WwLO4/VnXcPlbPPxI/AAAAAAAAAEg/Cppsh4QHrKI/w396-h276-p/updater.png)
+
 ## Try it out
 
 ```
