@@ -10,7 +10,7 @@ static string selected_file;
 
 static string root(){
 	 
-	var a = Posix.system("pkexec --disable-internal-agent echo hello to appimages");
+	var a = Posix.system("pkexec echo hello to appimages");
 	if (a == 32256){
 	return "false";
 	}
@@ -28,6 +28,7 @@ static void root_run(){
 /* Open file */
 static void open_file(string filename) {
     selected_file = filename;
+    root_run();
     new ProgressWindow(selected_file, {});
 }
 
@@ -63,11 +64,12 @@ static void on_about_clicked() {
 }
 
 static void main (string[] args) {
-	root_run();
+	
 	init (ref args);
   if(args.length > 1){
     open_file(args[1]);
     Gtk.main();
+
     Posix.exit(0);
   }
 
