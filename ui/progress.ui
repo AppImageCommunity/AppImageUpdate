@@ -56,7 +56,7 @@
         <property name="margin_right">5</property>
         <property name="spacing">10</property>
         <child>
-          <object class="GtkButton" id="btn_show_files">
+          <object class="GtkButton" id="btn_launch_now">
             <property name="label" translatable="yes">Launch now</property>
             <property name="visible">False</property>
             <property name="can_focus">True</property>
