@@ -23,7 +23,7 @@ public class ProgressWindow : Window {
     private Revealer revealer2;
 
     private Button btn_cancel;
-    private Button btn_show_files;
+    private Button btn_launch_now;
     private Button btn_quit;
 
     private Pid child_pid;
@@ -85,9 +85,10 @@ public class ProgressWindow : Window {
             btn_quit.clicked.connect(Gtk.main_quit);
             btn_quit.set_visible(false);
 
-            btn_show_files = builder.get_object("btn_show_files") as Button;
-            btn_show_files.clicked.connect(this.show_files);
-            btn_show_files.set_visible(false);
+            btn_launch_now = builder.get_object("btn_launch_now") as Button;
+            btn_launch_now.clicked.connect(this.show_files);
+            btn_launch_now.set_visible(false);
+            btn_launch_now.set_sensitive(false);
 
             this.files_to_be_updated = files_to_be_updated;
             this.file_name = file_name;
@@ -136,16 +137,15 @@ public class ProgressWindow : Window {
 		    return this.process_error (channel, condition, "stderr");
 	    });
 
-            ChildWatch.add (child_pid, (pid, status) => {
-			    // Triggered when the child indicated by child_pid exits
-			    Process.close_pid (pid);
-
+        ChildWatch.add (child_pid, (pid, status) => {
+		    // Triggered when the child indicated by child_pid exits
+		    Process.close_pid(pid);
+            btn_launch_now.set_sensitive(true);
 	    });
 
         } catch (SpawnError e) {
 	        action_label.label = "Error: " + e.message;
         }
-
     }
 
     /* Handle output pipe */
@@ -187,7 +187,7 @@ public class ProgressWindow : Window {
 			revealer2.set_reveal_child (true);
 		        icon_image.icon_name="emblem-ok-symbolic";
                         Posix.system("chmod 0755 " + result_file_name); // Because the CLI does not reliably do it (FIXME)
-			btn_show_files.set_visible(true);
+			btn_launch_now.set_visible(true);
                     }
 
                     if(line.contains("Cannot") || line.contains("Error")) {
