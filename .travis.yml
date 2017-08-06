@@ -17,7 +17,7 @@ script:
   - cp -r ./ui AppImageUpdate.AppDir/usr/bin/
   - wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
   - chmod a+x appimagetool*.AppImage
-  - ./appimagetool*.AppImage ./AppImageUpdate.AppDir -u "gh-releases-zsync|AppImage|AppImageUpdate|latest|AppImageUpdate-*x86_64.AppImage.zsync"
+  - ./appimagetool*.AppImage ./AppImageUpdate.AppDir -u "gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync"
   - ls -lh
   
 after_success:
