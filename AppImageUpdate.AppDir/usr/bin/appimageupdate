@@ -157,9 +157,13 @@ elif [ "$TYPE" == "gh-releases-zsync" ] ; then
   echo "Getting version information from GitHub Releases"
   USERNAME=$(echo "${APPLICATION_USED}" | cut -d "|" -f 2)
   REPO=$(echo "${APPLICATION_USED}" | cut -d "|" -f 3)
-  RELEASE=$(echo "${APPLICATION_USED}" | cut -d "|" -f 4)
+  TAG=$(echo "${APPLICATION_USED}" | cut -d "|" -f 4)
   FILENAME=$(echo "${APPLICATION_USED}" | cut -d "|" -f 5)
-  URL="https://api.github.com/repos/$USERNAME/$REPO/releases/$RELEASE"
+  if [ "$TAG" != "latest" ] ; then
+    URL="https://api.github.com/repos/$USERNAME/$REPO/releases/tags/$TAG"
+  else
+    URL="https://api.github.com/repos/$USERNAME/$REPO/releases/latest"
+  fi
   REGEX=$(echo $FILENAME | sed   -e 's|\*|\.\*|g')
   echo "$REGEX"
   ZSYNC_URL=$(curl "$URL" | grep "$REGEX" | grep "browser_download_url" | cut -d '"' -f 4) # TODO: Get rid of curl command
