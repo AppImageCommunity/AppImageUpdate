@@ -1,12 +1,18 @@
-lang: c
-sudo: true
+language: c
 dist: trusty
+sudo: false
 
-install:
-  - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe"
-  - sudo add-apt-repository -y ppa:vala-team
-  - sudo apt-get -q update
-  - sudo apt-get -y install libgtk-3-dev valac-0.30 clang cmake libvala-0.30 git
+addons:
+  apt:
+    sources:
+      - sourceline: "ppa:vala-team/ppa"
+    packages:
+      - "libgtk-3-dev"
+      - "valac-0.30"
+      - "clang"
+      - "cmake"
+      - "libvala-0.30"
+      - "git"
 
 script:
   - valac --pkg 'gtk+-3.0' --pkg 'gmodule-2.0' --pkg posix main.vala progress.vala -o appimageupdategui -v
@@ -16,14 +22,15 @@ script:
   - chmod a+x AppImageUpdate.AppDir/usr/bin/* AppImageUpdate.AppDir/AppRun
   - cp -r ./ui AppImageUpdate.AppDir/usr/bin/
   - wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-  - chmod a+x appimagetool*.AppImage
-  - ./appimagetool*.AppImage ./AppImageUpdate.AppDir -u "gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync"
+  - chmod a+x appimagetool-x86_64.AppImage
+  - ./appimagetool-x86_64.AppImage --appimage-extract
+  - squashfs-root/AppRun ./AppImageUpdate.AppDir -u "gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync"
   - ls -lh
-  
+
 after_success:
   - ls -lh out/* # Assuming you have some files in out/ that you would like to upload
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - bash ./upload.sh AppImageUpdate*AppImage AppImageUpdate*zsync
+  - bash ./upload.sh AppImageUpdate-x86_64.AppImage AppImageUpdate-x86_64.AppImage.zsync
 
 branches:
   except:
