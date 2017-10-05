@@ -1,3 +1,5 @@
+#pragma once
+
 // global headers
 #include <string>
 
@@ -30,6 +32,7 @@ namespace appimage {
             void runUpdate();
 
         public:
+            // throws std::invalid_argument if the file does not exist
             Updater(std::string pathToAppImage);
 
         public:
