@@ -8,7 +8,7 @@ add_library(libappimageupdate updater.cpp)
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libappimageupdate PROPERTIES PREFIX "")
 # link thread libraries
-target_link_libraries(libappimageupdate ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(libappimageupdate ${CMAKE_THREAD_LIBS_INIT} libzsync2)
 # include directories, publicly
 target_include_directories(libappimageupdate PUBLIC ../include)
 
