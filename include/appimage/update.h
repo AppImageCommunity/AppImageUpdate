@@ -22,10 +22,10 @@ namespace appimage {
             };
 
         private:
-            // opaque data type
-            // without this pattern, the header would become C++11, which is undesirable
-            class PrivateData;
-            PrivateData* d;
+            // opaque private class
+            // without this pattern, the header would require C++11, which is undesirable
+            class Private;
+            Private* d;
 
         private:
             // thread runner -- should be called from start() only
@@ -33,7 +33,8 @@ namespace appimage {
 
         public:
             // throws std::invalid_argument if the file does not exist
-            Updater(std::string pathToAppImage);
+            Updater(const char* pathToAppImage);
+            ~Updater();
 
         public:
             // Start update process. If running/finished already, returns false, otherwise true.
@@ -54,8 +55,12 @@ namespace appimage {
             // Beware that it will return false even if the update process has not yet begun, or is currently running!
             bool hasError();
 
-            // Returns a value between 0 and 1 indicating update progress.
-            double progress();
+            // Sets given parameter to current progress. Returns false in case of failure, i.e., the update process
+            // is not running or the version of the AppImage format is not supported, otherwise true.
+            bool progress(double& progress);
+
+            // Fetch a status message from the client in use that can be used to display updates
+            bool nextStatusMessage(std::string& message);
         };
     }
 }

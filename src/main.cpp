@@ -12,7 +12,7 @@ static void showUsage(const string& argv0) {
     cout << "Usage: " << argv0 << " <path to AppImage>" << endl;
 }
 
-int main(int argc, char* argv[]) {
+int main(const int argc, const char** argv) {
     if(argc <= 1) {
         showUsage(argv[0]);
         return 1;
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     // for now, the application serves as an API demo
     // it is not too advanced.
 
-    appimage::update::Updater updater(argv[0]);
+    appimage::update::Updater updater(argv[1]);
 
     cerr << "Starting update..." << endl;
 
@@ -33,8 +33,17 @@ int main(int argc, char* argv[]) {
     }
 
     while(!updater.isDone()) {
-        this_thread::sleep_for(chrono::milliseconds(250));
-        cout << "\r" << (int) (updater.progress() * 100) << "% done..." << flush;
+        this_thread::sleep_for(chrono::milliseconds(100));
+        double progress;
+
+        std::string nextMessage;
+        while (updater.nextStatusMessage(nextMessage))
+            cout << "\r" << nextMessage << endl;
+
+        if (!updater.progress(progress))
+            return 1;
+
+        cout << "\r" << (int) (progress * 100) << "% done..." << flush;
     }
 
     cerr << endl;
