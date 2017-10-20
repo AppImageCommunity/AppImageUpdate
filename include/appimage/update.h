@@ -33,7 +33,7 @@ namespace appimage {
 
         public:
             // throws std::invalid_argument if the file does not exist
-            Updater(const char* pathToAppImage);
+            explicit Updater(const char* pathToAppImage);
             ~Updater();
 
         public:
