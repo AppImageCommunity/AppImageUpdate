@@ -243,8 +243,10 @@ namespace appimage {
             // check whether file exists, otherwise throw exception
             std::ifstream f(pathToAppImage);
 
-            if(!f || !f.good())
-                throw std::invalid_argument("No such file or directory: " + d->pathToAppImage);
+            if(!f || !f.good()) {
+                auto errorMessage = std::strerror(errno);
+                throw std::invalid_argument(errorMessage + std::string(": ") + pathToAppImage);
+            }
 
             d->pathToAppImage = pathToAppImage;
         }
