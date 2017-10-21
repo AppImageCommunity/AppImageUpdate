@@ -390,7 +390,7 @@ namespace appimage {
             return false;
         }
 
-        State Updater::state() {
+        Updater::State Updater::state() {
             return d->state;
         }
     }
