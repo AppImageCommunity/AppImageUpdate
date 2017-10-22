@@ -172,6 +172,7 @@ namespace appimage {
                                         auto parts = split(currentLine, '"');
                                         zsyncUrl = parts.back();
                                         uiType = ZSYNC_GITHUB_RELEASES;
+                                        break;
                                     }
                                 }
                             }
