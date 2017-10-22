@@ -192,7 +192,7 @@ namespace appimage {
                         redirectorUrl << "https://bintray.com/" << username << "/" << repository << "/"
                                       << packageName << "/_latestVersion";
 
-                        auto versionResponse = cpr::Get(redirectorUrl.str());
+                        auto versionResponse = cpr::Head(redirectorUrl.str());
                         // this request is supposed to be redirected
                         // due to how cpr works, we can't check for a redirection status, as we get the response for
                         // the redirected request
