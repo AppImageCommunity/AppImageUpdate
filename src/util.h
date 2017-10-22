@@ -7,36 +7,36 @@
 
 namespace appimage {
     namespace update {
-        static void removeNewlineCharacters(std::string &str) {
+        static void removeNewlineCharacters(std::string& str) {
             str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
         }
 
-        static inline bool ltrim(std::string &s, char to_trim = ' ') {
+        static inline bool ltrim(std::string& s, char to_trim = ' ') {
             // TODO: find more efficient way to check whether elements have been removed
             size_t initialLength = s.length();
-            s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
-                return !std::isspace(ch);
+            s.erase(s.begin(), std::find_if(s.begin(), s.end(), [to_trim](int ch) {
+                return ch != to_trim;
             }));
             return s.length() < initialLength;
         }
 
-        static inline bool rtrim(std::string &s, char to_trim = ' ') {
+        static inline bool rtrim(std::string& s, char to_trim = ' ') {
             // TODO: find more efficient way to check whether elements have been removed
             auto initialLength = s.length();
-            s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
-                return !std::isspace(ch);
+            s.erase(std::find_if(s.rbegin(), s.rend(), [to_trim](int ch) {
+                return ch != to_trim;
             }).base(), s.end());
             return s.length() < initialLength;
         }
 
-        static inline bool trim(std::string &s, char to_trim = ' ') {
+        static inline bool trim(std::string& s, char to_trim = ' ') {
             // returns true if either modifies s
             auto ltrim_result = ltrim(s, to_trim);
             return rtrim(s, to_trim) && ltrim_result;
         }
 
-        static bool callProgramAndGrepForLine(const std::string command, const std::string pattern,
-                                              std::string &output) {
+        static bool callProgramAndGrepForLine(const std::string& command, const std::string& pattern,
+                                              std::string& output) {
             FILE *stream = popen(command.c_str(), "r");
 
             if (stream == nullptr)
