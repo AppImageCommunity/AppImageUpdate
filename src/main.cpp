@@ -43,7 +43,7 @@ int main(const int argc, const char** argv) {
         if (!updater.progress(progress))
             return 1;
 
-        cout << "\r" << (int) (progress * 100) << "% done..." << flush;
+        cout << "\33[2K\r" << (progress * 100.0f) << "% done..." << flush;
     }
 
     cerr << endl;
