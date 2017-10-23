@@ -110,6 +110,8 @@ void runUpdate(
         return;
     }
 
+    double oldProgress = 0;
+
     while (!updater.isDone()) {
         this_thread::sleep_for(chrono::milliseconds(100));
 
@@ -122,10 +124,17 @@ void runUpdate(
 
         progress *= 100;
 
-        progressBar->value(static_cast<float>(progress));
-        ostringstream label;
-        label << (int) progress << "%";
-        progressBar->label(label.str().c_str());
+        // check for change to avoid having to redraw every 100ms
+        if (progress != oldProgress) {
+            progressBar->value(static_cast<float>(progress));
+
+            ostringstream label;
+            label << progress << "%";
+            progressBar->label(label.str().c_str());
+
+            // update UI
+            Fl::check();
+        }
 
         std::string nextMessage;
         while (updater.nextStatusMessage(nextMessage))
