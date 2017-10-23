@@ -143,6 +143,9 @@ void runUpdate(
 
     if (updater.hasError()) {
         log("Update failed!");
+        progressBar->selection_color(FL_RED);
+        progressBar->redraw();
+        Fl::check();
     } else {
         log("Successfully updated AppImage!");
     }
