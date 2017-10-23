@@ -260,6 +260,12 @@ namespace appimage {
                     // causing e.g., main(), to interrupt the thread and finish.
                     auto* appImage = readAppImage(pathToAppImage);
 
+                    if (appImage == nullptr) {
+                        issueStatusMessage("Parsing failed! Are you sure the file is an AppImage?");
+                        state = ERROR;
+                        return;
+                    }
+
                     if (appImage->updateInformationType == ZSYNC_BINTRAY) {
                         issueStatusMessage("Updating from Bintray via ZSync");
                     } else if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES) {
