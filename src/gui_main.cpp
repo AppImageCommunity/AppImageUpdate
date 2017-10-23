@@ -89,13 +89,7 @@ void runUpdate(
     Fl_Text_Display* textDisplay,
     Fl_Text_Buffer* textBuffer
 ) {
-    auto redraw = [&win, &progressBar, &textDisplay]() {
-        progressBar->redraw();
-        textDisplay->redraw();
-        win->redraw();
-    };
-
-    auto log = [&textDisplay, &textBuffer, &redraw](const std::string& msg) {
+    auto log = [&textDisplay, &textBuffer](const std::string& msg) {
         std::ostringstream message;
         message << msg << endl;
 
@@ -104,7 +98,7 @@ void runUpdate(
         textBuffer->insert(textBuffer->length() + 1, message.str().c_str());
         textDisplay->scroll(INT_MAX, 0);
 
-        redraw();
+        Fl::check();
     };
 
     Updater updater(pathToAppImage);
@@ -143,8 +137,6 @@ void runUpdate(
     } else {
         log("Successfully updated AppImage!");
     }
-
-    redraw();
 
     DONE = true;
 }
