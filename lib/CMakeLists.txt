@@ -1,1 +1,3 @@
 add_subdirectory(zsync2)
+add_subdirectory(fltk)
+add_subdirectory(libdesktopenvironments)
