@@ -1,6 +1,7 @@
 // system headers+
 #include <algorithm>
 #include <chrono>
+#include <deque>
 #include <fnmatch.h>
 #include <fstream>
 #include <iostream>
@@ -47,6 +48,9 @@ namespace appimage {
             std::thread* thread;
             std::mutex mutex;
 
+            // status messages
+            std::deque<std::string> statusMessages;
+
         public:
             enum UpdateInformationType {
                 INVALID = -1,
@@ -66,6 +70,9 @@ namespace appimage {
             typedef struct AppImage AppImage;
 
         public:
+            void issueStatusMessage(std::string message) {
+                statusMessages.push_back(message);
+            }
 
             static const AppImage* readAppImage(const std::string pathToAppImage) {
                 // error state: empty AppImage path
@@ -105,7 +112,7 @@ namespace appimage {
                 std::string updateInformation;
 
                 if (version == 1) {
-//                    updateInformationCommand = "";
+                    // TODO implement type 1 update information parser
                 } else if (version == 2) {
                     // check whether update information can be found inside the file by calling objdump
                     auto command = "objdump -h \"" + pathToAppImage + "\"";
@@ -272,6 +279,16 @@ namespace appimage {
                 // causing e.g., main(), to interrupt the thread and finish.
                 auto* appImage = d->readAppImage(d->pathToAppImage);
 
+                if (appImage->updateInformationType == d->ZSYNC_BINTRAY) {
+                    d->issueStatusMessage("Updating from Bintray via ZSync");
+                } else if (appImage->updateInformationType == d->ZSYNC_GITHUB_RELEASES) {
+                    d->issueStatusMessage("Updating from GitHub Releases via ZSync");
+                } else if (appImage->updateInformationType == d->ZSYNC_GENERIC) {
+                    d->issueStatusMessage("Updating from generic server via ZSync");
+                }
+                if (!appImage->zsyncUrl.empty())
+                    d->issueStatusMessage("Update URL: " + appImage->zsyncUrl);
+
                 // check whether update information is available
                 if (appImage->updateInformationType == d->INVALID) {
                     d->state = ERROR;
@@ -378,7 +395,11 @@ namespace appimage {
 
         bool Updater::nextStatusMessage(std::string& message) {
             // first, check own message queue
-            // TODO: implement message queue, issue status messages
+            if (!d->statusMessages.empty()) {
+                message = d->statusMessages.front();
+                d->statusMessages.pop_front();
+                return true;
+            }
 
             // next, check zsync client for a message
             if (d->zSyncClient != nullptr) {
