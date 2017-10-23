@@ -242,6 +242,79 @@ namespace appimage {
 
                 return appImage;
             }
+
+            // thread runner
+            void runUpdate() {
+                // initialization
+                {
+                    lock_guard guard(mutex);
+
+                    // make sure it runs only once at a time
+                    // should never occur, but you never know
+                    if (state != INITIALIZED)
+                        return;
+
+                    // WARNING: if you don't want to shoot yourself in the foot, make sure to read in the AppImage
+                    // while locking the mutex and/or before the RUNNING state to make sure readAppImage() finishes
+                    // before progress() and such can be called! Otherwise, progress() etc. will return an error state,
+                    // causing e.g., main(), to interrupt the thread and finish.
+                    auto* appImage = readAppImage(pathToAppImage);
+
+                    if (appImage->updateInformationType == ZSYNC_BINTRAY) {
+                        issueStatusMessage("Updating from Bintray via ZSync");
+                    } else if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES) {
+                        issueStatusMessage("Updating from GitHub Releases via ZSync");
+                    } else if (appImage->updateInformationType == ZSYNC_GENERIC) {
+                        issueStatusMessage("Updating from generic server via ZSync");
+                    }
+                    if (!appImage->zsyncUrl.empty())
+                        issueStatusMessage("Update URL: " + appImage->zsyncUrl);
+
+                    // check whether update information is available
+                    if (appImage->updateInformationType == INVALID) {
+                        state = ERROR;
+                        return;
+                    }
+
+                    if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
+                        appImage->updateInformationType == ZSYNC_BINTRAY ||
+                        appImage->updateInformationType == ZSYNC_GENERIC) {
+                        // doesn't matter which type it is exactly, they all work like the same
+                        zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl);
+                    } else {
+                        // error unsupported type
+                        state = ERROR;
+                        return;
+                    }
+
+                    state = RUNNING;
+
+                    // cleanup
+                    delete appImage;
+                }
+
+                // keep state -- by default, an error (false) is assumed
+                bool result = false;
+
+                // run phase
+                {
+                    // check whether it's a zsync operation
+                    if (zSyncClient != nullptr) {
+                        result = zSyncClient->run();
+                    }
+                }
+
+                // end phase
+                {
+                    lock_guard guard(mutex);
+
+                    if (result) {
+                        state = SUCCESS;
+                    } else {
+                        state = ERROR;
+                    }
+                }
+            }
         };
         
         Updater::Updater(const std::string& pathToAppImage) {
@@ -264,75 +337,8 @@ namespace appimage {
         }
 
         void Updater::runUpdate() {
-            // initialization
-            {
-                lock_guard guard(d->mutex);
-
-                // make sure it runs only once at a time
-                // should never occur, but you never know
-                if (d->state != INITIALIZED)
-                    return;
-
-                // WARNING: if you don't want to shoot yourself in the foot, make sure to read in the AppImage
-                // while locking the mutex and/or before the RUNNING state to make sure readAppImage() finishes
-                // before progress() and such can be called! Otherwise, progress() etc. will return an error state,
-                // causing e.g., main(), to interrupt the thread and finish.
-                auto* appImage = d->readAppImage(d->pathToAppImage);
-
-                if (appImage->updateInformationType == d->ZSYNC_BINTRAY) {
-                    d->issueStatusMessage("Updating from Bintray via ZSync");
-                } else if (appImage->updateInformationType == d->ZSYNC_GITHUB_RELEASES) {
-                    d->issueStatusMessage("Updating from GitHub Releases via ZSync");
-                } else if (appImage->updateInformationType == d->ZSYNC_GENERIC) {
-                    d->issueStatusMessage("Updating from generic server via ZSync");
-                }
-                if (!appImage->zsyncUrl.empty())
-                    d->issueStatusMessage("Update URL: " + appImage->zsyncUrl);
-
-                // check whether update information is available
-                if (appImage->updateInformationType == d->INVALID) {
-                    d->state = ERROR;
-                    return;
-                }
-
-                if (appImage->updateInformationType == d->ZSYNC_GITHUB_RELEASES ||
-                    appImage->updateInformationType == d->ZSYNC_BINTRAY ||
-                    appImage->updateInformationType == d->ZSYNC_GENERIC) {
-                    // doesn't matter which type it is exactly, they all work like the same
-                    d->zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl);
-                } else {
-                    // error unsupported type
-                    d->state = ERROR;
-                    return;
-                }
-
-                d->state = RUNNING;
-
-                // cleanup
-                delete appImage;
-            }
-
-            // keep state -- by default, an error (false) is assumed
-            bool result = false;
-
-            // run phase
-            {
-                // check whether it's a zsync operation
-                if (d->zSyncClient != nullptr) {
-                    result = d->zSyncClient->run();
-                }
-            }
-
-            // end phase
-            {
-                lock_guard guard(d->mutex);
-
-                if (result) {
-                    d->state = SUCCESS;
-                } else {
-                    d->state = ERROR;
-                }
-            }
+            // alias for private function
+            return d->runUpdate();
         }
 
         bool Updater::start() {
