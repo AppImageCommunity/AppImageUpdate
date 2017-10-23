@@ -237,7 +237,7 @@ namespace appimage {
             }
         };
         
-        Updater::Updater(const char* pathToAppImage) {
+        Updater::Updater(const std::string& pathToAppImage) {
             // initialize data class
             d = new Updater::Private();
 
@@ -361,7 +361,7 @@ namespace appimage {
                 delete d->zSyncClient;
                 d->zSyncClient = nullptr;
 
-                return false;
+                return true;
             }
 
             if (d->zSyncClient != nullptr) {
