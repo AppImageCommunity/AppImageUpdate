@@ -1,6 +1,8 @@
 #pragma once
 
+// system headers
 #include <algorithm>
+#include <climits>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -79,9 +81,21 @@ namespace appimage {
             return result;
         }
 
-        static std::string toLower(std::string s) {
+        static inline std::string toLower(std::string s) {
             std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
             return s;
+        }
+
+        static inline bool toLong(const std::string& str, long& retval, int base = 10) {
+            char* end = nullptr;
+            const auto* cstr = str.c_str();
+
+            auto rv = std::strtol(cstr, &end, base);
+            if (errno == ERANGE || cstr == end || retval > LONG_MAX || retval < LONG_MIN)
+                return false;
+
+            retval = rv;
+            return true;
         }
     }
 }

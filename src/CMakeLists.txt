@@ -18,3 +18,12 @@ target_include_directories(libappimageupdate PRIVATE ../lib/zsync2/lib/cpr/inclu
 add_executable(appimageupdate main.cpp)
 # link to core lib
 target_link_libraries(appimageupdate libappimageupdate)
+
+# GUI application
+add_executable(appimageupdategui gui_main.cpp)
+# link libraries
+target_link_libraries(appimageupdategui
+    libappimageupdate
+    fltk
+    libdesktopenvironments
+)

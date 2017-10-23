@@ -1,3 +1,9 @@
 [submodule "lib/zsync2"]
 	path = lib/zsync2
 	url = git@github.com:TheAssassin/zsync2.git
+[submodule "lib/fltk"]
+	path = lib/fltk
+	url = https://github.com/TheAssassin/fltk-1.3.4
+[submodule "lib/libdesktopenvironments"]
+	path = lib/libdesktopenvironments
+	url = https://github.com/TheAssassin/libdesktopenvironments
