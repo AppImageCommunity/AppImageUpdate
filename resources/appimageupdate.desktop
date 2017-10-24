@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=zsync2
+Name=AppimageUpdate
 Type=Application
 Terminal=true
-Icon=zsync2
-Exec=zsync2
+Icon=appimageupdate
+Exec=appimageupdate
