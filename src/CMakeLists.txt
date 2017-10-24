@@ -27,3 +27,12 @@ target_link_libraries(appimageupdategui
     fltk
     libdesktopenvironments
 )
+
+# install targets
+install(
+    TARGETS libappimageupdate appimageupdate appimageupdategui
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib/static
+    INCLUDES DESTINATION include
+)
