@@ -25,3 +25,15 @@ has been taken to make public headers work in older versions of C++ as
 well. Therefore, it should not be necessary to set `CMAKE_CXX_STANDARD`,
 `-std=c++11` etc. in projects using this library. If you notice that this
 stops working, please open an issue.
+
+
+## Licensing
+
+For details on the licensing of the libraries AppImageUpdate uses, please
+see their documentation.
+
+The code of AppImageUpdate is licensed under the terms of the MIT license.
+Please see LICENSE.txt for details.
+
+AppImageUpdate GUI is based in part on the work of the FLTK project
+(http://www.fltk.org).
