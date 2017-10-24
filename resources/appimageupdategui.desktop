@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=zsync2
+Type=Application
+Terminal=true
+Icon=zsync2
+Exec=zsync2
