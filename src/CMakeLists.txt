@@ -20,6 +20,9 @@ add_executable(appimageupdate main.cpp)
 target_link_libraries(appimageupdate libappimageupdate)
 
 # GUI application
+# TODO: replace with target_include_directories in FLTK CMake configuration
+include_directories(../lib/fltk)
+include_directories(${CMAKE_BINARY_DIR}/lib/fltk)
 add_executable(appimageupdategui gui_main.cpp)
 # link libraries
 target_link_libraries(appimageupdategui
