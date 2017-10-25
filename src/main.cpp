@@ -50,6 +50,8 @@ int main(const int argc, const char** argv) {
     while (updater.nextStatusMessage(nextMessage))
         cout << nextMessage << endl;
 
+    cout << endl;
+
     if(updater.hasError()) {
         cerr << "Update failed!" << endl;
         return 1;
