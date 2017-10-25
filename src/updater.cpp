@@ -178,7 +178,6 @@ namespace appimage {
                                     if (fnmatch(pattern.c_str(), currentLine.c_str(), 0) == 0) {
                                         auto parts = split(currentLine, '"');
                                         zsyncUrl = parts.back();
-                                        uiType = ZSYNC_GITHUB_RELEASES;
                                         break;
                                     }
                                 }
@@ -187,6 +186,8 @@ namespace appimage {
                     }
                 } else if (uiParts[0] == "bintray-zsync") {
                     if (uiParts.size() == 5) {
+                        uiType = ZSYNC_BINTRAY;
+
                         auto username = uiParts[1];
                         auto repository = uiParts[2];
                         auto packageName = uiParts[3];
@@ -218,7 +219,6 @@ namespace appimage {
                                 auto firstPart = urlTemplate.substr(0, pos);
                                 auto secondPart = urlTemplate.substr(pos + std::string("_latestVersion").length());
                                 zsyncUrl = firstPart + packageVersion + secondPart;
-                                uiType = ZSYNC_BINTRAY;
                             }
                         }
 
@@ -226,8 +226,9 @@ namespace appimage {
                 } else if (uiParts[0] == "zsync") {
                     // validate update information
                     if (uiParts.size() == 2) {
-                        zsyncUrl = uiParts.back();
                         uiType = ZSYNC_GENERIC;
+
+                        zsyncUrl = uiParts.back();
                     }
                 } else {
                     // unknown type
@@ -275,6 +276,16 @@ namespace appimage {
                     }
                     if (!appImage->zsyncUrl.empty())
                         issueStatusMessage("Update URL: " + appImage->zsyncUrl);
+                    else {
+                        issueStatusMessage("Could not find update URL!");
+
+                        if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES)
+                            issueStatusMessage("Please beware that pre-releases are not considered by the GitHub "
+                                               "releases update information type!");
+
+                        state = ERROR;
+                        return;
+                    }
 
                     // check whether update information is available
                     if (appImage->updateInformationType == INVALID) {
