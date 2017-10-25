@@ -38,7 +38,7 @@ int main(const int argc, const char** argv) {
 
         std::string nextMessage;
         while (updater.nextStatusMessage(nextMessage))
-            cout << "\r" << nextMessage << endl;
+            cout << nextMessage << endl;
 
         if (!updater.progress(progress))
             return 1;
@@ -46,7 +46,9 @@ int main(const int argc, const char** argv) {
         cout << "\33[2K\r" << (progress * 100.0f) << "% done..." << flush;
     }
 
-    cerr << endl;
+    std::string nextMessage;
+    while (updater.nextStatusMessage(nextMessage))
+        cout << nextMessage << endl;
 
     if(updater.hasError()) {
         cerr << "Update failed!" << endl;
