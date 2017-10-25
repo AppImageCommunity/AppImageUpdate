@@ -36,9 +36,15 @@ int main(const int argc, const char** argv) {
         this_thread::sleep_for(chrono::milliseconds(100));
         double progress;
 
+        bool firstMessage = true;
         std::string nextMessage;
-        while (updater.nextStatusMessage(nextMessage))
+        while (updater.nextStatusMessage(nextMessage)) {
+            if (firstMessage)
+                cout << endl;
+            firstMessage = false;
+
             cout << nextMessage << endl;
+        }
 
         if (!updater.progress(progress))
             return 1;
