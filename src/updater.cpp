@@ -297,7 +297,7 @@ namespace appimage {
                         appImage->updateInformationType == ZSYNC_BINTRAY ||
                         appImage->updateInformationType == ZSYNC_GENERIC) {
                         // doesn't matter which type it is exactly, they all work like the same
-                        zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl);
+                        zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
                     } else {
                         // error unsupported type
                         state = ERROR;
