@@ -88,6 +88,11 @@ void windowCallback(Fl_Widget* widget, void*) {
     }
 }
 
+bool isFile(const std::string& path) {
+    struct stat buffer;
+    return stat(path.c_str(), &buffer) == 0;
+}
+
 // to be run in a thread
 void runUpdate(const std::string pathToAppImage) {
     static const auto winWidth = 500;
@@ -170,7 +175,11 @@ void runUpdate(const std::string pathToAppImage) {
         log("Successfully updated AppImage!");
     }
 
-    // TODO: remove *.zs_old backup file
+    auto oldFile = pathToAppImage + ".zs-old";
+    if (isFile(oldFile)) {
+        log("Removing backup " + oldFile);
+        unlink(oldFile.c_str());
+    }
 
     auto msg = "Update successful!\nDo you want to run the application right now?";
     switch (fl_choice(msg, "Exit now.", "Run app!", nullptr)) {
