@@ -31,9 +31,19 @@ target_link_libraries(appimageupdategui
     libdesktopenvironments
 )
 
+# GUI application for self-updating AppImages
+add_executable(appimageupdategui-selfupdate gui_main.cpp)
+# link libraries
+target_link_libraries(appimageupdategui-selfupdate
+    libappimageupdate
+    fltk
+    libdesktopenvironments
+)
+target_compile_definitions(appimageupdategui-selfupdate PRIVATE -DSELFUPDATE)
+
 # install targets
 install(
-    TARGETS libappimageupdate appimageupdate appimageupdategui
+    TARGETS libappimageupdate appimageupdate appimageupdategui appimageupdategui-selfupdate
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static

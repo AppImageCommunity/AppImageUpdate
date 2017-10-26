@@ -95,6 +95,11 @@ bool isFile(const std::string& path) {
 
 // to be run in a thread
 void runUpdate(const std::string pathToAppImage) {
+    if (!isFile(pathToAppImage)) {
+        fl_alert("No such file or directory: %s", pathToAppImage.c_str());
+        exit(1);
+    }
+
     static const auto winWidth = 500;
     static const auto winHeight = 300;
 
@@ -181,36 +186,57 @@ void runUpdate(const std::string pathToAppImage) {
         unlink(oldFile.c_str());
     }
 
+    auto runApp = [&pathToAppImage]() {
+        // check existing permissions
+        struct stat appImageStat;
+
+        if (stat(pathToAppImage.c_str(), &appImageStat) != 0) {
+            int error = errno;
+            ostringstream ss;
+            ss << "Error calling stat(): " << strerror(error);
+            fl_message("%s", ss.str().c_str());
+            exit(1);
+        }
+
+        // make executable
+        chmod(pathToAppImage.c_str(), appImageStat.st_mode + S_IXUSR);
+
+        if (fork() == 0) {
+            execl(pathToAppImage.c_str(), pathToAppImage.c_str(), nullptr);
+        }
+    };
+
+#ifdef SELFUPDATE
+    runApp();
+#else
     auto msg = "Update successful!\nDo you want to run the application right now?";
     switch (fl_choice(msg, "Exit now.", "Run app!", nullptr)) {
         case 0:
             exit(0);
         case 1: {
-            // check existing permissions
-            struct stat appImageStat;
-
-            if (stat(pathToAppImage.c_str(), &appImageStat) != 0) {
-                int error = errno;
-                ostringstream ss;
-                ss << "Error calling stat(): " << strerror(error);
-                fl_message("%s", ss.str().c_str());
-                exit(1);
-            }
-
-            // make executable
-            chmod(pathToAppImage.c_str(), appImageStat.st_mode + S_IXUSR);
-
-            if (fork() == 0) {
-                execl(pathToAppImage.c_str(), pathToAppImage.c_str(), nullptr);
-            }
-            exit(0);
+            runApp();
         }
     }
+#endif
+
+    // trigger exit to avoid FLTK warnings
+    exit(0);
 }
 
 int main(const int argc, const char* const* argv) {
-    // check whether path to AppImage has been passed on the CLI, otherwise show file chooser
     std::string pathToAppImage;
+
+#ifdef SELFUPDATE
+    {
+        auto *envVar = getenv("APPIMAGE");
+        if (envVar == nullptr) {
+            cerr << "Fatal: APPIMAGE environment variable not set!" << endl;
+            exit(2);
+        }
+        pathToAppImage = envVar;
+    }
+#else
+    // check whether path to AppImage has been passed on the CLI, otherwise show file chooser
     if (argc < 2) {
         Fl_Native_File_Chooser fileChooser(Fl_Native_File_Chooser::BROWSE_FILE);
         fileChooser.title("Please choose an AppImage for updating");
@@ -248,6 +274,7 @@ int main(const int argc, const char* const* argv) {
     } else {
         pathToAppImage = argv[1];
     }
+#endif
 
     IDesktopEnvironment* desktopEnvironment = IDesktopEnvironment::getInstance();
 
