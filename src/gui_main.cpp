@@ -95,6 +95,28 @@ bool isFile(const std::string& path) {
 
 // to be run in a thread
 void runUpdate(const std::string pathToAppImage) {
+    auto runApp = [&pathToAppImage]() {
+        // check existing permissions
+        struct stat appImageStat;
+
+        if (stat(pathToAppImage.c_str(), &appImageStat) != 0) {
+            int error = errno;
+            ostringstream ss;
+            ss << "Error calling stat(): " << strerror(error);
+            fl_message("%s", ss.str().c_str());
+            exit(1);
+        }
+
+        // make executable
+        chmod(pathToAppImage.c_str(), appImageStat.st_mode + S_IXUSR);
+
+        if (fork() == 0) {
+            // make sure to deactivate updater contained in the AppImage when running from AppImageUpdate
+            auto env = {"APPIMAGE_SELF_UPDATE_DISABLE=1"};
+            execle(pathToAppImage.c_str(), pathToAppImage.c_str(), nullptr, env);
+        }
+    };
+
     if (!isFile(pathToAppImage)) {
         fl_alert("No such file or directory: %s", pathToAppImage.c_str());
         exit(1);
@@ -185,26 +207,6 @@ void runUpdate(const std::string pathToAppImage) {
         log("Removing backup " + oldFile);
         unlink(oldFile.c_str());
     }
-
-    auto runApp = [&pathToAppImage]() {
-        // check existing permissions
-        struct stat appImageStat;
-
-        if (stat(pathToAppImage.c_str(), &appImageStat) != 0) {
-            int error = errno;
-            ostringstream ss;
-            ss << "Error calling stat(): " << strerror(error);
-            fl_message("%s", ss.str().c_str());
-            exit(1);
-        }
-
-        // make executable
-        chmod(pathToAppImage.c_str(), appImageStat.st_mode + S_IXUSR);
-
-        if (fork() == 0) {
-            execl(pathToAppImage.c_str(), pathToAppImage.c_str(), nullptr);
-        }
-    };
 
 #ifdef SELFUPDATE
     runApp();
