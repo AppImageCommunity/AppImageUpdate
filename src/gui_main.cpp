@@ -3,6 +3,7 @@
 #include <iterator>
 #include <iostream>
 #include <thread>
+#include <unistd.h>
 
 // library headers
 #include <desktopenvironments.h>
@@ -21,7 +22,7 @@ using namespace std;
 using namespace appimage::update;
 
 // used to detect whether application is done from other functions
-static bool DONE = false;
+static bool ERROR = false;
 
 void setFltkFont(const std::string &font) {
     // font could contain a size, which has to be parsed out
@@ -81,22 +82,38 @@ void setFltkFont(const std::string &font) {
     Fl::set_font(FL_HELVETICA, strdup(finalFont.c_str()));
 }
 
+void windowCallback(Fl_Widget* widget, void*) {
+    if (ERROR) {
+        exit(0);
+    }
+}
+
 // to be run in a thread
-void runUpdate(
-    const std::string pathToAppImage,
-    Fl_Window* win,
-    Fl_Progress* progressBar,
-    Fl_Text_Display* textDisplay,
-    Fl_Text_Buffer* textBuffer
-) {
+void runUpdate(const std::string pathToAppImage) {
+    static const auto winWidth = 500;
+    static const auto winHeight = 300;
+
+    Fl_Window win(winWidth, winHeight, "AppImageUpdate GUI");
+    win.begin();
+
+    Fl_Progress progressBar(50, winHeight-30, winWidth-(50*2), 20, "0%");
+
+    Fl_Text_Display textDisplay(10, 10, winWidth-(2*10), winHeight-50);
+    Fl_Text_Buffer textBuffer;
+    textDisplay.buffer(textBuffer);
+
+    win.callback(windowCallback);
+    win.end();
+    win.show();
+
     auto log = [&textDisplay, &textBuffer](const std::string& msg) {
         std::ostringstream message;
         message << msg << endl;
 
         cout << message.str();
 
-        textBuffer->insert(textBuffer->length() + 1, message.str().c_str());
-        textDisplay->scroll(INT_MAX, 0);
+        textBuffer.insert(textBuffer.length() + 1, message.str().c_str());
+        textDisplay.scroll(INT_MAX, 0);
 
         Fl::check();
     };
@@ -106,7 +123,7 @@ void runUpdate(
     log("Starting update...");
     if(!updater.start()) {
         log("Failed to start update process!");
-        DONE = true;
+        ERROR = true;
         return;
     }
 
@@ -118,7 +135,7 @@ void runUpdate(
         double progress;
         if (!updater.progress(progress)) {
             log("Call to progress() failed!");
-            DONE = true;
+            ERROR = true;
             return;
         }
 
@@ -126,11 +143,11 @@ void runUpdate(
 
         // check for change to avoid having to redraw every 100ms
         if (progress != oldProgress) {
-            progressBar->value(static_cast<float>(progress));
+            progressBar.value(static_cast<float>(progress));
 
             ostringstream label;
             label << progress << "%";
-            progressBar->label(label.str().c_str());
+            progressBar.label(label.str().c_str());
 
             // update UI
             Fl::check();
@@ -143,19 +160,42 @@ void runUpdate(
 
     if (updater.hasError()) {
         log("Update failed!");
-        progressBar->selection_color(FL_RED);
-        progressBar->redraw();
+        progressBar.selection_color(FL_RED);
+        progressBar.redraw();
         Fl::check();
     } else {
+        progressBar.selection_color(FL_GREEN);
+        progressBar.redraw();
+        Fl::check();
         log("Successfully updated AppImage!");
     }
 
-    DONE = true;
-}
+    // TODO: remove *.zs_old backup file
 
-void windowCallback(Fl_Widget *widget, void *) {
-    if (DONE) {
-        exit(0);
+    auto msg = "Update successful!\nDo you want to run the application right now?";
+    switch (fl_choice(msg, "Exit now.", "Run app!", nullptr)) {
+        case 0:
+            exit(0);
+        case 1: {
+            // check existing permissions
+            struct stat appImageStat;
+
+            if (stat(pathToAppImage.c_str(), &appImageStat) != 0) {
+                int error = errno;
+                ostringstream ss;
+                ss << "Error calling stat(): " << strerror(error);
+                fl_message("%s", ss.str().c_str());
+                exit(1);
+            }
+
+            // make executable
+            chmod(pathToAppImage.c_str(), appImageStat.st_mode + S_IXUSR);
+
+            if (fork() == 0) {
+                execl(pathToAppImage.c_str(), pathToAppImage.c_str(), nullptr);
+            }
+            exit(0);
+        }
     }
 }
 
@@ -209,30 +249,8 @@ int main(const int argc, const char* const* argv) {
         setFltkFont(font);
     }
 
-    static const auto winWidth = 500;
-    static const auto winHeight = 300;
-
-    Fl_Window win(winWidth, winHeight, "AppImageUpdate GUI");
-    win.begin();
-
-    Fl_Progress progressBar(50, winHeight-30, winWidth-(50*2), 20, "0%");
-
-    Fl_Text_Display textDisplay(10, 10, winWidth-(2*10), winHeight-50);
-    Fl_Text_Buffer textBuffer;
-    textDisplay.buffer(textBuffer);
-
-    win.callback(windowCallback);
-    win.end();
-    win.show();
-
     // run worker thread so UI can run in main thread
-    thread workerThread(runUpdate,
-        pathToAppImage,
-        &win,
-        &progressBar,
-        &textDisplay,
-        &textBuffer
-    );
+    thread workerThread(runUpdate, pathToAppImage);
 
     auto result = Fl::run();
 
