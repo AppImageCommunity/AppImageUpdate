@@ -112,7 +112,7 @@ void runUpdate(const std::string pathToAppImage) {
 
         if (fork() == 0) {
             // make sure to deactivate updater contained in the AppImage when running from AppImageUpdate
-            auto env = {"APPIMAGE_SELF_UPDATE_DISABLE=1"};
+            auto env = {"STARTED_BY_APPIMAGEUPDATE=1"};
             execle(pathToAppImage.c_str(), pathToAppImage.c_str(), nullptr, env);
         }
     };
