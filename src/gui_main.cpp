@@ -128,7 +128,8 @@ void runUpdate(const std::string pathToAppImage) {
 
             // execle should never return, so if this code is reached, there must be an error
             auto error = errno;
-            cerr << "Error executing AppImage " << realPathToAppImage << ": code " << error << ": " << strerror(error) << endl;
+            cerr << "Error executing AppImage " << realPathToAppImage << ": code " << error << ": "
+                 << strerror(error) << endl;
             exit(1);
         }
     };
@@ -166,7 +167,33 @@ void runUpdate(const std::string pathToAppImage) {
         Fl::check();
     };
 
+    auto showFinishedDialog = [&runApp](std::string msg) {
+        switch (fl_choice(msg.c_str(), "Exit now.", "Run app!", nullptr)) {
+            case 0:
+                exit(0);
+            case 1: {
+                runApp();
+            }
+        }
+    };
+
     Updater updater(pathToAppImage);
+
+    // first of all, check whether an update is required at all
+    // this avoids unnecessary file I/O (a real update process would create a copy of the file anyway in case an
+    // update is not required)
+    log("Checking for updates...");
+    bool updateRequired;
+    if (!updater.checkForChanges(updateRequired)) {
+        fl_alert("Update check failed!");
+        exit(1);
+    }
+    log("... done!");
+    if (!updateRequired) {
+        showFinishedDialog("AppImage already up to date, no update required!\n"
+                           "Do you want to run the application right now?");
+        exit(0);
+    }
 
     log("Starting update...");
     if(!updater.start()) {
@@ -229,14 +256,7 @@ void runUpdate(const std::string pathToAppImage) {
 #ifdef SELFUPDATE
     runApp();
 #else
-    auto msg = "Update successful!\nDo you want to run the application right now?";
-    switch (fl_choice(msg, "Exit now.", "Run app!", nullptr)) {
-        case 0:
-            exit(0);
-        case 1: {
-            runApp();
-        }
-    }
+    showFinishedDialog("Update successful!\nDo you want to run the application right now?");
 #endif
 
     // trigger exit to avoid FLTK warnings
