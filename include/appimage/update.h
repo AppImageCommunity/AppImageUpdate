@@ -61,6 +61,9 @@ namespace appimage {
 
             // Fetch a status message from the client in use that can be used to display updates
             bool nextStatusMessage(std::string& message);
+
+            // Check whether an update is available
+            bool checkForChanges(bool& updateAvailable, unsigned int method = 0);
         };
     }
 }

@@ -332,6 +332,33 @@ namespace appimage {
                     }
                 }
             }
+
+            bool checkForChanges(bool& updateAvailable, const unsigned int method = 0) {
+                lock_guard guard(mutex);
+
+                if (state != INITIALIZED)
+                    return false;
+
+                // TODO: this code is somewhat duplicated in run()
+                // should probably be extracted to separate function
+                auto* appImage = readAppImage(pathToAppImage);
+
+                if (appImage == nullptr) {
+                    issueStatusMessage("Parsing failed! Are you sure the file is an AppImage?");
+                    state = ERROR;
+                    return false;
+                }
+
+                if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
+                    appImage->updateInformationType == ZSYNC_BINTRAY ||
+                    appImage->updateInformationType == ZSYNC_GENERIC) {
+                    auto client = zsync2::ZSyncClient(appImage->zsyncUrl);
+                    return client.checkForChanges(updateAvailable, method);
+                }
+
+                // return error in case of unknown update information
+                return false;
+            }
         };
         
         Updater::Updater(const std::string& pathToAppImage) {
@@ -439,6 +466,10 @@ namespace appimage {
 
         Updater::State Updater::state() {
             return d->state;
+        }
+
+        bool Updater::checkForChanges(bool &updateAvailable, const unsigned int method) {
+            return d->checkForChanges(updateAvailable, method);
         }
     }
 }
