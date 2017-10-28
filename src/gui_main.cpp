@@ -110,10 +110,26 @@ void runUpdate(const std::string pathToAppImage) {
         // make executable
         chmod(pathToAppImage.c_str(), appImageStat.st_mode + S_IXUSR);
 
+        // full path to AppImage, required for execl
+        char* realPathToAppImage;
+        if ((realPathToAppImage = realpath(pathToAppImage.c_str(), nullptr)) == nullptr) {
+            auto error = errno;
+            cerr << "Error resolving full path of AppImage: code " << error << ": " << strerror(error) << endl;
+            exit(1);
+        }
+
         if (fork() == 0) {
+            putenv(strdup("STARTED_BY_APPIMAGEUPDATE=1"));
+
+            cerr << "Running " << realPathToAppImage << endl;
+
             // make sure to deactivate updater contained in the AppImage when running from AppImageUpdate
-            auto env = {"STARTED_BY_APPIMAGEUPDATE=1"};
-            execle(pathToAppImage.c_str(), pathToAppImage.c_str(), nullptr, env);
+            execl(realPathToAppImage, realPathToAppImage, nullptr);
+
+            // execle should never return, so if this code is reached, there must be an error
+            auto error = errno;
+            cerr << "Error executing AppImage " << realPathToAppImage << ": code " << error << ": " << strerror(error) << endl;
+            exit(1);
         }
     };
 
@@ -195,6 +211,8 @@ void runUpdate(const std::string pathToAppImage) {
         progressBar.selection_color(FL_RED);
         progressBar.redraw();
         Fl::check();
+        fl_alert("Update failed!");
+        exit(0);
     } else {
         progressBar.selection_color(FL_GREEN);
         progressBar.redraw();
