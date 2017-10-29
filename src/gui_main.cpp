@@ -155,8 +155,8 @@ void runUpdate(const std::string pathToAppImage) {
     win.end();
     win.show();
 
-    auto log = [&textDisplay, &textBuffer](const std::string& msg) {
-        std::ostringstream message;
+    auto log = [&textDisplay, &textBuffer](const string& msg) {
+        ostringstream message;
         message << msg << endl;
 
         cout << message.str();
@@ -167,7 +167,7 @@ void runUpdate(const std::string pathToAppImage) {
         Fl::check();
     };
 
-    auto showFinishedDialog = [&runApp](std::string msg) {
+    auto showFinishedDialog = [&runApp](string msg) {
         switch (fl_choice(msg.c_str(), "Exit now.", "Run app!", nullptr)) {
             case 0:
                 exit(0);
@@ -184,9 +184,28 @@ void runUpdate(const std::string pathToAppImage) {
     // update is not required)
     log("Checking for updates...");
     bool updateRequired;
-    if (!updater.checkForChanges(updateRequired)) {
-        fl_alert("Update check failed!");
-        exit(1);
+    if (updater.checkForChanges(updateRequired)) {
+        static const string selfUpdateBinary = "appimageupdategui-selfupdate";
+
+        ostringstream typeCommand;
+        typeCommand << "type " << selfUpdateBinary << " 2>&1 1>/dev/null";
+
+        auto x = typeCommand.str();
+
+        // check whether self update is possible
+        if (getenv("APPIMAGE") != nullptr || getenv("APPDIR") != nullptr || system(typeCommand.str().c_str()) != 0)
+            exit(1);
+
+        switch (fl_choice("Update check failed!\nDo you want to look for a newer version of AppImageUpdate?",
+                          "Check for updates", "Exit now", nullptr)) {
+            case 0:
+                execl("appimageupdategui-selfupdate", "appimageupdategui-selfupdate");
+                // if exec will return, it's an error
+                cerr << "Failed to call " << selfUpdateBinary << endl;
+                exit(2);
+            case 1:
+                exit(1);
+        }
     }
     log("... done!");
     if (!updateRequired) {
