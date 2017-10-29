@@ -27,7 +27,11 @@ script:
   - find AppDir -type f -iname 'libcrypt*.so' -delete
   - find AppDir -type f -iname 'libcurl*.so' -delete
   - ./appimagetool-x86_64.AppImage --exclude-file ../resources/appimageupdate.ignore AppDir appimageupdate-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdate-*x86_64.AppImage.zsync'
-  - rm AppDir/AppRun && ln -s AppDir/usr/bin/appimageupdategui AppDir/AppRun
+  - pushd AppDir
+  - rm AppRun && ln -s usr/bin/appimageupdategui AppRun
+  - rm *.desktop && cp usr/share/applications/appimageupdategui.desktop .
+  - rm *.png && cp usr/share/icons/hicolor/appimageupdategui.png .
+  - popd
   - ./appimagetool-x86_64.AppImage --exclude-file ../resources/appimageupdategui.ignore AppDir appimageupdategui-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdategui-*x86_64.AppImage.zsync'
 
 after_success:
