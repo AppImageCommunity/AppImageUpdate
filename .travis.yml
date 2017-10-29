@@ -28,6 +28,7 @@ script:
   - find AppDir -type f -iname 'libcrypt*.so' -delete
   - find AppDir -type f -iname 'libcurl*.so' -delete
   - ls -al AppDir/
+  - ls -al AppDir/usr/bin/
   - ./appimagetool-x86_64.AppImage -v --exclude-file ../resources/appimageupdate.ignore AppDir appimageupdate-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdate-*x86_64.AppImage.zsync'
   - pushd AppDir
   - rm AppRun && ln -s usr/bin/appimageupdategui AppRun
