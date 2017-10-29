@@ -14,8 +14,9 @@ script:
   - mkdir AppDir
   - make -j$(nproc) install DESTDIR=AppDir
   - mkdir -p AppDir/usr/share/{applications,icons/hicolor}
-  - cp ../resources/*.desktop AppDir/usr/share/applications
-  - cp ../resources/*.png AppDir/usr/share/icons/hicolor
+  - cp -v ../resources/*.desktop AppDir/usr/share/applications
+  - cp -v ../resources/*.png AppDir/usr/share/icons/hicolor
+  - ls -al AppDir/usr/share/applications AppDir/usr/share/icons/hicolor
   - wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
   - chmod +x linuxdeployqt-continuous-x86_64.AppImage
   - ./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdate.desktop -bundle-non-qt-libs -executable AppDir/usr/bin/appimageupdategui
