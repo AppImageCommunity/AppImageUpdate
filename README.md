@@ -1,4 +1,4 @@
-# AppImageUpdate
+# AppImageUpdate [![Build Status](https://travis-ci.org/AppImage/AppImageUpdate.svg?branch=rewrite)](https://travis-ci.org/AppImage/AppImageUpdate)
 
 This is a rewrite of AppImageUpdate in modern C++ (C++11, to be precise).
 
