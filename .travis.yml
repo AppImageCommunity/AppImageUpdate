@@ -30,7 +30,7 @@ script:
   - pushd AppDir
   - rm AppRun && ln -s usr/bin/appimageupdategui AppRun
   - rm *.desktop && cp usr/share/applications/appimageupdategui.desktop .
-  - rm *.png && cp usr/share/icons/hicolor/appimageupdategui.png .
+  - rm *.png && cp usr/share/icons/hicolor/128x128/appimageupdategui.png .
   - popd
   - ./appimagetool-x86_64.AppImage -v --exclude-file ../resources/appimageupdategui.ignore AppDir appimageupdategui-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdategui-*x86_64.AppImage.zsync'
 
