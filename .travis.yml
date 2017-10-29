@@ -27,13 +27,14 @@ script:
   - find AppDir -type f -iname 'libssl*.so' -delete
   - find AppDir -type f -iname 'libcrypt*.so' -delete
   - find AppDir -type f -iname 'libcurl*.so' -delete
-  - ./appimagetool-x86_64.AppImage --exclude-file ../resources/appimageupdate.ignore AppDir appimageupdate-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdate-*x86_64.AppImage.zsync'
+  - ls -al AppDir/
+  - ./appimagetool-x86_64.AppImage -v --exclude-file ../resources/appimageupdate.ignore AppDir appimageupdate-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdate-*x86_64.AppImage.zsync'
   - pushd AppDir
   - rm AppRun && ln -s usr/bin/appimageupdategui AppRun
   - rm *.desktop && cp usr/share/applications/appimageupdategui.desktop .
   - rm *.png && cp usr/share/icons/hicolor/appimageupdategui.png .
   - popd
-  - ./appimagetool-x86_64.AppImage --exclude-file ../resources/appimageupdategui.ignore AppDir appimageupdategui-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdategui-*x86_64.AppImage.zsync'
+  - ./appimagetool-x86_64.AppImage -v --exclude-file ../resources/appimageupdategui.ignore AppDir appimageupdategui-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdategui-*x86_64.AppImage.zsync'
 
 after_success:
   - ls -lh
