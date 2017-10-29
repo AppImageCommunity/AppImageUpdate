@@ -4,35 +4,33 @@ sudo: require
 dist: trusty
 
 install:
-  - sudo apt-get -y install git cmake g++ libcurl3-gnutls-dev zsync
+  - sudo apt-get -y install git cmake g++ libcurl3-gnutls-dev
 
 script:
   - git submodule update --init
   - mkdir build
   - cd build
   - cmake .. -DBUILD_CPR_TESTS=OFF -DUSE_SYSTEM_CURL=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo
-  - mkdir appimageupdate{,gui}.AppDir
-  - make -j$(nproc) install DESTDIR=appimageupdate.AppDir
-  - make -j$(nproc) install DESTDIR=appimageupdategui.AppDir
-  - mkdir -p appimageupdate{,gui}.AppDir/usr/share/{applications,icons/hicolor}
-  - cp ../resources/appimageupdate.desktop appimageupdate.AppDir/usr/share/applications
-  - cp ../resources/appimageupdate.png appimageupdate.AppDir/usr/share/icons/hicolor
-  - cp ../resources/appimageupdategui.desktop appimageupdategui.AppDir/usr/share/applications
-  - cp ../resources/appimageupdategui.png appimageupdategui.AppDir/usr/share/icons/hicolor
+  - mkdir AppDir
+  - make -j$(nproc) install DESTDIR=AppDir
+  - mkdir -p AppDir/usr/share/{applications,icons/hicolor}
+  - cp ../resources/*.desktop AppDir/usr/share/applications
+  - cp ../resources/*.png AppDir/usr/share/icons/hicolor
   - wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
   - chmod +x linuxdeployqt-continuous-x86_64.AppImage
-  - ./linuxdeployqt-continuous-x86_64.AppImage appimageupdate.AppDir/usr/share/applications/appimageupdate.desktop -bundle-non-qt-libs
-  - ./linuxdeployqt-continuous-x86_64.AppImage appimageupdategui.AppDir/usr/share/applications/appimageupdategui.desktop -bundle-non-qt-libs
+  - ./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdate.desktop -bundle-non-qt-libs -executable AppDir/usr/bin/appimageupdategui
   - wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
   - chmod +x appimagetool-x86_64.AppImage
-  - rm -rf appimageupdate{,gui}.AppDir/usr/include
-  - find appimageupdate.AppDir -type f -iname '*.a' -delete
-  - find appimageupdate.AppDir -type f -iname 'libssl*.so' -delete
-  - find appimageupdate.AppDir -type f -iname 'libcrypt*.so' -delete
-  - find appimageupdategui.AppDir -type f -iname '*.a' -delete
-  - find appimageupdategui.AppDir -type f -iname 'libssl*.so' -delete
-  - find appimageupdategui.AppDir -type f -iname 'libcrypt*.so' -delete
-  - ./appimagetool-x86_64.AppImage appimageupdate.AppDir appimageupdate-x86_64.AppImage
-  - ./appimagetool-x86_64.AppImage appimageupdategui.AppDir appimageupdategui-x86_64.AppImage
-  - wget -O- -nv --method PUT --body-file=appimageupdate-x86_64.AppImage https://transfer.sh/appimageupdate-x86_64.AppImage
-  - wget -O- -nv --method PUT --body-file=appimageupdategui-x86_64.AppImage https://transfer.sh/appimageupdategui-x86_64.AppImage
+  - rm -rf AppDir/usr/include
+  - find AppDir -type f -iname '*.a' -delete
+  - find AppDir -type f -iname 'libssl*.so' -delete
+  - find AppDir -type f -iname 'libcrypt*.so' -delete
+  - find AppDir -type f -iname 'libcurl*.so' -delete
+  - ./appimagetool-x86_64.AppImage --exclude-file ../resources/appimageupdate.ignore AppDir appimageupdate-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdate-*x86_64.AppImage.zsync'
+  - rm AppDir/AppRun && ln -s AppDir/usr/bin/appimageupdategui AppDir/AppRun
+  - ./appimagetool-x86_64.AppImage --exclude-file ../resources/appimageupdategui.ignore AppDir appimageupdategui-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdategui-*x86_64.AppImage.zsync'
+
+after_success:
+  - ls -lh
+  - #wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - #bash ./upload.sh appimageupdate*-x86_64.AppImage
