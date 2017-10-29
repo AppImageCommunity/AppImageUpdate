@@ -23,9 +23,9 @@ script:
   - chmod +x appimagetool-x86_64.AppImage
   - rm -rf AppDir/usr/include
   - find AppDir -type f -iname '*.a' -delete
-  - find AppDir -type f -iname 'libssl*.so' -delete
-  - find AppDir -type f -iname 'libcrypt*.so' -delete
-  - find AppDir -type f -iname 'libcurl*.so' -delete
+  - find AppDir -type f -iname 'libssl*.so*' -delete
+  - find AppDir -type f -iname 'libcrypt*.so*' -delete
+  - find AppDir -type f -iname 'libcurl*.so*' -delete
   - ./appimagetool-x86_64.AppImage -v --exclude-file ../resources/appimageupdate.ignore AppDir appimageupdate-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|latest|appimageupdate-*x86_64.AppImage.zsync'
   - pushd AppDir
   - rm AppRun && ln -s usr/bin/appimageupdategui AppRun
