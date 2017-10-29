@@ -13,9 +13,9 @@ script:
   - cmake .. -DBUILD_CPR_TESTS=OFF -DUSE_SYSTEM_CURL=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo
   - mkdir AppDir
   - make -j$(nproc) install DESTDIR=AppDir
-  - mkdir -p AppDir/usr/share/{applications,icons/hicolor}
+  - mkdir -p AppDir/usr/share/{applications,icons/hicolor/128x128}
   - cp -v ../resources/*.desktop AppDir/usr/share/applications
-  - cp -v ../resources/*.png AppDir/usr/share/icons/hicolor
+  - cp -v ../resources/*.png AppDir/usr/share/icons/hicolor/128x128
   - ls -al AppDir/usr/share/applications AppDir/usr/share/icons/hicolor
   - wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
   - chmod +x linuxdeployqt-continuous-x86_64.AppImage
