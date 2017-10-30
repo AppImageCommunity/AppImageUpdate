@@ -1,6 +1,7 @@
 #! /bin/bash
 
 set -x
+set -e
 
 # use RAM disk if possible
 if [ -d /dev/shm ]; then
@@ -70,7 +71,7 @@ popd
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync'
 
 # move AppImages to old cwd
-mv appimageupdatetool*.AppImage "$OLD_CWD"/
-mv AppImageUpdate*.AppImage "$OLD_CWD"/
+mv appimageupdatetool*.AppImage* "$OLD_CWD"/
+mv AppImageUpdate*.AppImage* "$OLD_CWD"/
 
 popd
