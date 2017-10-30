@@ -350,7 +350,12 @@ namespace appimage {
 
                 if (appImage == nullptr) {
                     issueStatusMessage("Parsing failed! Are you sure the file is an AppImage?");
-                    state = ERROR;
+                    return false;
+                }
+
+                if (appImage->zsyncUrl.empty()) {
+                    issueStatusMessage("Could not find update information in the AppImage! "
+                                       "Please contact the author to embed update information!");
                     return false;
                 }
 
