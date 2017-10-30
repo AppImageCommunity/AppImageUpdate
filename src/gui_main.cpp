@@ -193,8 +193,10 @@ void runUpdate(const std::string pathToAppImage) {
         auto x = typeCommand.str();
 
         // check whether self update is possible
-        if (getenv("APPIMAGE") != nullptr || getenv("APPDIR") != nullptr || system(typeCommand.str().c_str()) != 0)
+        if (getenv("APPIMAGE") != nullptr || getenv("APPDIR") != nullptr || system(typeCommand.str().c_str()) != 0) {
+            fl_alert("Update check failed, exiting!");
             exit(1);
+        }
 
         switch (fl_choice("Update check failed!\nDo you want to look for a newer version of AppImageUpdate?",
                           "Check for updates", "Exit now", nullptr)) {
