@@ -142,96 +142,101 @@ namespace appimage {
                 // parse update information
                 auto uiParts = split(updateInformation, '|');
 
-                if (uiParts[0] == "gh-releases-zsync") {
-                    // validate update information
-                    if (uiParts.size() == 5) {
-                        uiType = ZSYNC_GITHUB_RELEASES;
+                // make sure uiParts isn't empty
+                if (uiParts.size() > 0) {
+                    // TODO: GitHub releases type should consider pre-releases when there's no other types of releases
+                    if (uiParts[0] == "gh-releases-zsync") {
+                        // validate update information
+                        if (uiParts.size() == 5) {
+                            uiType = ZSYNC_GITHUB_RELEASES;
 
-                        auto username = uiParts[1];
-                        auto repository = uiParts[2];
-                        auto tag = uiParts[3];
-                        auto filename = uiParts[4];
+                            auto username = uiParts[1];
+                            auto repository = uiParts[2];
+                            auto tag = uiParts[3];
+                            auto filename = uiParts[4];
 
-                        std::stringstream url;
-                        url << "https://api.github.com/repos/" << username << "/" << repository << "/releases/";
+                            std::stringstream url;
+                            url << "https://api.github.com/repos/" << username << "/" << repository << "/releases/";
 
-                        if (tag.find("latest") != std::string::npos) {
-                            url << "latest";
-                        } else {
-                            url << "/tags/" << tag;
-                        }
+                            if (tag.find("latest") != std::string::npos) {
+                                url << "latest";
+                            } else {
+                                url << "/tags/" << tag;
+                            }
 
-                        auto response = cpr::Get(url.str());
+                            auto response = cpr::Get(url.str());
 
-                        // continue only if HTTP status is good
-                        if (response.status_code >= 200 && response.status_code < 300) {
-                            // in contrary to the original implementation, instead of converting wildcards into
-                            // all-matching regular expressions, we have the power of fnmatch() available, a real wildcard
-                            // implementation
-                            // unfortunately, this is still hoping for GitHub's JSON API to return a pretty printed
-                            // response which can be parsed like this
-                            std::stringstream responseText(response.text);
-                            std::string currentLine;
-                            auto pattern = "*" + filename + "*";
-                            while (std::getline(responseText, currentLine)) {
-                                if (currentLine.find("browser_download_url") != std::string::npos) {
-                                    if (fnmatch(pattern.c_str(), currentLine.c_str(), 0) == 0) {
-                                        auto parts = split(currentLine, '"');
-                                        zsyncUrl = parts.back();
-                                        break;
+                            // continue only if HTTP status is good
+                            if (response.status_code >= 200 && response.status_code < 300) {
+                                // in contrary to the original implementation, instead of converting wildcards into
+                                // all-matching regular expressions, we have the power of fnmatch() available, a real wildcard
+                                // implementation
+                                // unfortunately, this is still hoping for GitHub's JSON API to return a pretty printed
+                                // response which can be parsed like this
+                                std::stringstream responseText(response.text);
+                                std::string currentLine;
+                                auto pattern = "*" + filename + "*";
+                                while (std::getline(responseText, currentLine)) {
+                                    if (currentLine.find("browser_download_url") != std::string::npos) {
+                                        if (fnmatch(pattern.c_str(), currentLine.c_str(), 0) == 0) {
+                                            auto parts = split(currentLine, '"');
+                                            zsyncUrl = parts.back();
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                } else if (uiParts[0] == "bintray-zsync") {
-                    if (uiParts.size() == 5) {
-                        uiType = ZSYNC_BINTRAY;
+                    } else if (uiParts[0] == "bintray-zsync") {
+                        if (uiParts.size() == 5) {
+                            uiType = ZSYNC_BINTRAY;
 
-                        auto username = uiParts[1];
-                        auto repository = uiParts[2];
-                        auto packageName = uiParts[3];
-                        auto filename = uiParts[4];
+                            auto username = uiParts[1];
+                            auto repository = uiParts[2];
+                            auto packageName = uiParts[3];
+                            auto filename = uiParts[4];
 
-                        std::stringstream downloadUrl;
-                        downloadUrl << "https://dl.bintray.com/" << username << "/" << repository  << "/" << filename;
+                            std::stringstream downloadUrl;
+                            downloadUrl << "https://dl.bintray.com/" << username << "/" << repository << "/"
+                                        << filename;
 
-                        std::stringstream redirectorUrl;
-                        redirectorUrl << "https://bintray.com/" << username << "/" << repository << "/"
-                                      << packageName << "/_latestVersion";
+                            std::stringstream redirectorUrl;
+                            redirectorUrl << "https://bintray.com/" << username << "/" << repository << "/"
+                                          << packageName << "/_latestVersion";
 
-                        auto versionResponse = cpr::Head(redirectorUrl.str());
-                        // this request is supposed to be redirected
-                        // due to how cpr works, we can't check for a redirection status, as we get the response for
-                        // the redirected request
-                        // therefore, we check for a 2xx response, and then can inspect and compare the redirected URL
-                        if (versionResponse.status_code >= 200 && versionResponse.status_code < 400) {
-                            auto redirectedUrl = versionResponse.url;
+                            auto versionResponse = cpr::Head(redirectorUrl.str());
+                            // this request is supposed to be redirected
+                            // due to how cpr works, we can't check for a redirection status, as we get the response for
+                            // the redirected request
+                            // therefore, we check for a 2xx response, and then can inspect and compare the redirected URL
+                            if (versionResponse.status_code >= 200 && versionResponse.status_code < 400) {
+                                auto redirectedUrl = versionResponse.url;
 
-                            // if they're different, it's probably been successful
-                            if (redirectorUrl.str() != redirectedUrl) {
-                                // the last part will contain the current version
-                                auto packageVersion = static_cast<std::string>(split(redirectedUrl, '/').back());
-                                auto urlTemplate = downloadUrl.str();
+                                // if they're different, it's probably been successful
+                                if (redirectorUrl.str() != redirectedUrl) {
+                                    // the last part will contain the current version
+                                    auto packageVersion = static_cast<std::string>(split(redirectedUrl, '/').back());
+                                    auto urlTemplate = downloadUrl.str();
 
-                                // split by _latestVersion, insert correct value, compose final value
-                                auto pos = urlTemplate.find("_latestVersion");
-                                auto firstPart = urlTemplate.substr(0, pos);
-                                auto secondPart = urlTemplate.substr(pos + std::string("_latestVersion").length());
-                                zsyncUrl = firstPart + packageVersion + secondPart;
+                                    // split by _latestVersion, insert correct value, compose final value
+                                    auto pos = urlTemplate.find("_latestVersion");
+                                    auto firstPart = urlTemplate.substr(0, pos);
+                                    auto secondPart = urlTemplate.substr(pos + std::string("_latestVersion").length());
+                                    zsyncUrl = firstPart + packageVersion + secondPart;
+                                }
                             }
+
                         }
+                    } else if (uiParts[0] == "zsync") {
+                        // validate update information
+                        if (uiParts.size() == 2) {
+                            uiType = ZSYNC_GENERIC;
 
+                            zsyncUrl = uiParts.back();
+                        }
+                    } else {
+                        // unknown type
                     }
-                } else if (uiParts[0] == "zsync") {
-                    // validate update information
-                    if (uiParts.size() == 2) {
-                        uiType = ZSYNC_GENERIC;
-
-                        zsyncUrl = uiParts.back();
-                    }
-                } else {
-                    // unknown type
                 }
 
                 auto* appImage = new AppImage();
