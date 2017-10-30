@@ -184,7 +184,7 @@ void runUpdate(const std::string pathToAppImage) {
     // update is not required)
     log("Checking for updates...");
     bool updateRequired;
-    if (updater.checkForChanges(updateRequired)) {
+    if (!updater.checkForChanges(updateRequired)) {
         static const string selfUpdateBinary = "appimageupdategui-selfupdate";
 
         ostringstream typeCommand;
@@ -199,7 +199,7 @@ void runUpdate(const std::string pathToAppImage) {
         switch (fl_choice("Update check failed!\nDo you want to look for a newer version of AppImageUpdate?",
                           "Check for updates", "Exit now", nullptr)) {
             case 0:
-                execl("appimageupdategui-selfupdate", "appimageupdategui-selfupdate");
+                execl(selfUpdateBinary.c_str(), selfUpdateBinary.c_str());
                 // if exec will return, it's an error
                 cerr << "Failed to call " << selfUpdateBinary << endl;
                 exit(2);
