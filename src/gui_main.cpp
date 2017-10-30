@@ -195,6 +195,14 @@ void runUpdate(const std::string pathToAppImage) {
     }
 
     if (!updateCheckSuccessful) {
+#ifdef SELFUPDATE
+        // AppImageSelfUpdate should not attempt to call itself again, as it'd be kind of pointless to retry a
+        // self update if the previous one failed (except for maybe a retry button somewhere in the current self
+        // update process)
+        // this should prevent an infinite loop of calls to selfUpdateBinary
+        fl_alert("Update check of current AppImage failed, exiting!");
+        exit(1);
+#else
         static const string selfUpdateBinary = "appimageupdategui-selfupdate";
 
         // extend path to AppImage's mounting point's usr/bin/ to be able to find the binary
@@ -209,25 +217,14 @@ void runUpdate(const std::string pathToAppImage) {
         auto isAppImage = (getenv("APPIMAGE") != nullptr && getenv("APPDIR") != nullptr);
         auto selfUpdateCommandAvailable = (system(typeCommand.str().c_str()) == 0);
 
-        // also check whether this is a call from AppImageUpdate, in which case the application should exit here, too,
-        // to prevent an infinite loop of calls to selfUpdateBinary
-        auto startedByAppImageUpdate = (getenv("STARTED_BY_APPIMAGEUPDATE") != nullptr);
-
-        if (!isAppImage || !selfUpdateCommandAvailable || startedByAppImageUpdate) {
-            if (startedByAppImageUpdate)
-                fl_alert("Update check of current AppImage failed, exiting!");
-            else
-                fl_alert("Update check failed, exiting!");
-
+        if (!isAppImage || !selfUpdateCommandAvailable) {
+            fl_alert("Update check failed, exiting!");
             exit(1);
         }
 
         switch (fl_choice("Update check failed!\nDo you want to look for a newer version of AppImageUpdate?",
                           "Check for updates", "Exit now", nullptr)) {
             case 0: {
-                // notify the binary that it has been started from AppImageUpdate
-                putenv(strdup("STARTED_BY_APPIMAGEUPDATE=1"));
-
                 // build path
                 ostringstream pathToSelfUpdateBinary;
                 pathToSelfUpdateBinary << getenv("APPDIR") << "/usr/bin/" << selfUpdateBinary;
@@ -243,7 +240,9 @@ void runUpdate(const std::string pathToAppImage) {
             case 1:
                 exit(1);
         }
+#endif
     }
+
     log("... done!");
     if (!updateRequired) {
         showFinishedDialog("AppImage already up to date, no update required!\n"
