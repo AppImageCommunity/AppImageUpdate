@@ -14,4 +14,9 @@ after_success:
   - ls -lh
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   # make sure only pushes to rewrite create a new release
-  - [ "$TRAVIS_BRANCH" == "rewrite" ] && bash ./upload.sh appimageupdate*-x86_64.AppImage
+  - if [ "$TRAVIS_BRANCH" == "rewrite" ]; then bash ./upload.sh appimageupdate*-x86_64.AppImage; fi
+
+branches:
+  except:
+    - # Do not build tags that we create when we upload to GitHub Releases
+    - /^(?i:continuous)$/
