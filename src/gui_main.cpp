@@ -108,7 +108,7 @@ void runUpdate(const std::string pathToAppImage) {
         }
 
         // make executable
-        chmod(pathToAppImage.c_str(), appImageStat.st_mode + S_IXUSR);
+        chmod(pathToAppImage.c_str(), appImageStat.st_mode | S_IXUSR);
 
         // full path to AppImage, required for execl
         char* realPathToAppImage;
