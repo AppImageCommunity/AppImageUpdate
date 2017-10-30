@@ -143,7 +143,7 @@ namespace appimage {
                 auto uiParts = split(updateInformation, '|');
 
                 // make sure uiParts isn't empty
-                if (uiParts.size() > 0) {
+                if (!uiParts.empty()) {
                     // TODO: GitHub releases type should consider pre-releases when there's no other types of releases
                     if (uiParts[0] == "gh-releases-zsync") {
                         // validate update information
