@@ -150,6 +150,7 @@ void runUpdate(const std::string pathToAppImage) {
     Fl_Text_Display textDisplay(10, 10, winWidth-(2*10), winHeight-50);
     Fl_Text_Buffer textBuffer;
     textDisplay.buffer(textBuffer);
+    textDisplay.wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0);
 
     win.callback(windowCallback);
     win.end();
