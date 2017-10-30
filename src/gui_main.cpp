@@ -205,7 +205,7 @@ void runUpdate(const std::string pathToAppImage) {
         // self update if the previous one failed (except for maybe a retry button somewhere in the current self
         // update process)
         // this should prevent an infinite loop of calls to selfUpdateBinary
-        fl_alert("Update check of current AppImage failed, exiting!");
+        fl_alert("Update check of current AppImage failed");
         exit(1);
 #else
         static const string selfUpdateBinary = "appimageupdategui-selfupdate";
@@ -223,11 +223,11 @@ void runUpdate(const std::string pathToAppImage) {
         auto selfUpdateCommandAvailable = (system(typeCommand.str().c_str()) == 0);
 
         if (!isAppImage || !selfUpdateCommandAvailable) {
-            fl_alert("Update check failed, exiting!");
+            fl_alert("Update check failed");
             exit(1);
         }
 
-        switch (fl_choice("Update check failed!\nDo you want to look for a newer version of AppImageUpdate?",
+        switch (fl_choice("Update check failed.\nDo you want to look for a newer version of AppImageUpdate?",
                           "Check for updates", "Exit now", nullptr)) {
             case 0: {
                 // build path
@@ -248,16 +248,16 @@ void runUpdate(const std::string pathToAppImage) {
 #endif
     }
 
-    log("... done!");
+    log("... done");
     if (!updateRequired) {
-        showFinishedDialog("AppImage already up to date, no update required!\n"
+        showFinishedDialog("You already have the latest version.\n"
                            "Do you want to run the application right now?");
         exit(0);
     }
 
     log("Starting update...");
     if(!updater.start()) {
-        log("Failed to start update process!");
+        log("Failed to start update process");
         ERROR = true;
         return;
     }
@@ -269,7 +269,7 @@ void runUpdate(const std::string pathToAppImage) {
 
         double progress;
         if (!updater.progress(progress)) {
-            log("Call to progress() failed!");
+            log("Call to progress() failed");
             ERROR = true;
             return;
         }
@@ -294,17 +294,17 @@ void runUpdate(const std::string pathToAppImage) {
     }
 
     if (updater.hasError()) {
-        log("Update failed!");
+        log("Update failed");
         progressBar.selection_color(FL_RED);
         progressBar.redraw();
         Fl::check();
-        fl_alert("Update failed!");
+        fl_alert("Update failed");
         exit(0);
     } else {
         progressBar.selection_color(FL_GREEN);
         progressBar.redraw();
         Fl::check();
-        log("Successfully updated AppImage!");
+        log("Successfully updated");
     }
 
     auto oldFile = pathToAppImage + ".zs-old";
@@ -320,7 +320,7 @@ void runUpdate(const std::string pathToAppImage) {
 #ifdef SELFUPDATE
     runApp();
 #else
-    showFinishedDialog("Update successful!\nDo you want to run the application right now?");
+    showFinishedDialog("Update successful.\nDo you want to run the application right now?");
 #endif
 
     // trigger exit to avoid FLTK warnings
@@ -334,7 +334,7 @@ int main(const int argc, const char* const* argv) {
     {
         auto *envVar = getenv("APPIMAGE");
         if (envVar == nullptr) {
-            cerr << "Fatal: APPIMAGE environment variable not set!" << endl;
+            cerr << "Fatal: APPIMAGE environment variable not set" << endl;
             exit(2);
         }
         pathToAppImage = envVar;
