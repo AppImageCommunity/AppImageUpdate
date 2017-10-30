@@ -187,24 +187,33 @@ void runUpdate(const std::string pathToAppImage) {
     if (!updater.checkForChanges(updateRequired)) {
         static const string selfUpdateBinary = "appimageupdategui-selfupdate";
 
+        // extend path to AppImage's mounting point's usr/bin/ to be able to find the binary
+        ostringstream newPath;
+        newPath << "PATH=" << getenv("APPDIR") << "/usr/bin:" << getenv("PATH");
+        putenv(strdup(newPath.str().c_str()));
+
         ostringstream typeCommand;
         typeCommand << "type " << selfUpdateBinary << " 2>&1 1>/dev/null";
 
-        auto x = typeCommand.str();
-
-        // check whether self update is possible
-        if (getenv("APPIMAGE") != nullptr || getenv("APPDIR") != nullptr || system(typeCommand.str().c_str()) != 0) {
+        // check whether in AppImage and whether self update binary is available
+        if (getenv("APPIMAGE") == nullptr || getenv("APPDIR") == nullptr || system(typeCommand.str().c_str()) != 0) {
             fl_alert("Update check failed, exiting!");
             exit(1);
         }
 
+        cerr << "yay" << endl;
+
         switch (fl_choice("Update check failed!\nDo you want to look for a newer version of AppImageUpdate?",
                           "Check for updates", "Exit now", nullptr)) {
-            case 0:
-                execl(selfUpdateBinary.c_str(), selfUpdateBinary.c_str());
+            case 0: {
+                ostringstream pathToSelfUpdateBinary;
+                pathToSelfUpdateBinary << getenv("APPDIR") << "/usr/bin/" << selfUpdateBinary;
+                execl(pathToSelfUpdateBinary.str().c_str(), selfUpdateBinary.c_str(), nullptr);
                 // if exec will return, it's an error
-                cerr << "Failed to call " << selfUpdateBinary << endl;
+                auto err = errno;
+                cerr << "Failed to call " << selfUpdateBinary << ": " << strerror(err) << endl;
                 exit(2);
+            }
             case 1:
                 exit(1);
         }
