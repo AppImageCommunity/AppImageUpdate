@@ -184,7 +184,17 @@ void runUpdate(const std::string pathToAppImage) {
     // update is not required)
     log("Checking for updates...");
     bool updateRequired;
-    if (!updater.checkForChanges(updateRequired)) {
+
+    auto updateCheckSuccessful = updater.checkForChanges(updateRequired);
+
+    // fetch messages from updater before showing any error messages, giving the user a chance to check for errors
+    {
+        std::string nextMessage;
+        while (updater.nextStatusMessage(nextMessage))
+            log(nextMessage);
+    }
+
+    if (!updateCheckSuccessful) {
         static const string selfUpdateBinary = "appimageupdategui-selfupdate";
 
         // extend path to AppImage's mounting point's usr/bin/ to be able to find the binary
