@@ -304,7 +304,7 @@ void runUpdate(const std::string pathToAppImage) {
         progressBar.selection_color(FL_GREEN);
         progressBar.redraw();
         Fl::check();
-        log("Successfully updated");
+        log("Update successful");
     }
 
     auto oldFile = pathToAppImage + ".zs-old";
