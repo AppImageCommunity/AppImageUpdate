@@ -8,33 +8,10 @@ install:
 
 script:
   - git submodule update --init
-  - mkdir build
-  - cd build
-  - cmake .. -DBUILD_CPR_TESTS=OFF -DUSE_SYSTEM_CURL=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo
-  - mkdir AppDir
-  - make -j$(nproc) install DESTDIR=AppDir
-  - mkdir -p AppDir/usr/share/{applications,icons/hicolor/128x128}
-  - cp -v ../resources/*.desktop AppDir/usr/share/applications
-  - cp -v ../resources/*.png AppDir/usr/share/icons/hicolor/128x128
-  - wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
-  - chmod +x linuxdeployqt-continuous-x86_64.AppImage
-  - ./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdate.desktop -bundle-non-qt-libs -executable appimageupdategui
-  - wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-  - chmod +x appimagetool-x86_64.AppImage
-  - rm -rf AppDir/usr/include
-  - find AppDir -type f -iname '*.a' -delete
-  - find AppDir -type f -iname 'libssl*.so*' -delete
-  - find AppDir -type f -iname 'libcrypt*.so*' -delete
-  - find AppDir -type f -iname 'libcurl*.so*' -delete
-  - ./appimagetool-x86_64.AppImage -v --exclude-file ../resources/appimageupdate.ignore AppDir appimageupdate-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdate-*x86_64.AppImage.zsync'
-  - pushd AppDir
-  - rm AppRun && ln -s usr/bin/appimageupdategui AppRun
-  - rm *.desktop && cp usr/share/applications/appimageupdategui.desktop .
-  - rm *.png && cp usr/share/icons/hicolor/128x128/appimageupdategui.png .
-  - popd
-  - ./appimagetool-x86_64.AppImage -v --exclude-file ../resources/appimageupdategui.ignore AppDir appimageupdategui-x86_64.AppImage -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdategui-*x86_64.AppImage.zsync'
+  - bash resources/build-appimages.sh
 
 after_success:
   - ls -lh
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - bash ./upload.sh appimageupdate*-x86_64.AppImage
+  # make sure only pushes to rewrite create a new release
+  - [ "$TRAVIS_BRANCH" == "rewrite" ] && bash ./upload.sh appimageupdate*-x86_64.AppImage

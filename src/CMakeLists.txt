@@ -15,35 +15,35 @@ target_include_directories(libappimageupdate PUBLIC ../include)
 target_include_directories(libappimageupdate PRIVATE ../lib/zsync2/lib/cpr/include)
 
 # CLI application
-add_executable(appimageupdate main.cpp)
+add_executable(appimageupdatetool main.cpp)
 # link to core lib
-target_link_libraries(appimageupdate libappimageupdate)
+target_link_libraries(appimageupdatetool libappimageupdate)
 
 # GUI application
 # TODO: replace with target_include_directories in FLTK CMake configuration
 include_directories(../lib/fltk)
 include_directories(${CMAKE_BINARY_DIR}/lib/fltk)
-add_executable(appimageupdategui gui_main.cpp)
+add_executable(AppImageUpdate gui_main.cpp)
 # link libraries
-target_link_libraries(appimageupdategui
+target_link_libraries(AppImageUpdate
     libappimageupdate
     fltk
     libdesktopenvironments
 )
 
 # GUI application for self-updating AppImages
-add_executable(appimageupdategui-selfupdate gui_main.cpp)
+add_executable(AppImageSelfUpdate gui_main.cpp)
 # link libraries
-target_link_libraries(appimageupdategui-selfupdate
+target_link_libraries(AppImageSelfUpdate
     libappimageupdate
     fltk
     libdesktopenvironments
 )
-target_compile_definitions(appimageupdategui-selfupdate PRIVATE -DSELFUPDATE)
+target_compile_definitions(AppImageSelfUpdate PRIVATE -DSELFUPDATE)
 
 # install targets
 install(
-    TARGETS libappimageupdate appimageupdate appimageupdategui appimageupdategui-selfupdate
+    TARGETS libappimageupdate appimageupdatetool AppImageUpdate AppImageSelfUpdate
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static

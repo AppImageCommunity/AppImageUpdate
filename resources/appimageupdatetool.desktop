@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=appimageupdatetool
+Type=Application
+Terminal=true
+Icon=AppImage
+Exec=appimageupdatetool
