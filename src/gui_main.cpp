@@ -95,11 +95,11 @@ bool isFile(const std::string& path) {
 
 // to be run in a thread
 void runUpdate(const std::string pathToAppImage) {
-    auto runApp = [&pathToAppImage]() {
+    auto getPerms = [](const std::string path) {
         // check existing permissions
         struct stat appImageStat;
 
-        if (stat(pathToAppImage.c_str(), &appImageStat) != 0) {
+        if (stat(path.c_str(), &appImageStat) != 0) {
             int error = errno;
             ostringstream ss;
             ss << "Error calling stat(): " << strerror(error);
@@ -107,8 +107,12 @@ void runUpdate(const std::string pathToAppImage) {
             exit(1);
         }
 
+        return appImageStat.st_mode;
+    };
+
+    auto runApp = [&pathToAppImage, &getPerms]() {
         // make executable
-        chmod(pathToAppImage.c_str(), appImageStat.st_mode | S_IXUSR);
+        chmod(pathToAppImage.c_str(), getPerms(pathToAppImage) | S_IXUSR);
 
         // full path to AppImage, required for execl
         char* realPathToAppImage;
@@ -305,6 +309,10 @@ void runUpdate(const std::string pathToAppImage) {
 
     auto oldFile = pathToAppImage + ".zs-old";
     if (isFile(oldFile)) {
+        // if backup is still around, copy permissions from old file
+        auto perms = getPerms(oldFile);
+        chmod(pathToAppImage.c_str(), perms);
+
         log("Removing backup " + oldFile);
         unlink(oldFile.c_str());
     }
