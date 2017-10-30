@@ -196,19 +196,35 @@ void runUpdate(const std::string pathToAppImage) {
         typeCommand << "type " << selfUpdateBinary << " 2>&1 1>/dev/null";
 
         // check whether in AppImage and whether self update binary is available
-        if (getenv("APPIMAGE") == nullptr || getenv("APPDIR") == nullptr || system(typeCommand.str().c_str()) != 0) {
-            fl_alert("Update check failed, exiting!");
+        auto isAppImage = (getenv("APPIMAGE") != nullptr && getenv("APPDIR") != nullptr);
+        auto selfUpdateCommandAvailable = (system(typeCommand.str().c_str()) == 0);
+
+        // also check whether this is a call from AppImageUpdate, in which case the application should exit here, too,
+        // to prevent an infinite loop of calls to selfUpdateBinary
+        auto startedByAppImageUpdate = (getenv("STARTED_BY_APPIMAGEUPDATE") != nullptr);
+
+        if (!isAppImage || !selfUpdateCommandAvailable || startedByAppImageUpdate) {
+            if (startedByAppImageUpdate)
+                fl_alert("Update check of current AppImage failed, exiting!");
+            else
+                fl_alert("Update check failed, exiting!");
+
             exit(1);
         }
-
-        cerr << "yay" << endl;
 
         switch (fl_choice("Update check failed!\nDo you want to look for a newer version of AppImageUpdate?",
                           "Check for updates", "Exit now", nullptr)) {
             case 0: {
+                // notify the binary that it has been started from AppImageUpdate
+                putenv(strdup("STARTED_BY_APPIMAGEUPDATE=1"));
+
+                // build path
                 ostringstream pathToSelfUpdateBinary;
                 pathToSelfUpdateBinary << getenv("APPDIR") << "/usr/bin/" << selfUpdateBinary;
+
+                // call selfUpdateBinary
                 execl(pathToSelfUpdateBinary.str().c_str(), selfUpdateBinary.c_str(), nullptr);
+
                 // if exec will return, it's an error
                 auto err = errno;
                 cerr << "Failed to call " << selfUpdateBinary << ": " << strerror(err) << endl;
