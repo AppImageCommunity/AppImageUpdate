@@ -161,7 +161,7 @@ namespace appimage {
                             if (tag.find("latest") != std::string::npos) {
                                 url << "latest";
                             } else {
-                                url << "/tags/" << tag;
+                                url << "tags/" << tag;
                             }
 
                             auto response = cpr::Get(url.str());
