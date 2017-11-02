@@ -13,13 +13,13 @@ static void showUsage(const string& argv0) {
 }
 
 int main(const int argc, const char** argv) {
+    cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
+         << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
+
     if(argc <= 1) {
         showUsage(argv[0]);
         return 1;
     }
-
-    cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
-         << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
 
     appimage::update::Updater updater(argv[1]);
 

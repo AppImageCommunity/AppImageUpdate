@@ -328,6 +328,9 @@ void runUpdate(const std::string pathToAppImage) {
 }
 
 int main(const int argc, const char* const* argv) {
+    cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
+         << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
+
     std::string pathToAppImage;
 
 #ifdef SELFUPDATE
@@ -379,9 +382,6 @@ int main(const int argc, const char* const* argv) {
         pathToAppImage = argv[1];
     }
 #endif
-
-    cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
-         << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
 
     IDesktopEnvironment* desktopEnvironment = IDesktopEnvironment::getInstance();
 
