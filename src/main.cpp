@@ -43,6 +43,12 @@ int main(const int argc, const char** argv) {
         return 2;
     }
 
+    cout << "... done!" << endl;
+    if (!updateRequired) {
+        cout << "Update not required, exiting." << endl;
+        return 0;
+    }
+
     // to be fair, this check is not really required (why should this fail), but for the sake of completeness, it's
     // provided here
     if(!updater.start()) {
