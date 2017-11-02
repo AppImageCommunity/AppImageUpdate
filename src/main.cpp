@@ -23,7 +23,25 @@ int main(const int argc, const char** argv) {
 
     appimage::update::Updater updater(argv[1]);
 
-    cerr << "Starting update..." << endl;
+    // first of all, check whether an update is required at all
+    // this avoids unnecessary file I/O (a real update process would create a copy of the file anyway in case an
+    // update is not required)
+    cout << "Checking for updates..." << endl;
+    bool updateRequired;
+
+    auto updateCheckSuccessful = updater.checkForChanges(updateRequired);
+
+    // fetch messages from updater before showing any error messages, giving the user a chance to check for errors
+    {
+        std::string nextMessage;
+        while (updater.nextStatusMessage(nextMessage))
+            cout << nextMessage << endl;
+    }
+
+    if (!updateCheckSuccessful) {
+        cerr << "Update check failed, exiting!" << endl;
+        return 2;
+    }
 
     // to be fair, this check is not really required (why should this fail), but for the sake of completeness, it's
     // provided here
