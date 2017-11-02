@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 3.2)
 # required to link to correct thread library
 find_package(Threads REQUIRED)
 
+# expose version data as compiler definition
+add_definitions("-DAPPIMAGEUPDATE_VERSION=\"${VERSION}\"")
+add_definitions("-DAPPIMAGEUPDATE_GIT_COMMIT=\"${GIT_COMMIT}\"")
+add_definitions("-DBUILD_DATE=\"${DATE}\"")
+add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
+
 # core library
 add_library(libappimageupdate ../include/appimage/update.h updater.cpp util.h)
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix

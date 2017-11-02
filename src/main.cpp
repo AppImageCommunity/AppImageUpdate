@@ -18,8 +18,8 @@ int main(const int argc, const char** argv) {
         return 1;
     }
 
-    // for now, the application serves as an API demo
-    // it is not too advanced.
+    cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
+         << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
 
     appimage::update::Updater updater(argv[1]);
 
