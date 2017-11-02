@@ -362,7 +362,7 @@ namespace appimage {
                 if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
                     appImage->updateInformationType == ZSYNC_BINTRAY ||
                     appImage->updateInformationType == ZSYNC_GENERIC) {
-                    auto client = zsync2::ZSyncClient(appImage->zsyncUrl);
+                    auto client = zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
                     return client.checkForChanges(updateAvailable, method);
                 }
 
