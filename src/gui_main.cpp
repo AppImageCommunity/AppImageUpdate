@@ -188,7 +188,7 @@ void runUpdate(const std::string pathToAppImage) {
     // this avoids unnecessary file I/O (a real update process would create a copy of the file anyway in case an
     // update is not required)
     log("Checking for updates...");
-    bool updateRequired;
+    bool updateRequired = true;
 
     auto updateCheckSuccessful = updater.checkForChanges(updateRequired);
 

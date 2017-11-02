@@ -27,7 +27,7 @@ int main(const int argc, const char** argv) {
     // this avoids unnecessary file I/O (a real update process would create a copy of the file anyway in case an
     // update is not required)
     cout << "Checking for updates..." << endl;
-    bool updateRequired;
+    bool updateRequired = true;
 
     auto updateCheckSuccessful = updater.checkForChanges(updateRequired);
 
