@@ -64,6 +64,10 @@ namespace appimage {
 
             // Check whether an update is available
             bool checkForChanges(bool& updateAvailable, unsigned int method = 0);
+
+            // parses AppImage file, and returns a formatted string describing it
+            // in case of success, sets description and returns true, false otherwise
+            bool describeAppImage(std::string& description);
         };
     }
 }

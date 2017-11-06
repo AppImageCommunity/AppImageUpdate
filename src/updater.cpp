@@ -62,6 +62,7 @@ namespace appimage {
             struct AppImage {
                 std::string filename;
                 int appImageVersion;
+                std::string rawUpdateInformation;
                 UpdateInformationType updateInformationType;
                 std::string zsyncUrl;
 
@@ -244,6 +245,7 @@ namespace appimage {
 
                 appImage->filename = pathToAppImage;
                 appImage->appImageVersion = version;
+                appImage->rawUpdateInformation = updateInformation;
                 appImage->updateInformationType = uiType;
                 appImage->zsyncUrl = zsyncUrl;
 
@@ -481,6 +483,41 @@ namespace appimage {
 
         bool Updater::checkForChanges(bool &updateAvailable, const unsigned int method) {
             return d->checkForChanges(updateAvailable, method);
+        }
+
+        bool Updater::describeAppImage(std::string& description) {
+            std::ostringstream oss;
+
+            auto* appImage = d->readAppImage(d->pathToAppImage);
+
+            if (appImage == nullptr)
+                return false;
+
+            oss << appImage->filename << std::endl;
+            oss << "Type " << appImage->appImageVersion << " AppImage" << std::endl;
+            oss << "Raw update information: " << appImage->rawUpdateInformation << std::endl;
+
+            oss << "Update information type: ";
+
+            if (appImage->updateInformationType == d->ZSYNC_GENERIC)
+                oss << "Generic ZSync URL";
+            else if (appImage->updateInformationType == d->ZSYNC_BINTRAY)
+                oss << "ZSync via Bintray";
+            else if (appImage->updateInformationType == d->ZSYNC_GITHUB_RELEASES)
+                oss << "ZSync via GitHub Releases";
+            else if (appImage->updateInformationType == d->INVALID)
+                oss << "Invalid (usually means that it couldn't be parsed)";
+            else
+                oss << "Unknown error";
+
+            oss << std::endl;
+
+            if (!appImage->zsyncUrl.empty())
+                oss << "Assembled ZSync URL: " << appImage->zsyncUrl << std::endl;
+
+            description = oss.str();
+
+            return true;
         }
     }
 }
