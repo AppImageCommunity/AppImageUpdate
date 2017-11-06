@@ -355,7 +355,7 @@ namespace appimage {
                 }
 
                 if (appImage->zsyncUrl.empty()) {
-                    issueStatusMessage("Could not find update information in the AppImage! "
+                    issueStatusMessage("Could not find or parse update information in the AppImage! "
                                        "Please contact the author to embed update information!");
                     return false;
                 }
