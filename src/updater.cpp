@@ -123,17 +123,18 @@ namespace appimage {
 
                     auto parts = split(match);
                     parts.erase(std::remove_if(parts.begin(), parts.end(),
-                                               [](std::string s) {return s.length() <= 0;}
+                        [](std::string s) { return s.length() <= 0; }
                     ));
 
                     auto offset = std::stoi(parts[5], nullptr, 16);
                     auto length = std::stoi(parts[2], nullptr, 16);
 
                     ifs.seekg(offset, std::ios::beg);
-                    char rawUpdateInformation[2048] = {0};
+                    auto* rawUpdateInformation = static_cast<char*>(calloc(length, sizeof(char)));
                     ifs.read(rawUpdateInformation, length);
 
                     updateInformation = rawUpdateInformation;
+                    free(rawUpdateInformation);
                 }
 
                 UpdateInformationType uiType = INVALID;
