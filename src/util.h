@@ -3,6 +3,7 @@
 // system headers
 #include <algorithm>
 #include <climits>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -96,6 +97,11 @@ namespace appimage {
 
             retval = rv;
             return true;
+        }
+
+        static inline bool isFile(const std::string& path) {
+            std::ifstream ifs(path);
+            return (bool) ifs && ifs.good();
         }
     }
 }

@@ -8,13 +8,20 @@
 
 // local headers
 #include "appimage/update.h"
+#include "util.h"
 
 using namespace std;
+using namespace appimage::update;
 
 int main(const int argc, const char** argv) {
     args::ArgumentParser parser("AppImage companion tool taking care of updates for the commandline.");
 
     args::Flag showVersion(parser, "", "Display version and exit.", {'V', "version"});
+
+    args::Flag describeAppImage(parser, "",
+        "Parse and describe AppImage and its update information and exit.",
+        {'d', "describe"}
+    );
     args::Positional<std::string> pathToAppImage(parser, "path", "path to AppImage");
 
     if (showVersion) {
@@ -29,7 +36,13 @@ int main(const int argc, const char** argv) {
         return 0;
     }
 
-    appimage::update::Updater updater(pathToAppImage.Get());
+    // after checking that a path is given, check whether the file actually exists
+    if (isFile(pathToAppImage.Get())) {
+        // cannot tell whether it exists or not without inspecting errno, therefore using a more generic error message
+        cerr << "Could not read file: " << pathToAppImage;
+    }
+
+    Updater updater(pathToAppImage.Get());
 
     // first of all, check whether an update is required at all
     // this avoids unnecessary file I/O (a real update process would create a copy of the file anyway in case an
