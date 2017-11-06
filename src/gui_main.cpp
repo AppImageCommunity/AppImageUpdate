@@ -88,11 +88,6 @@ void windowCallback(Fl_Widget* widget, void*) {
     }
 }
 
-bool isFile(const std::string& path) {
-    struct stat buffer;
-    return stat(path.c_str(), &buffer) == 0;
-}
-
 // to be run in a thread
 void runUpdate(const std::string pathToAppImage) {
     auto getPerms = [](const std::string path) {
@@ -139,7 +134,7 @@ void runUpdate(const std::string pathToAppImage) {
     };
 
     if (!isFile(pathToAppImage)) {
-        fl_alert("No such file or directory: %s", pathToAppImage.c_str());
+        fl_alert("Could not access file: %s", pathToAppImage.c_str());
         exit(1);
     }
 
