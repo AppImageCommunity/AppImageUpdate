@@ -8,10 +8,9 @@ addons:
       - sourceline: "ppa:vala-team/ppa"
     packages:
       - "libgtk-3-dev"
-      - "valac-0.30"
+      - "vala"
       - "clang"
       - "cmake"
-      - "libvala-0.30"
       - "git"
 
 script:
