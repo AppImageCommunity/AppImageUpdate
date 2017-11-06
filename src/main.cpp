@@ -3,25 +3,33 @@
 #include <iostream>
 #include <thread>
 
+// library headers
+#include <args.hxx>
+
 // local headers
 #include "appimage/update.h"
 
 using namespace std;
 
-static void showUsage(const string& argv0) {
-    cout << "Usage: " << argv0 << " <path to AppImage>" << endl;
-}
-
 int main(const int argc, const char** argv) {
-    cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
-         << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
+    args::ArgumentParser parser("AppImage companion tool taking care of updates for the commandline.");
 
-    if(argc <= 1) {
-        showUsage(argv[0]);
-        return 1;
+    args::Flag showVersion(parser, "", "Display version and exit.", {'V', "version"});
+    args::Positional<std::string> pathToAppImage(parser, "path", "path to AppImage");
+
+    if (showVersion) {
+        cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION
+             << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
+             << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
+        return 0;
     }
 
-    appimage::update::Updater updater(argv[1]);
+    if (!pathToAppImage) {
+        cerr << parser;
+        return 0;
+    }
+
+    appimage::update::Updater updater(pathToAppImage.Get());
 
     // first of all, check whether an update is required at all
     // this avoids unnecessary file I/O (a real update process would create a copy of the file anyway in case an

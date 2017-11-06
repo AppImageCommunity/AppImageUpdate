@@ -23,7 +23,7 @@ target_include_directories(libappimageupdate PRIVATE ../lib/zsync2/lib/cpr/inclu
 # CLI application
 add_executable(appimageupdatetool main.cpp)
 # link to core lib
-target_link_libraries(appimageupdatetool libappimageupdate)
+target_link_libraries(appimageupdatetool libappimageupdate args)
 
 # GUI application
 # TODO: replace with target_include_directories in FLTK CMake configuration
