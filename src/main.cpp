@@ -48,9 +48,10 @@ int main(const int argc, const char** argv) {
     }
 
     // after checking that a path is given, check whether the file actually exists
-    if (isFile(pathToAppImage.Get())) {
+    if (!isFile(pathToAppImage.Get())) {
         // cannot tell whether it exists or not without inspecting errno, therefore using a more generic error message
         cerr << "Could not read file: " << pathToAppImage;
+        return 1;
     }
 
     Updater updater(pathToAppImage.Get());
