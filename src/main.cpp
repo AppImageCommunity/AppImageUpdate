@@ -44,6 +44,20 @@ int main(const int argc, const char** argv) {
 
     Updater updater(pathToAppImage.Get());
 
+    // if the user just wants a description of the AppImage, parse the AppImage, print the description and exit
+    if (describeAppImage) {
+        string description;
+
+        if (!updater.describeAppImage(description)) {
+            // TODO: better description of what went wrong
+            cerr << "Failed to parse AppImage!" << endl;
+            return 1;
+        }
+
+        cout << description;
+        return 0;
+    }
+
     // first of all, check whether an update is required at all
     // this avoids unnecessary file I/O (a real update process would create a copy of the file anyway in case an
     // update is not required)
