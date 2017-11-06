@@ -493,8 +493,8 @@ namespace appimage {
             if (appImage == nullptr)
                 return false;
 
-            oss << appImage->filename << std::endl;
-            oss << "Type " << appImage->appImageVersion << " AppImage" << std::endl;
+            oss << "Parsing file: " << appImage->filename << std::endl;
+            oss << "AppImage type: " << appImage->appImageVersion << std::endl;
             oss << "Raw update information: " << appImage->rawUpdateInformation << std::endl;
 
             oss << "Update information type: ";
