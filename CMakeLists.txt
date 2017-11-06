@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # read Git revision ID
+# WARNING: this value will be stored in the CMake cache
+# to update it, you will have to reset the CMake cache
+# (doesn't matter for CI builds like Travis for instance, where there's no permanent CMake cache)
 execute_process(
     COMMAND git rev-parse --short HEAD
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
