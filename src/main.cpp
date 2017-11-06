@@ -24,6 +24,17 @@ int main(const int argc, const char** argv) {
     );
     args::Positional<std::string> pathToAppImage(parser, "path", "path to AppImage");
 
+    try {
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help&) {
+        cerr << parser;
+        return 0;
+    } catch (args::ParseError& e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    }
+
     if (showVersion) {
         cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION
              << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
