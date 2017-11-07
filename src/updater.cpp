@@ -71,21 +71,25 @@ namespace appimage {
             typedef struct AppImage AppImage;
 
         public:
-            void issueStatusMessage(std::string message) {
+            void issueStatusMessage(const std::string& message) {
                 statusMessages.push_back(message);
             }
 
-            static const AppImage* readAppImage(const std::string pathToAppImage) {
+            const AppImage* readAppImage(const std::string& pathToAppImage) {
                 // error state: empty AppImage path
-                if (pathToAppImage.empty())
+                if (pathToAppImage.empty()) {
+                    issueStatusMessage("Path to AppImage must not be empty.");
                     return nullptr;
+                }
 
                 // check whether file exists
                 std::ifstream ifs(pathToAppImage);
 
                 // if file can't be opened, it's an error
-                if (!ifs || !ifs.good())
+                if (!ifs || !ifs.good()) {
+                    issueStatusMessage("Failed to access AppImage file: " + pathToAppImage);
                     return nullptr;
+                }
 
                 // read magic number
                 ifs.seekg(8, std::ios::beg);
@@ -93,8 +97,12 @@ namespace appimage {
                 ifs.read((char*) magicByte, 3);
 
                 // validate first two bytes are A and I
-                if (magicByte[0] != 'A' || magicByte[1] != 'I')
+                if (magicByte[0] != 'A' || magicByte[1] != 'I') {
+                    std::ostringstream oss;
+                    oss << "Invalid magic bytes: " << (int) magicByte[0] << (int) magicByte[1];
+                    issueStatusMessage(oss.str());
                     return nullptr;
+                }
 
                 uint8_t version;
                 // the third byte contains the version
@@ -106,6 +114,8 @@ namespace appimage {
                         version = 2;
                         break;
                     default:
+                        // it's not very realistic, but it's better to be prepared
+                        issueStatusMessage("No such AppImage type: " + std::to_string(magicByte[2]));
                         return nullptr;
                 }
 
@@ -114,6 +124,7 @@ namespace appimage {
 
                 if (version == 1) {
                     // TODO implement type 1 update information parser
+                    issueStatusMessage("Type 1 AppImage update information is currently not supported!");
                 } else if (version == 2) {
                     // check whether update information can be found inside the file by calling objdump
                     auto command = "objdump -h \"" + pathToAppImage + "\"";
@@ -135,6 +146,8 @@ namespace appimage {
                     ifs.read(rawUpdateInformation, length);
 
                     updateInformation = rawUpdateInformation;
+
+                    // cleanup
                     free(rawUpdateInformation);
                 }
 
@@ -149,7 +162,14 @@ namespace appimage {
                     // TODO: GitHub releases type should consider pre-releases when there's no other types of releases
                     if (uiParts[0] == "gh-releases-zsync") {
                         // validate update information
-                        if (uiParts.size() == 5) {
+                        if (uiParts.size() != 5) {
+                            std::ostringstream oss;
+                            oss << "Update information has invalid parameter count. Please contact the author of "
+                                << "the AppImage and ask them to revise the update information. They should consult "
+                                << "the AppImage specification, there might have been changes to the update"
+                                <<  "information.";
+                            issueStatusMessage(oss.str());
+                        } else {
                             uiType = ZSYNC_GITHUB_RELEASES;
 
                             auto username = uiParts[1];
@@ -161,12 +181,21 @@ namespace appimage {
                             url << "https://api.github.com/repos/" << username << "/" << repository << "/releases/";
 
                             if (tag.find("latest") != std::string::npos) {
+                                issueStatusMessage("Fetching latest release information from GitHub API");
                                 url << "latest";
                             } else {
+                                std::ostringstream oss;
+                                oss << "Fetching release information for tag \"" << tag << "\" from GitHub API.";
+                                issueStatusMessage(oss.str());
                                 url << "tags/" << tag;
                             }
 
                             auto response = cpr::Get(url.str());
+
+                            // counter that will be evaluated later to give some meaningful feedback why parsing API
+                            // response might have failed
+                            int downloadUrlLines = 0;
+                            int matchingUrls = 0;
 
                             // continue only if HTTP status is good
                             if (response.status_code >= 200 && response.status_code < 300) {
@@ -177,19 +206,48 @@ namespace appimage {
                                 // response which can be parsed like this
                                 std::stringstream responseText(response.text);
                                 std::string currentLine;
+
+                                // not ideal, but allows for returning a match for the entire line
                                 auto pattern = "*" + filename + "*";
+
+                                // iterate through all lines to find a possible download URL and compare it to the pattern
                                 while (std::getline(responseText, currentLine)) {
                                     if (currentLine.find("browser_download_url") != std::string::npos) {
+                                        downloadUrlLines++;
                                         if (fnmatch(pattern.c_str(), currentLine.c_str(), 0) == 0) {
+                                            matchingUrls++;
                                             auto parts = split(currentLine, '"');
                                             zsyncUrl = parts.back();
                                             break;
                                         }
                                     }
                                 }
+                            } else {
+                                issueStatusMessage("GitHub API request failed!");
+                            }
+
+                            if (downloadUrlLines <= 0) {
+                                std::ostringstream oss;
+                                oss << "Could not find any artifacts in release data. "
+                                    << "Please contact the author of the AppImage and tell them the files are missing "
+                                    <<  "on the releases page.";
+                                issueStatusMessage(oss.str());
+                            } else if (matchingUrls <= 0) {
+                                std::ostringstream oss;
+                                oss << "None of the artifacts matched the pattern in the update information. "
+                                    << "The pattern is most likely invalid, e.g., due to changes in the filenames of "
+                                    << "the AppImages. Please contact the author of the AppImage and ask them to "
+                                    << "revise the update information.";
+                                issueStatusMessage(oss.str());
+                            } else if (zsyncUrl.empty()) {
+                                // unlike that this code will ever be reached, the other two messages should cover all
+                                // cases in which a ZSync URL is missing
+                                // if it does, however, it's most likely that GitHub's API didn't return a URL
+                                issueStatusMessage("Failed to parse GitHub's response.");
                             }
                         }
                     } else if (uiParts[0] == "bintray-zsync") {
+                        // TODO: better error handling
                         if (uiParts.size() == 5) {
                             uiType = ZSYNC_BINTRAY;
 
@@ -227,7 +285,6 @@ namespace appimage {
                                     zsyncUrl = firstPart + packageVersion + secondPart;
                                 }
                             }
-
                         }
                     } else if (uiParts[0] == "zsync") {
                         // validate update information
@@ -235,6 +292,13 @@ namespace appimage {
                             uiType = ZSYNC_GENERIC;
 
                             zsyncUrl = uiParts.back();
+                        } else {
+                            std::ostringstream oss;
+                            oss << "Update information has invalid parameter count. Please contact the author of "
+                                << "the AppImage and ask them to revise the update information. They should consult "
+                                << "the AppImage specification, there might have been changes to the update"
+                                <<  "information.";
+                            issueStatusMessage(oss.str());
                         }
                     } else {
                         // unknown type
@@ -250,6 +314,47 @@ namespace appimage {
                 appImage->zsyncUrl = zsyncUrl;
 
                 return appImage;
+            }
+
+            bool validateAppImage(AppImage const* appImage) {
+                // a null pointer is clearly a sign
+                if (appImage == nullptr) {
+                    std::ostringstream oss;
+                    oss << "Parsing AppImage failed. See previous message for details. "
+                        << "Are you sure the file is an AppImage?";
+                    issueStatusMessage(oss.str());
+                    return false;
+                }
+
+                // first check whether there's update information at all
+                if (appImage->rawUpdateInformation.empty()) {
+                    std::ostringstream oss;
+                    oss << "Could not find update information in the AppImage. "
+                        << "Please contact the author of the AppImage and ask him to embed update information.";
+                    issueStatusMessage(oss.str());
+                    return false;
+                }
+
+                // now check whether a ZSync URL could be composed by readAppImage
+                // this is the only supported update type at the moment
+                if (appImage->zsyncUrl.empty()) {
+                    std::ostringstream oss;
+                    oss << "ZSync URL not available. See previous messages for details.";
+                    issueStatusMessage(oss.str());
+                    return false;
+                }
+
+                // check whether update information is available
+                if (appImage->updateInformationType == INVALID) {
+                    std::stringstream oss;
+                    oss << "Could not detect update information type."
+                        << "Please contact the author of the AppImage and ask them whether the update information "
+                        << "is correct.";
+                    issueStatusMessage(oss.str());
+                    return false;
+                }
+
+                return true;
             }
 
             // thread runner
@@ -269,8 +374,7 @@ namespace appimage {
                     // causing e.g., main(), to interrupt the thread and finish.
                     auto* appImage = readAppImage(pathToAppImage);
 
-                    if (appImage == nullptr) {
-                        issueStatusMessage("Parsing failed! Are you sure the file is an AppImage?");
+                    if (!validateAppImage(appImage)) {
                         state = ERROR;
                         return;
                     }
@@ -281,24 +385,6 @@ namespace appimage {
                         issueStatusMessage("Updating from GitHub Releases via ZSync");
                     } else if (appImage->updateInformationType == ZSYNC_GENERIC) {
                         issueStatusMessage("Updating from generic server via ZSync");
-                    }
-                    if (!appImage->zsyncUrl.empty())
-                        issueStatusMessage("Update URL: " + appImage->zsyncUrl);
-                    else {
-                        issueStatusMessage("Could not find update URL!");
-
-                        if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES)
-                            issueStatusMessage("Please beware that pre-releases are not considered by the GitHub "
-                                               "releases update information type!");
-
-                        state = ERROR;
-                        return;
-                    }
-
-                    // check whether update information is available
-                    if (appImage->updateInformationType == INVALID) {
-                        state = ERROR;
-                        return;
                     }
 
                     if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
@@ -351,16 +437,9 @@ namespace appimage {
                 // should probably be extracted to separate function
                 auto* appImage = readAppImage(pathToAppImage);
 
-                if (appImage == nullptr) {
-                    issueStatusMessage("Parsing failed! Are you sure the file is an AppImage?");
+                // validate AppImage
+                if(!validateAppImage(appImage))
                     return false;
-                }
-
-                if (appImage->zsyncUrl.empty()) {
-                    issueStatusMessage("Could not find or parse update information in the AppImage! "
-                                       "Please contact the author to embed update information!");
-                    return false;
-                }
 
                 if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
                     appImage->updateInformationType == ZSYNC_BINTRAY ||
@@ -370,6 +449,7 @@ namespace appimage {
                 }
 
                 // return error in case of unknown update information
+                issueStatusMessage("Unknown update information type, aborting.");
                 return false;
             }
         };
