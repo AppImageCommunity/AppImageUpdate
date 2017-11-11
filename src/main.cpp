@@ -22,6 +22,10 @@ int main(const int argc, const char** argv) {
         "Parse and describe AppImage and its update information and exit.",
         {'d', "describe"}
     );
+    args::Flag checkForUpdate(parser, "",
+        "Check for update. Exits with code 1 if changes are available, 0 if there are not,"
+            "other non-zero code in case of errors.",
+        {'j', "check-for-update"});
     args::Positional<std::string> pathToAppImage(parser, "path", "path to AppImage");
 
     try {
@@ -68,6 +72,24 @@ int main(const int argc, const char** argv) {
 
         cout << description;
         return 0;
+    }
+
+    if (checkForUpdate) {
+        bool changesAvailable = false;
+
+        if (!updater.checkForChanges(changesAvailable)) {
+            // print all messages that might be available
+            {
+                std::string nextMessage;
+                while (updater.nextStatusMessage(nextMessage))
+                    cerr << nextMessage << endl;
+            }
+
+            cerr << "Error checking for changes!";
+            return 2;
+        }
+
+        return changesAvailable ? 1 : 0;
     }
 
     // first of all, check whether an update is required at all
