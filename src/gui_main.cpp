@@ -344,6 +344,8 @@ int main(const int argc, const char* const* argv) {
     cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
          << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
 
+    Fl_File_Icon::load_system_icons();
+
     std::string pathToAppImage;
 
 #ifdef SELFUPDATE

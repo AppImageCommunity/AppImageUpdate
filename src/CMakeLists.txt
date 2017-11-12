@@ -34,6 +34,7 @@ add_executable(AppImageUpdate gui_main.cpp)
 target_link_libraries(AppImageUpdate
     libappimageupdate
     fltk
+    fltk_images
     libdesktopenvironments
 )
 
