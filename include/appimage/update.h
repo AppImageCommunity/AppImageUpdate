@@ -33,7 +33,9 @@ namespace appimage {
 
         public:
             // throws std::invalid_argument if the file does not exist
-            explicit Updater(const std::string& pathToAppImage);
+            // if overwrite is specified, old file will be overwritten, otherwise it will remain on the system
+            // as-is
+            explicit Updater(const std::string& pathToAppImage, bool overwrite = false);
             ~Updater();
 
         public:
@@ -65,9 +67,14 @@ namespace appimage {
             // Check whether an update is available
             bool checkForChanges(bool& updateAvailable, unsigned int method = 0);
 
-            // parses AppImage file, and returns a formatted string describing it
+            // Parses AppImage file, and returns a formatted string describing it
             // in case of success, sets description and returns true, false otherwise
             bool describeAppImage(std::string& description);
+
+            // Sets path to the path of the file created by the update and returns true as soon as this value is
+            // available (after a successful update at the latest)
+            // Returns false in case of errors, or when the path is not available yet
+            bool pathToNewFile(std::string& path);
         };
     }
 }

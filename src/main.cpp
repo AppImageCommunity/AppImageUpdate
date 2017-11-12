@@ -26,6 +26,10 @@ int main(const int argc, const char** argv) {
         "Check for update. Exits with code 1 if changes are available, 0 if there are not,"
             "other non-zero code in case of errors.",
         {'j', "check-for-update"});
+    args::Flag overwriteOldFile(parser, "",
+        "Overwrite existing file. If not specified, a new file will be created, and the old one will remain untouched.",
+        {'O', "overwrite"}
+    );
     args::Positional<std::string> pathToAppImage(parser, "path", "path to AppImage");
 
     try {
@@ -58,7 +62,7 @@ int main(const int argc, const char** argv) {
         return 1;
     }
 
-    Updater updater(pathToAppImage.Get());
+    Updater updater(pathToAppImage.Get(), (bool) overwriteOldFile);
 
     // if the user just wants a description of the AppImage, parse the AppImage, print the description and exit
     if (describeAppImage) {
@@ -125,6 +129,8 @@ int main(const int argc, const char** argv) {
         return 1;
     }
 
+    cerr << "Starting update..." << endl;
+
     while(!updater.isDone()) {
         this_thread::sleep_for(chrono::milliseconds(100));
         double progress;
@@ -156,7 +162,17 @@ int main(const int argc, const char** argv) {
         return 1;
     }
 
-    cerr << "Update successful!" << endl;
+    string newFilePath;
+
+    // really shouldn't fail here any more, but just in case...
+    if (!updater.pathToNewFile(newFilePath)) {
+        cerr << "Fatal error: could not determine path to new file!" << endl;
+        return 1;
+    }
+
+    cerr << "Update successful. "
+         << (overwriteOldFile ? "Updated existing file" : "New file created: ") << newFilePath
+         << endl;
 
     return 0;
 }

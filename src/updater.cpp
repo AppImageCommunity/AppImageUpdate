@@ -25,10 +25,12 @@ namespace appimage {
         class Updater::Private {
         public:
             Private() : state(INITIALIZED),
-                            pathToAppImage(),
-                            zSyncClient(nullptr),
-                            thread(nullptr),
-                            mutex() {};
+                pathToAppImage(),
+                zSyncClient(nullptr),
+                thread(nullptr),
+                mutex(),
+                overwrite(false)
+            {};
 
             ~Private() {
                 delete zSyncClient;
@@ -50,6 +52,8 @@ namespace appimage {
 
             // status messages
             std::deque<std::string> statusMessages;
+
+            bool overwrite;
 
         public:
             enum UpdateInformationType {
@@ -368,6 +372,11 @@ namespace appimage {
                     if (state != INITIALIZED)
                         return;
 
+                    // if there is a ZSync client, something has gone very wrong, and the application should terminate
+                    // immediately
+                    if (zSyncClient != nullptr)
+                        throw std::runtime_error("fatal error, exiting");
+
                     // WARNING: if you don't want to shoot yourself in the foot, make sure to read in the AppImage
                     // while locking the mutex and/or before the RUNNING state to make sure readAppImage() finishes
                     // before progress() and such can be called! Otherwise, progress() etc. will return an error state,
@@ -391,7 +400,7 @@ namespace appimage {
                         appImage->updateInformationType == ZSYNC_BINTRAY ||
                         appImage->updateInformationType == ZSYNC_GENERIC) {
                         // doesn't matter which type it is exactly, they all work like the same
-                        zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
+                        zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage, overwrite);
                     } else {
                         // error unsupported type
                         state = ERROR;
@@ -454,7 +463,7 @@ namespace appimage {
             }
         };
         
-        Updater::Updater(const std::string& pathToAppImage) {
+        Updater::Updater(const std::string& pathToAppImage, bool overwrite) {
             // initialize data class
             d = new Updater::Private();
 
@@ -467,6 +476,7 @@ namespace appimage {
             }
 
             d->pathToAppImage = pathToAppImage;
+            d->overwrite = overwrite;
         }
 
         Updater::~Updater() {
@@ -517,10 +527,6 @@ namespace appimage {
                 return true;
             } else if (d->state == SUCCESS || d->state == ERROR) {
                 progress = 1;
-
-                delete d->zSyncClient;
-                d->zSyncClient = nullptr;
-
                 return true;
             }
 
@@ -598,6 +604,14 @@ namespace appimage {
             description = oss.str();
 
             return true;
+        }
+
+        bool Updater::pathToNewFile(std::string& path) {
+            // only available update method is via ZSync
+            if (d->zSyncClient)
+                return d->zSyncClient->pathToNewFile(path);
+
+            return false;
         }
     }
 }
