@@ -157,8 +157,8 @@ void runUpdate(const std::string pathToAppImage) {
         auto iconFilename = "AppImage.xpm";
 
         ostringstream iconPath;
-        if (getenv("APPIMAGE") != nullptr)
-            iconPath << getenv("APPIMAGE") << "/" << iconFilename;
+        if (getenv("APPDIR") != nullptr)
+            iconPath << getenv("APPDIR") << "/" << iconFilename;
         else
             iconPath << std::string("resources/") + iconFilename;
 
