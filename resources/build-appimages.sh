@@ -40,7 +40,7 @@ make -j$(nproc) install DESTDIR=AppDir
 # install resources into AppDir
 mkdir -p AppDir/usr/share/{applications,icons/hicolor/scalable}
 cp -v "$REPO_ROOT"/resources/*.desktop AppDir/usr/share/applications
-cp -v "$REPO_ROOT"/resources/*.svg AppDir/usr/share/icons/hicolor/scalable
+cp -v "$REPO_ROOT"/resources/*.{svg,xpm} AppDir/usr/share/icons/hicolor/scalable
 
 # get linuxdeployqt
 wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
