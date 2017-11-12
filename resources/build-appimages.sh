@@ -3,6 +3,8 @@
 set -x
 set -e
 
+export VERSION=$(git rev-parse --short HEAD) # linuxdeployqt uses this for naming the file
+
 # use RAM disk if possible
 if [ -d /dev/shm ]; then
     TEMP_BASE=/dev/shm
