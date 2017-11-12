@@ -105,13 +105,13 @@ void runUpdate(const std::string pathToAppImage) {
         return appImageStat.st_mode;
     };
 
-    auto runApp = [&pathToAppImage, &getPerms]() {
+    auto runApp = [&getPerms](const string& path) {
         // make executable
-        chmod(pathToAppImage.c_str(), getPerms(pathToAppImage) | S_IXUSR);
+        chmod(path.c_str(), getPerms(path) | S_IXUSR);
 
         // full path to AppImage, required for execl
         char* realPathToAppImage;
-        if ((realPathToAppImage = realpath(pathToAppImage.c_str(), nullptr)) == nullptr) {
+        if ((realPathToAppImage = realpath(path.c_str(), nullptr)) == nullptr) {
             auto error = errno;
             cerr << "Error resolving full path of AppImage: code " << error << ": " << strerror(error) << endl;
             exit(1);
@@ -167,12 +167,12 @@ void runUpdate(const std::string pathToAppImage) {
         Fl::check();
     };
 
-    auto showFinishedDialog = [&runApp](string msg) {
+    auto showFinishedDialog = [&pathToAppImage, &runApp](string msg) {
         switch (fl_choice(msg.c_str(), "Exit now.", "Run app!", nullptr)) {
             case 0:
                 exit(0);
             case 1: {
-                runApp();
+                runApp(pathToAppImage);
             }
         }
     };
@@ -302,18 +302,34 @@ void runUpdate(const std::string pathToAppImage) {
         log("Update successful");
     }
 
-    auto oldFile = pathToAppImage + ".zs-old";
+    std::string newFilePath;
+
+    // there is no reason for this to fail at this point, but just in case...
+    if (!updater.pathToNewFile(newFilePath))
+        throw std::runtime_error("Fatal error: could not determine path to new file!");
+
+    string oldFile;
+    auto filenameChanged = (newFilePath == pathToAppImage);
+
+    // check whether .zs-old file has been created, and remove it
+    // if a file with a different name has been created, the file shall remain untouched on the system
+    if (!filenameChanged)
+        oldFile = pathToAppImage + ".zs-old";
+    else
+        oldFile = pathToAppImage;
+
     if (isFile(oldFile)) {
-        // if backup is still around, copy permissions from old file
+        // copy permissions from old file
         auto perms = getPerms(oldFile);
         chmod(pathToAppImage.c_str(), perms);
 
-        log("Removing backup " + oldFile);
-        unlink(oldFile.c_str());
+        // if the file has a .zs-old suffix, remove the file, otherwise leave it alone
+        if (!filenameChanged)
+            unlink(oldFile.c_str());
     }
 
 #ifdef SELFUPDATE
-    runApp();
+    runApp(newFilePath);
 #else
     showFinishedDialog("Update successful.\nDo you want to run the application right now?");
 #endif
