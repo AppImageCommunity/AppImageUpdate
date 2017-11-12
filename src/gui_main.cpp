@@ -154,13 +154,14 @@ void runUpdate(const std::string pathToAppImage) {
 
     // read and set icon
     {
-        auto iconFilename = "AppImage.xpm";
+        auto iconFilename = "window-icon.xpm";
 
         ostringstream iconPath;
+
         if (getenv("APPDIR") != nullptr)
-            iconPath << getenv("APPDIR") << "/" << iconFilename;
-        else
-            iconPath << std::string("resources/") + iconFilename;
+            iconPath << getenv("APPDIR") << "/";
+
+        iconPath << std::string("resources/") + iconFilename;
 
         if (isFile(iconPath.str())) {
             Pixmap p, mask;
