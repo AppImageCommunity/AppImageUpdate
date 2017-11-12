@@ -47,7 +47,7 @@ wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/lin
 chmod +x linuxdeployqt-continuous-x86_64.AppImage
 
 # bundle applications
-./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdatetool.desktop -verbose=3 -bundle-non-qt-libs -executable AppImageUpdate -executable AppImageSelfUpdate
+./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdatetool.desktop -verbose=3 -bundle-non-qt-libs -executable=AppImageUpdate -executable=AppImageSelfUpdate
 
 # get appimagetool
 wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
