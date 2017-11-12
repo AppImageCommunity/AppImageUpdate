@@ -317,21 +317,21 @@ void runUpdate(const std::string pathToAppImage) {
         Fl::check();
         fl_alert("Update failed");
         exit(0);
-    } else {
-        progressBar.selection_color(FL_GREEN);
-        progressBar.redraw();
-        Fl::check();
-        log("Update successful");
     }
 
-    std::string newFilePath;
+    std::string pathToUpdatedFile;
 
     // there is no reason for this to fail at this point, but just in case...
-    if (!updater.pathToNewFile(newFilePath))
+    if (!updater.pathToNewFile(pathToUpdatedFile))
         throw std::runtime_error("Fatal error: could not determine path to new file!");
 
+    progressBar.selection_color(FL_GREEN);
+    progressBar.redraw();
+    Fl::check();
+    log("Update successful.\nUpdated file: " + pathToUpdatedFile);
+
     string oldFile;
-    auto filenameChanged = (newFilePath == pathToAppImage);
+    auto filenameChanged = (pathToUpdatedFile == pathToAppImage);
 
     // check whether .zs-old file has been created, and remove it
     // if a file with a different name has been created, the file shall remain untouched on the system
@@ -351,9 +351,9 @@ void runUpdate(const std::string pathToAppImage) {
     }
 
 #ifdef SELFUPDATE
-    runApp(newFilePath);
+    runApp(pathToUpdatedFile);
 #else
-    showFinishedDialog("Update successful.\nDo you want to run the application right now?", newFilePath);
+    showFinishedDialog("Update successful.\nDo you want to run the application right now?", pathToUpdatedFile);
 #endif
 
     // trigger exit to avoid FLTK warnings
