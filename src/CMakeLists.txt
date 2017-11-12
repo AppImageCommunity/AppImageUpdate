@@ -27,25 +27,22 @@ target_link_libraries(appimageupdatetool libappimageupdate args)
 
 # GUI application
 # TODO: replace with target_include_directories in FLTK CMake configuration
+
 include_directories(../lib/fltk)
 include_directories(${CMAKE_BINARY_DIR}/lib/fltk)
+
 add_executable(AppImageUpdate gui_main.cpp)
+
+set(APPIMAGEUPDATE_GUI_LIBS libappimageupdate fltk fltk_images libdesktopenvironments)
+
 # link libraries
-target_link_libraries(AppImageUpdate
-    libappimageupdate
-    fltk
-    fltk_images
-    libdesktopenvironments
+target_link_libraries(AppImageUpdate ${APPIMAGEUPDATE_GUI_LIBS}
 )
 
 # GUI application for self-updating AppImages
 add_executable(AppImageSelfUpdate gui_main.cpp)
 # link libraries
-target_link_libraries(AppImageSelfUpdate
-    libappimageupdate
-    fltk
-    libdesktopenvironments
-)
+target_link_libraries(AppImageSelfUpdate ${APPIMAGEUPDATE_GUI_LIBS})
 target_compile_definitions(AppImageSelfUpdate PRIVATE -DSELFUPDATE)
 
 # install targets
