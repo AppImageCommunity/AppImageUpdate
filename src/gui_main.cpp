@@ -164,7 +164,8 @@ void runUpdate(const std::string pathToAppImage) {
 
         if (isFile(iconPath.str())) {
             Pixmap p, mask;
-            XpmReadFileToPixmap(fl_display, DefaultRootWindow(fl_display), iconPath.str().c_str(), &p, &mask, nullptr);
+            // FIXME: remove strdup() hack which fixes error: invalid conversion from ‘const char*’ to ‘char*’
+            XpmReadFileToPixmap(fl_display, DefaultRootWindow(fl_display), strdup(iconPath.str().c_str()), &p, &mask, nullptr);
             win.icon((char*) (p));
         }
     }
