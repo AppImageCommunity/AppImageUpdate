@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.2)
 
 # required to link to correct thread library
 find_package(Threads REQUIRED)
+find_package(X11 REQUIRED)
+
+if(NOT ${X11_Xpm_FOUND})
+    message(FATAL_ERROR "libxpm could not be found!")
+else()
+    message(STATUS "Found libxpm: ${X11_Xpm_LIB}")
+endif()
 
 # expose version data as compiler definition
 add_definitions("-DAPPIMAGEUPDATE_VERSION=\"${VERSION}\"")
@@ -27,13 +34,13 @@ target_link_libraries(appimageupdatetool libappimageupdate args)
 
 # GUI application
 # TODO: replace with target_include_directories in FLTK CMake configuration
-
 include_directories(../lib/fltk)
 include_directories(${CMAKE_BINARY_DIR}/lib/fltk)
+include_directories(${X11_Xpm_INCLUDE_PATH})
 
 add_executable(AppImageUpdate gui_main.cpp)
 
-set(APPIMAGEUPDATE_GUI_LIBS libappimageupdate fltk fltk_images libdesktopenvironments)
+set(APPIMAGEUPDATE_GUI_LIBS libappimageupdate fltk fltk_images libdesktopenvironments ${X11_Xpm_LIB})
 
 # link libraries
 target_link_libraries(AppImageUpdate ${APPIMAGEUPDATE_GUI_LIBS}

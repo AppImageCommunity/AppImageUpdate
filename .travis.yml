@@ -4,7 +4,7 @@ sudo: require
 dist: trusty
 
 install:
-  - sudo apt-get -y install git cmake g++ libcurl3-gnutls-dev
+  - sudo apt-get -y install git cmake g++ libcurl3-gnutls-dev libxpm-dev
 
 script:
   - git submodule update --init

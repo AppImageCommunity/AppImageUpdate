@@ -13,6 +13,7 @@
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Display.H>
 #include <FL/Fl_Window.H>
+#include <X11/xpm.h>
 
 // local headers
 #include "appimage/update.h"
@@ -150,6 +151,23 @@ void runUpdate(const std::string pathToAppImage) {
     Fl_Text_Buffer textBuffer;
     textDisplay.buffer(textBuffer);
     textDisplay.wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0);
+
+    // read and set icon
+    {
+        auto iconFilename = "AppImage.xpm";
+
+        ostringstream iconPath;
+        if (getenv("APPIMAGE") != nullptr)
+            iconPath << getenv("APPIMAGE") << "/" << iconFilename;
+        else
+            iconPath << std::string("resources/") + iconFilename;
+
+        if (isFile(iconPath.str())) {
+            Pixmap p, mask;
+            XpmReadFileToPixmap(fl_display, DefaultRootWindow(fl_display), iconPath.str().c_str(), &p, &mask, nullptr);
+            win.icon((char*) (p));
+        }
+    }
 
     win.callback(windowCallback);
     win.end();
