@@ -167,12 +167,12 @@ void runUpdate(const std::string pathToAppImage) {
         Fl::check();
     };
 
-    auto showFinishedDialog = [&pathToAppImage, &runApp](string msg) {
+    auto showFinishedDialog = [&runApp](string msg, string newAppImagePath) {
         switch (fl_choice(msg.c_str(), "Exit now.", "Run app!", nullptr)) {
             case 0:
                 exit(0);
             case 1: {
-                runApp(pathToAppImage);
+                runApp(newAppImagePath);
             }
         }
     };
@@ -245,8 +245,10 @@ void runUpdate(const std::string pathToAppImage) {
 
     log("... done");
     if (!updateRequired) {
-        showFinishedDialog("You already have the latest version.\n"
-                           "Do you want to run the application right now?");
+        showFinishedDialog(
+            "You already have the latest version.\nDo you want to run the application right now?",
+            pathToAppImage
+        );
         exit(0);
     }
 
@@ -331,7 +333,7 @@ void runUpdate(const std::string pathToAppImage) {
 #ifdef SELFUPDATE
     runApp(newFilePath);
 #else
-    showFinishedDialog("Update successful.\nDo you want to run the application right now?");
+    showFinishedDialog("Update successful.\nDo you want to run the application right now?", newFilePath);
 #endif
 
     // trigger exit to avoid FLTK warnings
