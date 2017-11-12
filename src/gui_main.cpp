@@ -141,7 +141,7 @@ void runUpdate(const std::string pathToAppImage) {
     static const auto winWidth = 500;
     static const auto winHeight = 300;
 
-    Fl_Window win(winWidth, winHeight, "AppImageUpdate GUI");
+    Fl_Window win(winWidth, winHeight, "AppImageUpdate");
     win.begin();
 
     Fl_Progress progressBar(50, winHeight-30, winWidth-(50*2), 20, "0%");
