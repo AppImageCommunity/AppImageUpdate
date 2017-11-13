@@ -38,9 +38,9 @@ mkdir -p AppDir
 make -j$(nproc) install DESTDIR=AppDir
 
 # install resources into AppDir
-mkdir -p AppDir/usr/share/{applications,icons/hicolor/scalable} AppDir/resources
+mkdir -p AppDir/usr/share/{applications,icons/hicolor/scalable/apps/} AppDir/resources
 cp -v "$REPO_ROOT"/resources/*.desktop AppDir/usr/share/applications/
-cp -v "$REPO_ROOT"/resources/*.svg AppDir/usr/share/icons/hicolor/scalable/
+cp -v "$REPO_ROOT"/resources/*.svg AppDir/usr/share/icons/hicolor/scalable/apps/
 cp -v "$REPO_ROOT"/resources/*.xpm AppDir/resources/
 
 # get linuxdeployqt
