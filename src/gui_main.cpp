@@ -188,7 +188,7 @@ void runUpdate(const std::string pathToAppImage) {
     };
 
     auto showFinishedDialog = [&runApp](string msg, string newAppImagePath) {
-        switch (fl_choice(msg.c_str(), "Exit", "Run updated version", nullptr)) {
+        switch (fl_choice(msg.c_str(), "Exit", "Run application", nullptr)) {
             case 0:
                 exit(0);
             case 1: {
