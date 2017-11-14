@@ -53,6 +53,7 @@ namespace appimage {
             // status messages
             std::deque<std::string> statusMessages;
 
+            // defines whether to overwrite original file
             bool overwrite;
 
         public:
