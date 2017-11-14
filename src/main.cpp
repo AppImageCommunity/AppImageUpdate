@@ -1,5 +1,6 @@
 // system headers
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <thread>
 
@@ -148,7 +149,16 @@ int main(const int argc, const char** argv) {
         if (!updater.progress(progress))
             return 1;
 
-        cout << "\33[2K\r" << (progress * 100.0f) << "% done..." << flush;
+        off_t fileSize = 0;
+        if (!updater.remoteFileSize(fileSize))
+            fileSize = -1;
+
+        double fileSizeInMiB = fileSize / 1024.0f / 1024.0f;
+
+        cout << "\33[2K\r" << (progress * 100.0f) << "% done";
+        if (fileSize >= 0)
+            cout << fixed << setprecision(2) << " (" << progress * fileSizeInMiB << " of " << fileSizeInMiB << " MiB)...";
+        cout << flush;
     }
 
     std::string nextMessage;
