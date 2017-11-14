@@ -43,12 +43,16 @@ cp -v "$REPO_ROOT"/resources/*.desktop AppDir/usr/share/applications/
 cp -v "$REPO_ROOT"/resources/*.svg AppDir/usr/share/icons/hicolor/scalable/apps/
 cp -v "$REPO_ROOT"/resources/*.xpm AppDir/resources/
 
+# bundle objdump required for parsing update information
+cp /usr/bin/objdump AppDir/usr/bin/
+
 # get linuxdeployqt
 wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
 chmod +x linuxdeployqt-continuous-x86_64.AppImage
 
 # bundle applications
-./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdatetool.desktop -verbose=1 -bundle-non-qt-libs -executable=AppDir/usr/bin/AppImageUpdate -executable=AppDir/usr/bin/AppImageSelfUpdate
+./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdatetool.desktop -verbose=1 -bundle-non-qt-libs \
+    -executable=AppDir/usr/bin/AppImageUpdate -executable=AppDir/usr/bin/AppImageSelfUpdate -executable=AppDir/usr/bin/objdump
 
 # get appimagetool
 wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
@@ -62,7 +66,8 @@ find AppDir -type f -iname 'libcrypt*.so*' -delete
 find AppDir -type f -iname 'libcurl*.so*' -delete
 
 # create appimageupdatetool AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdatetool-*x86_64.AppImage.zsync'
+./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \
+    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdatetool-*x86_64.AppImage.zsync'
 
 # change AppDir root to fit the GUI
 pushd AppDir
@@ -71,7 +76,8 @@ rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
 popd
 
 # create AppImageUpdate AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync'
+./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir \
+    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync'
 
 # move AppImages to old cwd
 mv appimageupdatetool*.AppImage* "$OLD_CWD"/
