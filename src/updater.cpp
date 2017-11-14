@@ -614,5 +614,13 @@ namespace appimage {
 
             return false;
         }
+
+        bool Updater::remoteFileSize(off_t& fileSize) {
+            // only available update method is via ZSync
+            if (d->zSyncClient != nullptr)
+                return d->zSyncClient->remoteFileSize(fileSize);
+
+            return false;
+        }
     }
 }

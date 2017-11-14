@@ -75,6 +75,9 @@ namespace appimage {
             // available (after a successful update at the latest)
             // Returns false in case of errors, or when the path is not available yet
             bool pathToNewFile(std::string& path);
+
+            // Returns the size of the remote file in bytes
+            bool remoteFileSize(off_t& fileSize);
         };
     }
 }
