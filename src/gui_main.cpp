@@ -14,6 +14,7 @@
 #include <FL/Fl_Text_Display.H>
 #include <FL/Fl_Window.H>
 #include <X11/xpm.h>
+#include <zsutil.h>
 
 // local headers
 #include "appimage/update.h"
@@ -91,24 +92,19 @@ void windowCallback(Fl_Widget* widget, void*) {
 
 // to be run in a thread
 void runUpdate(const std::string pathToAppImage) {
-    auto getPerms = [](const std::string path) {
-        // check existing permissions
-        struct stat appImageStat;
+    auto runApp = [&getPerms](const string& path) {
+        // make executable
+        mode_t newPerms;
+        auto errCode = getPerms(path, newPerms);
 
-        if (stat(path.c_str(), &appImageStat) != 0) {
-            int error = errno;
+        if (errCode != 0) {
             ostringstream ss;
-            ss << "Error calling stat(): " << strerror(error);
+            ss << "Error calling stat(): " << strerror(errCode);
             fl_message("%s", ss.str().c_str());
             exit(1);
         }
 
-        return appImageStat.st_mode;
-    };
-
-    auto runApp = [&getPerms](const string& path) {
-        // make executable
-        chmod(path.c_str(), getPerms(path) | S_IXUSR);
+        chmod(path.c_str(), newPerms | S_IXUSR);
 
         // full path to AppImage, required for execl
         char* realPathToAppImage;
@@ -341,10 +337,6 @@ void runUpdate(const std::string pathToAppImage) {
         oldFile = pathToAppImage;
 
     if (isFile(oldFile)) {
-        // copy permissions from old file
-        auto perms = getPerms(oldFile);
-        chmod(pathToAppImage.c_str(), perms);
-
         // if the file has a .zs-old suffix, remove the file, otherwise leave it alone
         if (!filenameChanged)
             unlink(oldFile.c_str());
