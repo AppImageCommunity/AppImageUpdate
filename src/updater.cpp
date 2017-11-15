@@ -5,6 +5,7 @@
 #include <fnmatch.h>
 #include <fstream>
 #include <iostream>
+#include <libgen.h>
 #include <mutex>
 #include <sstream>
 #include <thread>
@@ -402,6 +403,14 @@ namespace appimage {
                         appImage->updateInformationType == ZSYNC_GENERIC) {
                         // doesn't matter which type it is exactly, they all work like the same
                         zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage, overwrite);
+
+                        // make sure the new AppImage goes into the same directory as the old one
+                        // unfortunately, to be able to use dirname(), one has to copy the C string first
+                        auto* path = strdup(appImage->filename.c_str());
+                        std::string dirPath = dirname(path);
+                        free(path);
+
+                        zSyncClient->setCwd(dirPath);
                     } else {
                         // error unsupported type
                         state = ERROR;
