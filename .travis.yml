@@ -7,7 +7,6 @@ install:
   - sudo sh -c "echo 'deb http://download.opensuse.org/repositories/home:/TheAssassin:/AppImageLibraries/xUbuntu_14.04/ /' > /etc/apt/sources.list.d/curl-httponly.list"
   - wget -nv https://download.opensuse.org/repositories/home:TheAssassin:AppImageLibraries/xUbuntu_14.04/Release.key -O- | sudo apt-key add -
   - sudo apt-get update
-  - sudo apt-get -y upgrade
   - sudo apt-get -y install git cmake g++ libxpm-dev libcurl3-httponly libcurl3-gnutls-httponly
 
 script:
