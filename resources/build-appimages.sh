@@ -61,9 +61,6 @@ chmod +x appimagetool-x86_64.AppImage
 # remove some libraries which produce segfaults atm
 # FIXME: this means the AppImages aren't fully self contained, might lead to errors on some non-Debian/-Ubuntu istros
 find AppDir -type f -iname '*.a' -delete
-find AppDir -type f -iname 'libssl*.so*' -delete
-find AppDir -type f -iname 'libcrypt*.so*' -delete
-find AppDir -type f -iname 'libcurl*.so*' -delete
 
 # create appimageupdatetool AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \
