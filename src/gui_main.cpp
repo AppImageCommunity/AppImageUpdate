@@ -91,11 +91,12 @@ void windowCallback(Fl_Widget* widget, void*) {
 }
 
 // to be run in a thread
+// caution: using a reference instead of copying the value doesn't work
 void runUpdate(const std::string pathToAppImage) {
-    auto runApp = [&getPerms](const string& path) {
+    auto runApp = [](const string& path) {
         // make executable
         mode_t newPerms;
-        auto errCode = getPerms(path, newPerms);
+        auto errCode = zsync2::getPerms(path, newPerms);
 
         if (errCode != 0) {
             ostringstream ss;

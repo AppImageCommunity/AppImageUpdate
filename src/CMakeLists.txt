@@ -17,15 +17,19 @@ add_definitions("-DBUILD_DATE=\"${DATE}\"")
 add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
 # core library
-add_library(libappimageupdate ../include/appimage/update.h updater.cpp util.h)
+add_library(libappimageupdate ${CMAKE_CURRENT_SOURCE_DIR}/../include/appimage/update.h updater.cpp util.h)
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libappimageupdate PROPERTIES PREFIX "")
 # link thread libraries
-target_link_libraries(libappimageupdate PRIVATE ${CMAKE_THREAD_LIBS_INIT} libzsync2 cpr)
+target_link_libraries(libappimageupdate PRIVATE ${CMAKE_THREAD_LIBS_INIT} libzsync2 ${CPR_LIBRARIES})
 # include directories, publicly
-target_include_directories(libappimageupdate PUBLIC ../include)
-# works for now, but should be possible without this workaround
-target_include_directories(libappimageupdate PRIVATE ../lib/zsync2/lib/cpr/include)
+target_include_directories(libappimageupdate PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    # FIXME: works for now, but should be possible without these workaround
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/lib/cpr/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/include>
+)
 
 # CLI application
 add_executable(appimageupdatetool main.cpp)
