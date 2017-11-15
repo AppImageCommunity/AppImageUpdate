@@ -8,7 +8,7 @@ install:
   - wget -nv https://download.opensuse.org/repositories/home:TheAssassin:AppImageLibraries/xUbuntu_14.04/Release.key -O- | sudo apt-key add -
   - sudo apt-get update
   - sudo apt-get -y upgrade
-  - sudo apt-get -y install git cmake g++ libxpm-dev
+  - sudo apt-get -y install git cmake g++ libxpm-dev libcurl3-httponly libcurl3-gnutls-httponly
 
 script:
   - git submodule update --init
