@@ -3,12 +3,8 @@ compiler: gcc
 sudo: require
 dist: trusty
 
-install:
-  - sudo sh -c "echo 'deb http://download.opensuse.org/repositories/home:/TheAssassin:/AppImageLibraries/xUbuntu_14.04/ /' > /etc/apt/sources.list.d/curl-httponly.list"
-  - wget -nv https://download.opensuse.org/repositories/home:TheAssassin:AppImageLibraries/xUbuntu_14.04/Release.key -O- | sudo apt-key add -
-  - sudo apt-get update
-  - sudo apt-get purge -y curl\* libcurl\*
-  - sudo apt-get install -y git cmake g++ libxpm-dev libcurl3-httponly libcurl3-gnutls-httponly
+before_script:
+  - bash resources/bootstrap-container.sh
 
 script:
   - git submodule update --init
