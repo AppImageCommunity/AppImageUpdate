@@ -4,7 +4,7 @@ sudo: require
 dist: trusty
 
 before_script:
-  - bash resources/bootstrap-container.sh
+  - sudo bash resources/bootstrap-container.sh
 
 script:
   - git submodule update --init
