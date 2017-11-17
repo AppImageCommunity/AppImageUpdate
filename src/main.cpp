@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <thread>
+#include <unistd.h>
 
 // library headers
 #include <args.hxx>
@@ -31,6 +32,9 @@ int main(const int argc, const char** argv) {
         "Overwrite existing file. If not specified, a new file will be created, and the old one will remain untouched.",
         {'O', "overwrite"}
     );
+
+    args::Flag removeOldFile(parser, "", "Remove old AppImage after successful update", {'r', "remove-old"});
+
     args::Positional<std::string> pathToAppImage(parser, "path", "path to AppImage");
 
     try {
@@ -178,6 +182,11 @@ int main(const int argc, const char** argv) {
     if (!updater.pathToNewFile(newFilePath)) {
         cerr << "Fatal error: could not determine path to new file!" << endl;
         return 1;
+    }
+
+    if (removeOldFile) {
+        cerr << "Removing old AppImage: " << pathToAppImage.Get() << endl;
+        unlink(pathToAppImage.Get().c_str());
     }
 
     cerr << "Update successful. "
