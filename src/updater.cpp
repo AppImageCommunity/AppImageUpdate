@@ -129,8 +129,19 @@ namespace appimage {
                 std::string updateInformation;
 
                 if (version == 1) {
-                    // TODO implement type 1 update information parser
-                    issueStatusMessage("Type 1 AppImage update information is currently not supported!");
+                    // update information is always at the same position, and has a fixed length
+                    static constexpr auto position = 0x8373;
+                    static constexpr auto length = 512;
+
+                    ifs.seekg(position);
+
+                    auto* rawUpdateInformation = (char*) calloc(length, sizeof(char));
+                    ifs.read(rawUpdateInformation, length);
+
+                    updateInformation = rawUpdateInformation;
+
+                    // cleanup
+                    free(rawUpdateInformation);
                 } else if (version == 2) {
                     // check whether update information can be found inside the file by calling objdump
                     auto command = "objdump -h \"" + pathToAppImage + "\"";
