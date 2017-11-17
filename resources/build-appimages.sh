@@ -3,8 +3,6 @@
 set -x
 set -e
 
-export VERSION=$(git rev-parse --short HEAD) # linuxdeployqt uses this for naming the file
-
 # use RAM disk if possible
 if [ -d /dev/shm ]; then
     TEMP_BASE=/dev/shm
@@ -45,6 +43,10 @@ cp -v "$REPO_ROOT"/resources/*.xpm AppDir/resources/
 
 # bundle objdump required for parsing update information
 cp /usr/bin/objdump AppDir/usr/bin/
+
+# determine Git commit ID
+# linuxdeployqt uses this for naming the file
+export VERSION=$(cd "$REPO_ROOT" && git rev-parse --short HEAD)
 
 # get linuxdeployqt
 wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
