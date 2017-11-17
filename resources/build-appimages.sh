@@ -48,6 +48,11 @@ cp /usr/bin/objdump AppDir/usr/bin/
 # linuxdeployqt uses this for naming the file
 export VERSION=$(cd "$REPO_ROOT" && git rev-parse --short HEAD)
 
+# prepend Travis build number if possible
+if [ "$TRAVIS_BUILD_NUMBER" != "" ]; then
+    export VERSION="$TRAVIS_BUILD_NUMBER-$VERSION"
+fi
+
 # get linuxdeployqt
 wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
 chmod +x linuxdeployqt-continuous-x86_64.AppImage
