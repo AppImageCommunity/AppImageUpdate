@@ -602,7 +602,13 @@ namespace appimage {
 
             oss << "Parsing file: " << appImage->filename << std::endl;
             oss << "AppImage type: " << appImage->appImageVersion << std::endl;
-            oss << "Raw update information: " << appImage->rawUpdateInformation << std::endl;
+
+            oss << "Raw update information: ";
+            if (appImage->rawUpdateInformation.empty())
+                oss << "<empty>";
+            else
+                oss << appImage->rawUpdateInformation;
+            oss << std::endl;
 
             oss << "Update information type: ";
 
@@ -613,7 +619,7 @@ namespace appimage {
             else if (appImage->updateInformationType == d->ZSYNC_GITHUB_RELEASES)
                 oss << "ZSync via GitHub Releases";
             else if (appImage->updateInformationType == d->INVALID)
-                oss << "Invalid (usually means that it couldn't be parsed)";
+                oss << "Invalid (parsing failed/no update information available)";
             else
                 oss << "Unknown error";
 
@@ -621,6 +627,8 @@ namespace appimage {
 
             if (!appImage->zsyncUrl.empty())
                 oss << "Assembled ZSync URL: " << appImage->zsyncUrl << std::endl;
+            else
+                oss << "Failed to assemble ZSync URL. AppImageUpdate can not be used with this AppImage.";
 
             description = oss.str();
 
