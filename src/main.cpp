@@ -79,7 +79,18 @@ int main(const int argc, const char** argv) {
             return 1;
         }
 
+        // post all status messages on stderr...
+        {
+            std::string nextMessage;
+            while (updater.nextStatusMessage(nextMessage))
+                cerr << nextMessage << endl;
+        }
+        // ... insert an empty line to separate description and messages visually ...
+        cerr << endl;
+
+        // ... and the description on stdout
         cout << description;
+
         return 0;
     }
 
