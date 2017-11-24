@@ -65,9 +65,9 @@ chmod +x linuxdeployqt-continuous-x86_64.AppImage
 wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
 chmod +x appimagetool-x86_64.AppImage
 
-# remove some libraries which produce segfaults atm
-# FIXME: this means the AppImages aren't fully self contained, might lead to errors on some non-Debian/-Ubuntu istros
+# remove unnecessary data
 find AppDir -type f -iname '*.a' -delete
+rm -rf AppDir/usr/include
 
 # create appimageupdatetool AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \

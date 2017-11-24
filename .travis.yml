@@ -7,7 +7,7 @@ before_script:
   - sudo bash -ex resources/bootstrap-container.sh
 
 script:
-  - git submodule update --init
+  - git submodule update --init --recursive
   - bash -ex resources/build-appimages.sh
 
 after_success:
