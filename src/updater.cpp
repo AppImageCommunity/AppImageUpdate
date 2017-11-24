@@ -9,6 +9,7 @@
 #include <mutex>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
 
 // library headers
 #include <zsclient.h>
@@ -144,7 +145,28 @@ namespace appimage {
                     free(rawUpdateInformation);
                 } else if (version == 2) {
                     // check whether update information can be found inside the file by calling objdump
-                    auto command = "objdump -h \"" + pathToAppImage + "\"";
+
+                    // first of all, check whether there is an objdump binary next to the current one (probably
+                    // the bundled one in the AppImages of AppImageUpdate), otherwise use the system wide
+                    std::string objdump;
+
+                    {
+                        // TODO: replace this Linux specific solution with something platform independent
+                        std::vector<char> buffer(4096);
+                        readlink("/proc/self/exe", buffer.data(), buffer.size());
+
+                        auto pathToBinary = std::string(buffer.data());
+                        auto slashPos = pathToBinary.find_last_of('/');
+                        auto bundledObjdump = pathToBinary.substr(0, slashPos) + "/objdump";
+
+                        if (isFile(bundledObjdump)) {
+                            objdump = bundledObjdump;
+                        } else {
+                            objdump = "objdump";
+                        }
+                    }
+
+                    auto command = objdump + " -h \"" + pathToAppImage + "\"";
 
                     std::string match;
                     if (!callProgramAndGrepForLine(command, ".upd_info", match))
