@@ -100,18 +100,17 @@ namespace appimage {
 
                 // read magic number
                 ifs.seekg(8, std::ios::beg);
-                unsigned char magicByte[4] = {0, 0, 0, 0};
-                ifs.read((char*) magicByte, 3);
+                std::vector<char> magicByte(4, '\0');
+                ifs.read(magicByte.data(), 3);
 
                 // validate first two bytes are A and I
-                if (magicByte[0] != 'A' || magicByte[1] != 'I') {
+                if (magicByte[0] != 'A' && magicByte[1] != 'I') {
                     std::ostringstream oss;
                     oss << "Invalid magic bytes: " << (int) magicByte[0] << (int) magicByte[1];
                     issueStatusMessage(oss.str());
-                    return nullptr;
                 }
 
-                uint8_t appImageType;
+                int appImageType = -1;
                 // the third byte contains the version
                 switch (magicByte[2]) {
                     case '\x01':
@@ -121,9 +120,8 @@ namespace appimage {
                         appImageType = 2;
                         break;
                     default:
-                        // it's not very realistic, but it's better to be prepared
-                        issueStatusMessage("No such AppImage type: " + std::to_string(magicByte[2]));
-                        return nullptr;
+                        // see fallback in the final else block in the next if construct
+                        break;
                 }
 
                 // read update information in the file
@@ -136,13 +134,10 @@ namespace appimage {
 
                     ifs.seekg(position);
 
-                    auto* rawUpdateInformation = (char*) calloc(length, sizeof(char));
-                    ifs.read(rawUpdateInformation, length);
+                    std::vector<char> rawUpdateInformation(length, 0);
+                    ifs.read(rawUpdateInformation.data(), length);
 
-                    updateInformation = rawUpdateInformation;
-
-                    // cleanup
-                    free(rawUpdateInformation);
+                    updateInformation = rawUpdateInformation.data();
                 } else if (appImageType == 2) {
                     // check whether update information can be found inside the file by calling objdump
 
@@ -177,17 +172,43 @@ namespace appimage {
                         [](std::string s) { return s.length() <= 0; }
                     ));
 
-                    auto offset = std::stoi(parts[5], nullptr, 16);
-                    auto length = std::stoi(parts[2], nullptr, 16);
+                    auto offset = (unsigned long) std::stoi(parts[5], nullptr, 16);
+                    auto length = (unsigned long) std::stoi(parts[2], nullptr, 16);
 
                     ifs.seekg(offset, std::ios::beg);
-                    auto* rawUpdateInformation = static_cast<char*>(calloc(length, sizeof(char)));
-                    ifs.read(rawUpdateInformation, length);
+                    std::vector<char> rawUpdateInformation(length, '\0');
+                    ifs.read(rawUpdateInformation.data(), length);
 
-                    updateInformation = rawUpdateInformation;
+                    updateInformation = rawUpdateInformation.data();
+                } else {
+                    // final try: type 1 AppImages do not have to set the magic bytes, although they should
+                    // if the file is both an ELF and an ISO9660 file, we'll suspect it to be a type 1 AppImage, and
+                    // proceed with a warning
 
-                    // cleanup
-                    free(rawUpdateInformation);
+                    static constexpr int elfMagicPos = 1;
+                    static const std::string elfMagicValue = "ELF";
+
+                    static constexpr int isoMagicPos = 32769;
+                    static const std::string isoMagicValue = "CD001";
+
+                    ifs.seekg(elfMagicPos);
+                    std::vector<char> elfMagicPosData(elfMagicValue.size() + 1, '\0');
+                    ifs.read(elfMagicPosData.data(), elfMagicValue.size());
+                    auto elfMagicAvailable = (elfMagicPosData.data() == elfMagicValue);
+
+                    ifs.seekg(isoMagicPos);
+                    std::vector<char> isoMagicPosData(isoMagicValue.size() + 1, '\0');
+                    ifs.read(isoMagicPosData.data(), isoMagicValue.size());
+                    auto isoMagicAvailable = (isoMagicPosData.data() == isoMagicValue);
+
+                    if (elfMagicAvailable && isoMagicAvailable) {
+                        issueStatusMessage("Guessing AppImage type 1");
+                        appImageType = 1;
+                    } else {
+                        // all possible methods attempted, ultimately fail here
+                        issueStatusMessage("No such AppImage type: " + std::to_string(magicByte[2]));
+                        return nullptr;
+                    }
                 }
 
                 UpdateInformationType uiType = INVALID;
