@@ -111,14 +111,14 @@ namespace appimage {
                     return nullptr;
                 }
 
-                uint8_t version;
+                uint8_t appImageType;
                 // the third byte contains the version
                 switch (magicByte[2]) {
                     case '\x01':
-                        version = 1;
+                        appImageType = 1;
                         break;
                     case '\x02':
-                        version = 2;
+                        appImageType = 2;
                         break;
                     default:
                         // it's not very realistic, but it's better to be prepared
@@ -129,7 +129,7 @@ namespace appimage {
                 // read update information in the file
                 std::string updateInformation;
 
-                if (version == 1) {
+                if (appImageType == 1) {
                     // update information is always at the same position, and has a fixed length
                     static constexpr auto position = 0x8373;
                     static constexpr auto length = 512;
@@ -143,7 +143,7 @@ namespace appimage {
 
                     // cleanup
                     free(rawUpdateInformation);
-                } else if (version == 2) {
+                } else if (appImageType == 2) {
                     // check whether update information can be found inside the file by calling objdump
 
                     // first of all, check whether there is an objdump binary next to the current one (probably
@@ -347,7 +347,7 @@ namespace appimage {
                 auto* appImage = new AppImage();
 
                 appImage->filename = pathToAppImage;
-                appImage->appImageVersion = version;
+                appImage->appImageVersion = appImageType;
                 appImage->rawUpdateInformation = updateInformation;
                 appImage->updateInformationType = uiType;
                 appImage->zsyncUrl = zsyncUrl;
