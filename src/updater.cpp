@@ -390,7 +390,7 @@ namespace appimage {
                 if (appImage->rawUpdateInformation.empty()) {
                     std::ostringstream oss;
                     oss << "Could not find update information in the AppImage. "
-                        << "Please contact the author of the AppImage and ask him to embed update information.";
+                        << "Please contact the author of the AppImage and ask them to embed update information.";
                     issueStatusMessage(oss.str());
                     return false;
                 }
