@@ -44,21 +44,12 @@ include_directories(${X11_Xpm_INCLUDE_PATH})
 
 add_executable(AppImageUpdate gui_main.cpp)
 
-set(APPIMAGEUPDATE_GUI_LIBS libappimageupdate fltk fltk_images libdesktopenvironments ${X11_Xpm_LIB})
-
 # link libraries
-target_link_libraries(AppImageUpdate ${APPIMAGEUPDATE_GUI_LIBS}
-)
-
-# GUI application for self-updating AppImages
-add_executable(AppImageSelfUpdate gui_main.cpp)
-# link libraries
-target_link_libraries(AppImageSelfUpdate ${APPIMAGEUPDATE_GUI_LIBS})
-target_compile_definitions(AppImageSelfUpdate PRIVATE -DSELFUPDATE)
+target_link_libraries(AppImageUpdate libappimageupdate fltk fltk_images libdesktopenvironments ${X11_Xpm_LIB} args)
 
 # install targets
 install(
-    TARGETS libappimageupdate appimageupdatetool AppImageUpdate AppImageSelfUpdate
+    TARGETS libappimageupdate appimageupdatetool AppImageUpdate
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static

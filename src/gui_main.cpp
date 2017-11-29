@@ -212,14 +212,6 @@ void runUpdate(const std::string pathToAppImage) {
     }
 
     if (!updateCheckSuccessful) {
-#ifdef SELFUPDATE
-        // AppImageSelfUpdate should not attempt to call itself again, as it'd be kind of pointless to retry a
-        // self update if the previous one failed (except for maybe a retry button somewhere in the current self
-        // update process)
-        // this should prevent an infinite loop of calls to selfUpdateBinary
-        fl_alert("Update check of current AppImage failed");
-        exit(1);
-#else
         static const string selfUpdateBinary = "appimageupdategui-selfupdate";
 
         // extend path to AppImage's mounting point's usr/bin/ to be able to find the binary
@@ -257,7 +249,6 @@ void runUpdate(const std::string pathToAppImage) {
             case 1:
                 exit(1);
         }
-#endif
     }
 
     log("... done");
@@ -343,11 +334,7 @@ void runUpdate(const std::string pathToAppImage) {
             unlink(oldFile.c_str());
     }
 
-#ifdef SELFUPDATE
-    runApp(pathToUpdatedFile);
-#else
     showFinishedDialog("Update successful.\nDo you want to run the application right now?", pathToUpdatedFile);
-#endif
 
     // trigger exit to avoid FLTK warnings
     exit(0);
@@ -361,16 +348,6 @@ int main(const int argc, const char* const* argv) {
 
     std::string pathToAppImage;
 
-#ifdef SELFUPDATE
-    {
-        auto *envVar = getenv("APPIMAGE");
-        if (envVar == nullptr) {
-            cerr << "Fatal: APPIMAGE environment variable not set" << endl;
-            exit(2);
-        }
-        pathToAppImage = envVar;
-    }
-#else
     // check whether path to AppImage has been passed on the CLI, otherwise show file chooser
     if (argc < 2) {
         Fl_Native_File_Chooser fileChooser(Fl_Native_File_Chooser::BROWSE_FILE);
@@ -409,7 +386,6 @@ int main(const int argc, const char* const* argv) {
     } else {
         pathToAppImage = argv[1];
     }
-#endif
 
     IDesktopEnvironment* desktopEnvironment = IDesktopEnvironment::getInstance();
 
