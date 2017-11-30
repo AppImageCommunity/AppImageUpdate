@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 // library headers
+#include <args.hxx>
 #include <desktopenvironments.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Native_File_Chooser.H>
@@ -346,10 +347,28 @@ int main(const int argc, const char* const* argv) {
 
     Fl_File_Icon::load_system_icons();
 
+    args::ArgumentParser parser("AppImageUpdate -- GUI for updating AppImages");
+
+    args::HelpFlag help(parser, "help", "", {'h', "help"});
+    args::Positional<string> pathArg(parser, "", "Path to AppImage that should be updated");
+
+    try {
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help&) {
+        cerr << parser;
+        return 0;
+    } catch (args::ParseError& e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    }
+
     std::string pathToAppImage;
 
     // check whether path to AppImage has been passed on the CLI, otherwise show file chooser
-    if (argc < 2) {
+    if (pathArg) {
+        pathToAppImage = pathArg.Get();
+    } else {
         Fl_Native_File_Chooser fileChooser(Fl_Native_File_Chooser::BROWSE_FILE);
         fileChooser.title("Please choose an AppImage for updating");
         fileChooser.filter("*.{appimage,AppImage}");
@@ -383,8 +402,6 @@ int main(const int argc, const char* const* argv) {
                 fl_message("Fatal error!");
                 exit(1);
         }
-    } else {
-        pathToAppImage = argv[1];
     }
 
     IDesktopEnvironment* desktopEnvironment = IDesktopEnvironment::getInstance();
