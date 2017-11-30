@@ -350,6 +350,12 @@ int main(const int argc, const char* const* argv) {
     args::ArgumentParser parser("AppImageUpdate -- GUI for updating AppImages");
 
     args::HelpFlag help(parser, "help", "", {'h', "help"});
+    args::Flag checkForUpdate(parser, "",
+        "Check for update. Exits with code 1 if changes are available, 0 if there are not,"
+            "other non-zero code in case of errors.",
+        {'j', "check-for-update"}
+    );
+
     args::Positional<string> pathArg(parser, "", "Path to AppImage that should be updated");
 
     try {
@@ -402,6 +408,26 @@ int main(const int argc, const char* const* argv) {
                 fl_message("Fatal error!");
                 exit(1);
         }
+    }
+
+    if (checkForUpdate) {
+        appimage::update::Updater updater(pathToAppImage);
+
+        bool changesAvailable = false;
+
+        if (!updater.checkForChanges(changesAvailable)) {
+            // print all messages that might be available
+            {
+                std::string nextMessage;
+                while (updater.nextStatusMessage(nextMessage))
+                    cerr << nextMessage << endl;
+            }
+
+            cerr << "Error checking for changes!";
+            return 2;
+        }
+
+        return changesAvailable ? 1 : 0;
     }
 
     IDesktopEnvironment* desktopEnvironment = IDesktopEnvironment::getInstance();
