@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.2)
 find_package(Threads REQUIRED)
 find_package(X11 REQUIRED)
 
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/lib/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
+find_package(Sanitizers)
+
 if(NOT ${X11_Xpm_FOUND})
     message(FATAL_ERROR "libxpm could not be found!")
 else()
@@ -33,6 +36,8 @@ target_include_directories(libappimageupdate PUBLIC
 
 # CLI application
 add_executable(appimageupdatetool main.cpp)
+# build with sanitizer support, if requested using -DSANITIZE_ADDRESS=1 etc.
+add_sanitizers(appimageupdatetool)
 # link to core lib
 target_link_libraries(appimageupdatetool libappimageupdate args)
 
@@ -43,6 +48,9 @@ include_directories(${CMAKE_BINARY_DIR}/lib/fltk)
 include_directories(${X11_Xpm_INCLUDE_PATH})
 
 add_executable(AppImageUpdate gui_main.cpp)
+
+# build with sanitizer support, if requested using -DSANITIZE_ADDRESS=1 etc.
+add_sanitizers(AppImageUpdate)
 
 # link libraries
 target_link_libraries(AppImageUpdate libappimageupdate fltk fltk_images libdesktopenvironments ${X11_Xpm_LIB} args)
