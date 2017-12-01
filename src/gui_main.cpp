@@ -24,6 +24,9 @@
 using namespace std;
 using namespace appimage::update;
 
+// name of variable that is set and evaluated when AppImageUpdate needs to elevate to root
+static const std::string ELEVATED_VAR = "APPIMAGEUPDATE_ELEVATED_TO_ROOT";
+
 // used to detect whether application is done from other functions
 static bool ERROR = false;
 
@@ -94,7 +97,7 @@ void windowCallback(Fl_Widget* widget, void*) {
 // to be run in a thread
 // caution: using a reference instead of copying the value doesn't work
 void runUpdate(const std::string pathToAppImage) {
-    auto runApp = [](const string& path) {
+    auto runApp = [](const string& path, uid_t uid) {
         // make executable
         mode_t newPerms;
         auto errCode = zsync2::getPerms(path, newPerms);
@@ -116,7 +119,16 @@ void runUpdate(const std::string pathToAppImage) {
             exit(1);
         }
 
-        if (fork() == 0) {
+        auto forkResult = fork();
+
+        if (forkResult == 0) {
+            // change user if necessary
+            if (uid != getuid()) {
+                cerr << "Dropping privileges to user " << uid << endl;
+                setuid(uid);
+                setgid((gid_t) gidForUid(uid));
+            }
+
             putenv(strdup("STARTED_BY_APPIMAGEUPDATE=1"));
 
             cerr << "Running " << realPathToAppImage << endl;
@@ -126,9 +138,17 @@ void runUpdate(const std::string pathToAppImage) {
 
             // execle should never return, so if this code is reached, there must be an error
             auto error = errno;
-            cerr << "Error executing AppImage " << realPathToAppImage << ": code " << error << ": "
-                 << strerror(error) << endl;
+            ostringstream oss;
+            oss << "Error executing AppImage " << realPathToAppImage << ":\n"
+                << "code " << error << ": " << strerror(error) << endl;
+            fl_alert(oss.str().c_str());
             exit(1);
+        } else if (forkResult > 0) {
+            return;
+        } else {
+            auto error = errno;
+            cerr << "fork() failed: " << strerror(error) << endl;
+            exit(3);
         }
     };
 
@@ -186,11 +206,49 @@ void runUpdate(const std::string pathToAppImage) {
     };
 
     auto showFinishedDialog = [&runApp](string msg, string newAppImagePath) {
+        char* SUDO_UID = getenv("SUDO_UID");
+        char* PKEXEC_UID = getenv("PKEXEC_UID");
+
+        long originalUid = getuid();
+
+        // check whether run from root
+        if (getuid() == 0) {
+            // check whether this is a re-run of AppImageUpdate with elevated permissions, in which case AppImageUpdate
+            // should attempt to call the new app as the original user, and if it cannot exit with a non-zero code
+            if (getenv(ELEVATED_VAR.c_str()) == nullptr) {
+                if (SUDO_UID != nullptr) {
+                    if ((originalUid = strtol(SUDO_UID, nullptr, 10)) == 0L) {
+                        auto error = errno;
+                        if (error != 0) {
+                            cerr << "strtol() failed: " << strerror(error) << endl;
+                            exit(1);
+                        }
+                    }
+                }
+                else if (PKEXEC_UID != nullptr) {
+                    if ((originalUid = strtol(PKEXEC_UID, nullptr, 10)) == 0L) {
+                        auto error = errno;
+                        if (error != 0) {
+                            cerr << "strtol() failed: " << strerror(error) << endl;
+                            exit(1);
+                        }
+                    }
+                }
+                else {
+                    fl_alert(
+                        "This instance of AppImageUpdate is running with elevated permissions,\n"
+                        "but cannot detect original user ID. Please run the updated AppImage yourself."
+                    );
+                    exit(1);
+                }
+            }
+        }
+
         switch (fl_choice(msg.c_str(), "Exit", "Run application", nullptr)) {
             case 0:
                 exit(0);
             case 1: {
-                runApp(newAppImagePath);
+                runApp(newAppImagePath, originalUid);
             }
         }
     };
@@ -410,6 +468,11 @@ int main(const int argc, const char* const* argv) {
         }
     }
 
+    if (!isFile(pathToAppImage)) {
+        cerr << "Cannot access file: " << pathToAppImage << endl;
+        return 1;
+    }
+
     if (checkForUpdate) {
         appimage::update::Updater updater(pathToAppImage);
 
@@ -428,6 +491,137 @@ int main(const int argc, const char* const* argv) {
         }
 
         return changesAvailable ? 1 : 0;
+    }
+
+    /*
+     * check whether higher privileges are necessary to be able to perform update
+     * therefore, we first check whether we have write permissions to the target directory (to be able to create new
+     * files, such as the temp files and the updated file), then check for write permissions to the old file (might
+     * have to be able to rename it)
+     * this check should be performed for both the current user and for the root user (AppImageUpdate should not
+     * ignore files being read-only)
+     * if root permissions could most likely help, re-execute AppImageUpdate using pkexec, gksudo, gksu (if available)
+     * or show a message to the user that we can't write to the target directory, asking them to change its
+     * permissions or re-execute AppImageUpdate with sudo
+     */
+    std::string fullPathToAppImage;
+
+    // resolve full path to AppImage
+    {
+        char* pathBuf;
+
+        if ((pathBuf = realpath(pathToAppImage.c_str(), nullptr)) == nullptr) {
+            auto error = errno;
+            cerr << "Failed to call readlink(): " << strerror(error) << endl;
+            return 1;
+        }
+
+        fullPathToAppImage = pathBuf;
+        free(pathBuf);
+        pathBuf = nullptr;
+    }
+
+
+    // split string and get directory path
+    size_t posOfLastSlash;
+    if ((posOfLastSlash = fullPathToAppImage.find_last_of('/')) == std::string::npos) {
+        // just making sure to catch unexpected errors
+        return 1;
+    }
+
+    auto pathToAppImageDirectory = fullPathToAppImage.substr(0, posOfLastSlash);
+
+    bool needRoot = false;
+
+    // check whether AppImage and its directory are writable for current user
+    bool appImageWritable = false;
+    bool directoryWritable = false;
+
+    if (!isFileOrDirectoryWritable(pathToAppImage, appImageWritable))
+        return 1;
+
+    if (!isFileOrDirectoryWritable(pathToAppImageDirectory, directoryWritable))
+        return 1;
+
+    if (!appImageWritable && getuid() != 0) {
+        bool appImageRootWritable = false;
+        bool directoryRootWritable = false;
+
+        // normal user can't write to file and/or directory, hence retry with root
+        if (!isFileOrDirectoryWritable(pathToAppImage, appImageRootWritable, true))
+            return 1;
+
+        if (!isFileOrDirectoryWritable(pathToAppImageDirectory, directoryRootWritable, true))
+            return 1;
+
+        needRoot = appImageRootWritable && directoryRootWritable;
+    }
+
+
+    // evaluate results
+    if (!appImageWritable && getuid() == 0) {
+        ostringstream oss;
+        oss << "Fatal error: no write access to file " << pathToAppImage << ".\n"
+            << "Please make sure you have write access to the file and retry.";
+        fl_alert(oss.str().c_str());
+        return 1;
+    }
+
+    if (!directoryWritable && getuid() == 0) {
+        ostringstream oss;
+        oss << "Fatal error: cannot write to directory " << pathToAppImageDirectory << ".\n"
+            << "Please make sure you have write access to the directory and retry.";
+        fl_alert(oss.str().c_str());
+        return 1;
+    }
+
+    if (needRoot) {
+        auto rv = fl_choice(
+            "Warning: need to elevate privileges to be able to update AppImage.\n"
+            "Do you want to restart the application as root?",
+            "Cancel update", "Restart and retry", nullptr
+        );
+
+        switch (rv) {
+            case 0: {
+                return 1;
+            }
+            case 1: {
+                std::string sudoTool = "/usr/bin/gksudo";
+
+                // TODO: check whether sudoTool exists
+                // TODO: also check whether pkexec exists (more modern UX)
+                // TODO: find out why pkexec won't work if exec()d (something about suid bit not being set although it is set)
+
+                // prepare argv array for exec() call
+                vector<char*> newArgv;
+
+                newArgv.push_back(strdup(sudoTool.c_str()));
+                // trying to use STL functions like std::copy didn't lead to success within a reasonable amount of time
+                // hence using a simple for loop
+                for (int i = 0; i < argc; i++) {
+                    newArgv.push_back(strdup(argv[i]));
+                }
+                // null-terminate the vector to make execvpe happy
+                newArgv.push_back(nullptr);
+
+                // push new variable into environ stating that AppImageUpdate had to elevate to root privileges
+                // then, the new instance knows it should try to downgrade to the old user ID when the user wants to
+                // run the app, and if it can't, abort running the AppImage
+                // also allows it to recognize whether AppImageUpdate has been started with root permissions directly
+                // in which case running the application as root after the update is valid
+                putenv(strdup((ELEVATED_VAR + std::string("=1")).c_str()));
+
+                execvp(sudoTool.c_str(), newArgv.data());
+
+                // exec would only return in case of error
+                auto error = errno;
+                cerr << "Failed to call execv(): " << strerror(error) << endl;
+                return 1;
+            }
+            default:
+                return 3;
+        }
     }
 
     IDesktopEnvironment* desktopEnvironment = IDesktopEnvironment::getInstance();
