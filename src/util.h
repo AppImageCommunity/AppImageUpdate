@@ -3,12 +3,12 @@
 // system headers
 #include <algorithm>
 #include <climits>
+#include <cstring>
 #include <grp.h>
 #include <fstream>
 #include <pwd.h>
 #include <sstream>
 #include <string>
-#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
