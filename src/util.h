@@ -8,9 +8,11 @@
 #include <pwd.h>
 #include <sstream>
 #include <string>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
+
 
 namespace appimage {
     namespace update {
