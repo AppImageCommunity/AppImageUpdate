@@ -184,7 +184,9 @@ namespace appimage {
         static long long gidForUid(uid_t uid) {
             // http://pubs.opengroup.org/onlinepubs/009695399/functions/getpwuid.html -> should reset errno
             errno = 0;
+
             struct passwd* pwd;
+
             if ((pwd = getpwuid(uid)) == nullptr) {
                 auto error = errno;
                 std::cerr << "Failed to call getpwuid(): " << strerror(error) << std::endl;
