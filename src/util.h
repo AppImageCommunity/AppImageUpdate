@@ -63,6 +63,7 @@ namespace appimage {
                     }
                     output = line;
                     removeNewlineCharacters(output);
+                    free(line);
                     return true;
                 }
             }
