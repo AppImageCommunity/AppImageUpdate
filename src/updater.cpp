@@ -468,6 +468,7 @@ namespace appimage {
                     } else {
                         // error unsupported type
                         state = ERROR;
+                        delete appImage;
                         return;
                     }
 
@@ -511,18 +512,22 @@ namespace appimage {
                 auto* appImage = readAppImage(pathToAppImage);
 
                 // validate AppImage
-                if(!validateAppImage(appImage))
+                if(!validateAppImage(appImage)) {
+                    delete appImage;
                     return false;
+                }
 
                 if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
                     appImage->updateInformationType == ZSYNC_BINTRAY ||
                     appImage->updateInformationType == ZSYNC_GENERIC) {
                     auto client = zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
+                    delete appImage;
                     return client.checkForChanges(updateAvailable, method);
                 }
 
                 // return error in case of unknown update information
                 issueStatusMessage("Unknown update information type, aborting.");
+                delete appImage;
                 return false;
             }
         };
