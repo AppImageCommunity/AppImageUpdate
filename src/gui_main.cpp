@@ -377,8 +377,7 @@ int main(const int argc, const char* const* argv) {
     // otherwise check whether path has been passed on the CLI, otherwise show file chooser
     if (selfUpdate) {
         if (pathArg) {
-            cerr << "Error: options " << selfUpdate.Name() << " and " << pathArg.Name() << " are not compatible."
-                 << endl;
+            cerr << "Error: --self-update does not take a path." << endl;
             cerr << parser;
             return 1;
         } else {
