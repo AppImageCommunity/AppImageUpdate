@@ -356,6 +356,8 @@ int main(const int argc, const char* const* argv) {
         {'j', "check-for-update"}
     );
 
+    args::Flag selfUpdate(parser, "", "", {"self-update"});
+
     args::Positional<string> pathArg(parser, "", "Path to AppImage that should be updated");
 
     try {
@@ -371,8 +373,33 @@ int main(const int argc, const char* const* argv) {
 
     std::string pathToAppImage;
 
-    // check whether path to AppImage has been passed on the CLI, otherwise show file chooser
-    if (pathArg) {
+    // if a self-update is requested, check whether the path argument has been passed, and show an error
+    // otherwise check whether path has been passed on the CLI, otherwise show file chooser
+    if (selfUpdate) {
+        if (pathArg) {
+            cerr << "Error: options " << selfUpdate.Name() << " and " << pathArg.Name() << " are not compatible."
+                 << endl;
+            cerr << parser;
+            return 1;
+        } else {
+            auto* APPIMAGE = getenv("APPIMAGE");
+
+            if (APPIMAGE == nullptr) {
+                cerr << "Error: self update requested but could not determine path to AppImage "
+                     << "($APPIMAGE environment variable missing)."
+                     << endl;
+                return 1;
+            }
+
+            if (!isFile(APPIMAGE)) {
+                cerr << "Error: $APPIMAGE pointing to non-existing file:\n"
+                     << APPIMAGE << endl;
+                return 1;
+            }
+
+            pathToAppImage = APPIMAGE;
+        }
+    } else if (pathArg) {
         pathToAppImage = pathArg.Get();
     } else {
         Fl_Native_File_Chooser fileChooser(Fl_Native_File_Chooser::BROWSE_FILE);
