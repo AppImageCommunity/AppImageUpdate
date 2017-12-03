@@ -18,6 +18,7 @@ using namespace appimage::update;
 int main(const int argc, const char** argv) {
     args::ArgumentParser parser("AppImage companion tool taking care of updates for the commandline.");
 
+    args::HelpFlag help(parser, "help", "", {'h', "help"});
     args::Flag showVersion(parser, "", "Display version and exit.", {'V', "version"});
 
     args::Flag describeAppImage(parser, "",
@@ -35,7 +36,9 @@ int main(const int argc, const char** argv) {
 
     args::Flag removeOldFile(parser, "", "Remove old AppImage after successful update", {'r', "remove-old"});
 
-    args::Positional<std::string> pathToAppImage(parser, "path", "path to AppImage");
+    args::Flag selfUpdate(parser, "", "", {"self-update"});
+
+    args::Positional<std::string> pathArg(parser, "path", "path to AppImage");
 
     try {
         parser.ParseCLI(argc, argv);
@@ -55,19 +58,48 @@ int main(const int argc, const char** argv) {
         return 0;
     }
 
-    if (!pathToAppImage) {
+    string pathToAppImage;
+
+    // if a self-update is requested, check whether the path argument has been passed, and show an error
+    // otherwise check whether path has been passed on the CLI, otherwise show file chooser
+    if (selfUpdate) {
+        if (pathArg) {
+            cerr << "Error: --self-update does not take a path." << endl;
+            cerr << parser;
+            return 1;
+        } else {
+            auto* APPIMAGE = getenv("APPIMAGE");
+
+            if (APPIMAGE == nullptr) {
+                cerr << "Error: self update requested but could not determine path to AppImage "
+                     << "($APPIMAGE environment variable missing)."
+                     << endl;
+                return 1;
+            }
+
+            if (!isFile(APPIMAGE)) {
+                cerr << "Error: $APPIMAGE pointing to non-existing file:\n"
+                     << APPIMAGE << endl;
+                return 1;
+            }
+
+            pathToAppImage = APPIMAGE;
+        }
+    }  else if (pathArg) {
+        pathToAppImage = pathArg.Get();
+    } else {
         cerr << parser;
         return 0;
     }
 
     // after checking that a path is given, check whether the file actually exists
-    if (!isFile(pathToAppImage.Get())) {
+    if (!isFile(pathToAppImage)) {
         // cannot tell whether it exists or not without inspecting errno, therefore using a more generic error message
         cerr << "Could not read file: " << pathToAppImage;
         return 1;
     }
 
-    Updater updater(pathToAppImage.Get(), (bool) overwriteOldFile);
+    Updater updater(pathToAppImage, (bool) overwriteOldFile);
 
     // if the user just wants a description of the AppImage, parse the AppImage, print the description and exit
     if (describeAppImage) {
@@ -196,8 +228,8 @@ int main(const int argc, const char** argv) {
     }
 
     if (removeOldFile) {
-        cerr << "Removing old AppImage: " << pathToAppImage.Get() << endl;
-        unlink(pathToAppImage.Get().c_str());
+        cerr << "Removing old AppImage: " << pathToAppImage << endl;
+        unlink(pathToAppImage.c_str());
     }
 
     cerr << "Update successful. "
