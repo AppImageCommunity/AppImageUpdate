@@ -350,6 +350,8 @@ int main(const int argc, const char* const* argv) {
     args::ArgumentParser parser("AppImageUpdate -- GUI for updating AppImages");
 
     args::HelpFlag help(parser, "help", "", {'h', "help"});
+    args::Flag showVersion(parser, "", "Display version and exit.", {'V', "version"});
+
     args::Flag checkForUpdate(parser, "",
         "Check for update. Exits with code 1 if changes are available, 0 if there are not,"
             "other non-zero code in case of errors.",
@@ -369,6 +371,13 @@ int main(const int argc, const char* const* argv) {
         std::cerr << e.what() << std::endl;
         std::cerr << parser;
         return 1;
+    }
+
+    if (showVersion) {
+        cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION
+             << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
+             << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
+        return 0;
     }
 
     std::string pathToAppImage;
