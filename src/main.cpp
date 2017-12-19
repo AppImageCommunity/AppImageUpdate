@@ -93,23 +93,6 @@ int main(const int argc, const char** argv) {
         return 0;
     }
 
-    // resolve full path to AppImage
-    {
-        char* fullPath = nullptr;
-
-        if ((fullPath = realpath(pathToAppImage.c_str(), nullptr)) == nullptr) {
-            auto error = errno;
-            cerr << "Failed to resolve full path to AppImage: " << strerror(error) << endl;
-            return 1;
-        }
-
-        pathToAppImage = fullPath;
-
-        // clean up
-        free(fullPath);
-        fullPath = nullptr;
-    }
-
     // after checking that a path is given, check whether the file actually exists
     if (!isFile(pathToAppImage)) {
         // cannot tell whether it exists or not without inspecting errno, therefore using a more generic error message
@@ -246,7 +229,26 @@ int main(const int argc, const char** argv) {
     }
 
     if (removeOldFile) {
-        if (pathToAppImage == newFilePath) {
+        std::string fullPathToAppImage;
+
+        // resolve full path to AppImage
+        {
+            char* fullPath = nullptr;
+
+            if ((fullPath = realpath(pathToAppImage.c_str(), nullptr)) == nullptr) {
+                auto error = errno;
+                cerr << "Failed to resolve full path to AppImage: " << strerror(error) << endl;
+                return 1;
+            }
+
+            fullPathToAppImage = fullPath;
+
+            // clean up
+            free(fullPath);
+            fullPath = nullptr;
+        }
+
+        if (fullPathToAppImage == newFilePath) {
             cerr << "Skipping removal of old AppImage: old and new AppImage paths are equal" << endl;
         } else {
             cerr << "Removing old AppImage: " << pathToAppImage << endl;
