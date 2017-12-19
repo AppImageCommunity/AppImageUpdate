@@ -7,3 +7,9 @@
 [submodule "lib/libdesktopenvironments"]
 	path = lib/libdesktopenvironments
 	url = https://github.com/TheAssassin/libdesktopenvironments
+[submodule "lib/--force"]
+	path = lib/--force
+	url = https://github.com/arsenm/sanitizers-cmake
+[submodule "lib/sanitizers-cmake"]
+	path = lib/sanitizers-cmake
+	url = https://github.com/arsenm/sanitizers-cmake

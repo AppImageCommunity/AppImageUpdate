@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.2)
 
+# add support for sanitizers
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/lib/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
+find_package(Sanitizers REQUIRED)
+
 # required to link to correct thread library
 find_package(Threads REQUIRED)
 find_package(X11 REQUIRED)
@@ -43,6 +47,7 @@ include_directories(${CMAKE_BINARY_DIR}/lib/fltk)
 include_directories(${X11_Xpm_INCLUDE_PATH})
 
 add_executable(AppImageUpdate gui_main.cpp)
+add_sanitizers(AppImageUpdate)
 
 # link libraries
 target_link_libraries(AppImageUpdate libappimageupdate fltk fltk_images libdesktopenvironments ${X11_Xpm_LIB} args)
