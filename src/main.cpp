@@ -1,5 +1,6 @@
 // system headers
 #include <chrono>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <thread>
@@ -90,6 +91,23 @@ int main(const int argc, const char** argv) {
     } else {
         cerr << parser;
         return 0;
+    }
+
+    // resolve full path to AppImage
+    {
+        char* fullPath = nullptr;
+
+        if ((fullPath = realpath(pathToAppImage.c_str(), nullptr)) == nullptr) {
+            auto error = errno;
+            cerr << "Failed to resolve full path to AppImage: " << strerror(error) << endl;
+            return 1;
+        }
+
+        pathToAppImage = fullPath;
+
+        // clean up
+        free(fullPath);
+        fullPath = nullptr;
     }
 
     // after checking that a path is given, check whether the file actually exists
@@ -228,8 +246,12 @@ int main(const int argc, const char** argv) {
     }
 
     if (removeOldFile) {
-        cerr << "Removing old AppImage: " << pathToAppImage << endl;
-        unlink(pathToAppImage.c_str());
+        if (pathToAppImage == newFilePath) {
+            cerr << "Skipping removal of old AppImage: old and new AppImage paths are equal" << endl;
+        } else {
+            cerr << "Removing old AppImage: " << pathToAppImage << endl;
+            unlink(pathToAppImage.c_str());
+        }
     }
 
     cerr << "Update successful. "
