@@ -429,6 +429,7 @@ namespace appimage {
                         return;
 
                     // if there is a ZSync client (e.g., because an update check has been run), clean it up
+                    // this ensures that a fresh instance will be used for the update run
                     if (zSyncClient != nullptr) {
                         delete zSyncClient;
                         zSyncClient = nullptr;
@@ -526,9 +527,11 @@ namespace appimage {
                 if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
                     appImage->updateInformationType == ZSYNC_BINTRAY ||
                     appImage->updateInformationType == ZSYNC_GENERIC) {
-                    auto client = zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
-                    return client.checkForChanges(updateAvailable, method);
+                    zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
+                    return zSyncClient->checkForChanges(updateAvailable, method);
                 }
+
+                zSyncClient = nullptr;
 
                 // return error in case of unknown update information
                 issueStatusMessage("Unknown update information type, aborting.");
@@ -596,6 +599,7 @@ namespace appimage {
             lock_guard guard(d->mutex);
 
             if (d->state == INITIALIZED) {
+                // this protects update checks from returning progress, which would only occur when using method 0
                 progress = 0;
                 return true;
             } else if (d->state == SUCCESS || d->state == ERROR) {
