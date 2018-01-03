@@ -428,10 +428,12 @@ namespace appimage {
                     if (state != INITIALIZED)
                         return;
 
-                    // if there is a ZSync client, something has gone very wrong, and the application should terminate
-                    // immediately
-                    if (zSyncClient != nullptr)
-                        throw std::runtime_error("fatal error, exiting");
+                    // if there is a ZSync client (e.g., because an update check has been run), clean it up
+                    if (zSyncClient != nullptr) {
+                        delete zSyncClient;
+                        zSyncClient = nullptr;
+                    }
+
 
                     // WARNING: if you don't want to shoot yourself in the foot, make sure to read in the AppImage
                     // while locking the mutex and/or before the RUNNING state to make sure readAppImage() finishes
