@@ -130,14 +130,16 @@ int main(const int argc, const char** argv) {
     if (checkForUpdate) {
         bool changesAvailable = false;
 
-        if (!updater.checkForChanges(changesAvailable)) {
-            // print all messages that might be available
-            {
-                std::string nextMessage;
-                while (updater.nextStatusMessage(nextMessage))
-                    cerr << nextMessage << endl;
-            }
+        auto result = updater.checkForChanges(changesAvailable);
 
+        // print all messages that might be available
+        {
+            std::string nextMessage;
+            while (updater.nextStatusMessage(nextMessage))
+                cerr << nextMessage << endl;
+        }
+
+        if (!result) {
             cerr << "Error checking for changes!";
             return 2;
         }
