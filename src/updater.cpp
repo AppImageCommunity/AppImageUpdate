@@ -440,6 +440,9 @@ namespace appimage {
                     auto* appImage = readAppImage(pathToAppImage);
 
                     if (!validateAppImage(appImage)) {
+                        // cleanup
+                        delete appImage;
+
                         state = ERROR;
                         return;
                     }
@@ -467,14 +470,18 @@ namespace appimage {
                         zSyncClient->setCwd(dirPath);
                     } else {
                         // error unsupported type
+
+                        // cleanup
+                        delete appImage;
+
                         state = ERROR;
                         return;
                     }
 
-                    state = RUNNING;
-
                     // cleanup
                     delete appImage;
+
+                    state = RUNNING;
                 }
 
                 // keep state -- by default, an error (false) is assumed
