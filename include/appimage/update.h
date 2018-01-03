@@ -65,6 +65,8 @@ namespace appimage {
             bool nextStatusMessage(std::string& message);
 
             // Check whether an update is available
+            // Please note that this method is *only* available until the update is started (after calling start(),
+            // the method will instantly return false)
             bool checkForChanges(bool& updateAvailable, unsigned int method = 0);
 
             // Parses AppImage file, and returns a formatted string describing it
