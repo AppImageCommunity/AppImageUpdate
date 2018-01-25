@@ -374,9 +374,7 @@ int main(const int argc, const char* const* argv) {
     }
 
     if (showVersion) {
-        cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION
-             << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
-             << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
+        // version has been printed already, so we can just exit here
         return 0;
     }
 
