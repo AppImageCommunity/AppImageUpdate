@@ -139,48 +139,44 @@ namespace appimage {
 
                     updateInformation = rawUpdateInformation.data();
                 } else if (appImageType == 2) {
-                    // check whether update information can be found inside the file by calling objdump
+                   {
+                     unsigned offset = 0, length = 0;
+                     uint8_t * data;
+                     Elf64_Ehdr * elf64;
+                     Elf64_Shdr * shdr64;
+                     Elf32_Ehdr * elf32;
+                     Elf32_Shdr * shdr32;
+                     int i, fd = open(pathToAppImage.c_str(), O_RDONLY);
+                     data = (uint8_t * ) mmap(NULL, lseek(fd, 0, SEEK_END), PROT_READ, MAP_SHARED, fd, 0);
+                     elf64 = (Elf64_Ehdr * ) data;
+                     shdr64 = (Elf64_Shdr * )(data + elf64-> e_shoff);
+                     if (elf64-> e_ident[EI_CLASS] != ELFCLASS64) {
+                     elf32 = (Elf32_Ehdr * ) data;
+                     shdr32 = (Elf32_Shdr * )(data + elf32-> e_shoff);
 
-                    // first of all, check whether there is an objdump binary next to the current one (probably
-                    // the bundled one in the AppImages of AppImageUpdate), otherwise use the system wide
-                    std::string objdump;
-
-                    {
-                        // TODO: replace this Linux specific solution with something platform independent
-                        std::vector<char> buffer(4096);
-                        readlink("/proc/self/exe", buffer.data(), buffer.size());
-
-                        auto pathToBinary = std::string(buffer.data());
-                        auto slashPos = pathToBinary.find_last_of('/');
-                        auto bundledObjdump = pathToBinary.substr(0, slashPos) + "/objdump";
-
-                        if (isFile(bundledObjdump)) {
-                            objdump = bundledObjdump;
-                        } else {
-                            objdump = "objdump";
+                     char * strTab = (char * )(data + shdr32[elf32-> e_shstrndx].sh_offset);
+                     for (i = 0; i < elf32-> e_shnum; i++) {
+                     if (strcmp( & strTab[shdr32[i].sh_name], ".upd_info") == 0) {
+                        offset = shdr32[i].sh_offset;
+                        length = shdr32[i].sh_size;
+                      }
+                     }
+                     } else {
+                       char * strTab = (char * )(data + shdr64[elf64-> e_shstrndx].sh_offset);
+                       for (i = 0; i < elf64-> e_shnum; i++) {
+                         if (strcmp( & strTab[shdr64[i].sh_name], ".upd_info") == 0) {
+                             offset = shdr64[i].sh_offset;
+                             length = shdr64[i].sh_size;
+                          }
                         }
+                      }
+                     close(fd);
+                     char update_info[length];
+                     ifs.seekg(offset, std::ios::beg);
+                     ifs.read(update_info, length);
+                     updateInformation = std::string(update_info);
                     }
-
-                    auto command = objdump + " -h \"" + pathToAppImage + "\"";
-
-                    std::string match;
-                    if (!callProgramAndGrepForLine(command, ".upd_info", match))
-                        return nullptr;
-
-                    auto parts = split(match);
-                    parts.erase(std::remove_if(parts.begin(), parts.end(),
-                        [](std::string s) { return s.length() <= 0; }
-                    ));
-
-                    auto offset = (unsigned long) std::stoi(parts[5], nullptr, 16);
-                    auto length = (unsigned long) std::stoi(parts[2], nullptr, 16);
-
-                    ifs.seekg(offset, std::ios::beg);
-                    std::vector<char> rawUpdateInformation(length, '\0');
-                    ifs.read(rawUpdateInformation.data(), length);
-
-                    updateInformation = rawUpdateInformation.data();
-                } else {
+		} else {
                     // final try: type 1 AppImages do not have to set the magic bytes, although they should
                     // if the file is both an ELF and an ISO9660 file, we'll suspect it to be a type 1 AppImage, and
                     // proceed with a warning

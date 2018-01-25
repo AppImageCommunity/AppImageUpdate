@@ -41,8 +41,7 @@ cp -v "$REPO_ROOT"/resources/*.desktop AppDir/usr/share/applications/
 cp -v "$REPO_ROOT"/resources/*.svg AppDir/usr/share/icons/hicolor/scalable/apps/
 cp -v "$REPO_ROOT"/resources/*.xpm AppDir/resources/
 
-# bundle objdump required for parsing update information
-cp /usr/bin/objdump AppDir/usr/bin/
+# no need for objdump to be bundled!
 
 # determine Git commit ID
 # linuxdeployqt uses this for naming the file
@@ -59,7 +58,7 @@ chmod +x linuxdeployqt-continuous-x86_64.AppImage
 
 # bundle applications
 ./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdatetool.desktop -verbose=1 -bundle-non-qt-libs \
-    -executable=AppDir/usr/bin/AppImageUpdate -executable=AppDir/usr/bin/AppImageSelfUpdate -executable=AppDir/usr/bin/objdump
+    -executable=AppDir/usr/bin/AppImageUpdate -executable=AppDir/usr/bin/AppImageSelfUpdate
 
 # get appimagetool
 wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
