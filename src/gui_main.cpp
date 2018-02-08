@@ -15,7 +15,6 @@
 #include <FL/Fl_Text_Display.H>
 #include <FL/Fl_Window.H>
 #include <X11/xpm.h>
-#include <zsutil.h>
 
 // local headers
 #include "appimage/update.h"
@@ -93,45 +92,7 @@ void windowCallback(Fl_Widget* widget, void*) {
 
 // to be run in a thread
 // caution: using a reference instead of copying the value doesn't work
-void runUpdate(const std::string pathToAppImage) {
-    auto runApp = [](const string& path) {
-        // make executable
-        mode_t newPerms;
-        auto errCode = zsync2::getPerms(path, newPerms);
-
-        if (errCode != 0) {
-            ostringstream ss;
-            ss << "Error calling stat(): " << strerror(errCode);
-            fl_message("%s", ss.str().c_str());
-            exit(1);
-        }
-
-        chmod(path.c_str(), newPerms | S_IXUSR);
-
-        // full path to AppImage, required for execl
-        char* realPathToAppImage;
-        if ((realPathToAppImage = realpath(path.c_str(), nullptr)) == nullptr) {
-            auto error = errno;
-            cerr << "Error resolving full path of AppImage: code " << error << ": " << strerror(error) << endl;
-            exit(1);
-        }
-
-        if (fork() == 0) {
-            putenv(strdup("STARTED_BY_APPIMAGEUPDATE=1"));
-
-            cerr << "Running " << realPathToAppImage << endl;
-
-            // make sure to deactivate updater contained in the AppImage when running from AppImageUpdate
-            execl(realPathToAppImage, realPathToAppImage, nullptr);
-
-            // execle should never return, so if this code is reached, there must be an error
-            auto error = errno;
-            cerr << "Error executing AppImage " << realPathToAppImage << ": code " << error << ": "
-                 << strerror(error) << endl;
-            exit(1);
-        }
-    };
-
+void runUpdate(const std::string& pathToAppImage) {
     if (!isFile(pathToAppImage)) {
         fl_alert("Could not access file: %s", pathToAppImage.c_str());
         exit(1);
