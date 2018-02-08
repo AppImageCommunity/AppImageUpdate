@@ -1,3 +1,4 @@
 usr/include
 usr/bin/AppImageUpdate
 usr/bin/AppImageSelfUpdate
+usr/bin/AppImageUpdate-Qt

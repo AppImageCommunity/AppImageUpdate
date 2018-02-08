@@ -83,8 +83,17 @@ popd
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir \
     -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync'
 
+# change AppDir root to fit the GUI
+pushd AppDir
+rm AppRun && ln -s usr/bin/AppImageUpdate-Qt AppRun
+rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
+popd
+
+# create AppImageUpdate AppImage
+./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate-Qt.ignore AppDir \
+    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-Qt-*x86_64.AppImage.zsync'
+
 # move AppImages to old cwd
-mv appimageupdatetool*.AppImage* "$OLD_CWD"/
-mv AppImageUpdate*.AppImage* "$OLD_CWD"/
+mv {appimageupdatetool,AppImageUpdate}*.AppImage* "$OLD_CWD"/
 
 popd
