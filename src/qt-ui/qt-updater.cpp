@@ -162,10 +162,12 @@ namespace appimage {
 
                     d->buttonBox = new QDialogButtonBox();
 
-                    d->buttonBox->addButton("Run updated AppImage", QDialogButtonBox::AcceptRole);
-                    d->buttonBox->addButton("Close", QDialogButtonBox::RejectRole);
+                    if (!d->updater->hasError()) {
+                        d->buttonBox->addButton("Run updated AppImage", QDialogButtonBox::AcceptRole);
+                        connect(d->buttonBox, SIGNAL(accepted()), this, SLOT(runUpdatedAppImage()));
+                    }
 
-                    connect(d->buttonBox, SIGNAL(accepted()), this, SLOT(runUpdatedAppImage()));
+                    d->buttonBox->addButton("Close", QDialogButtonBox::RejectRole);
                     connect(d->buttonBox, &QDialogButtonBox::rejected, this, [this]() {
                         this->done(0);
                     });
