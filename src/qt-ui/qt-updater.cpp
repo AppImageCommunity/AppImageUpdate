@@ -28,6 +28,7 @@ namespace appimage {
                 appimage::update::Updater* updater;
 
                 QLabel* label;
+                QLabel* progressLabel;
                 QDialogButtonBox* buttonBox;
 
                 QProgressBar* progressBar;
@@ -75,6 +76,7 @@ namespace appimage {
                 ~Private() {
                     delete updater;
                     delete label;
+                    delete progressLabel;
                     delete buttonBox;
                     delete progressBar;
                     delete mainLayout;
@@ -119,6 +121,9 @@ namespace appimage {
                 d->progressBar->setMaximum(100);
                 layout()->addWidget(d->progressBar);
 
+                d->progressLabel = new QLabel(this);
+                layout()->addWidget(d->progressLabel);
+
                 d->buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
                 connect(d->buttonBox, SIGNAL(rejected()), this, SLOT(showCancelDialog()));
                 layout()->addWidget(d->buttonBox);
@@ -129,16 +134,25 @@ namespace appimage {
             }
 
             void QtUpdater::updateProgress() {
-                    double progress;
+                double progress;
 
-                    if (!d->updater->progress(progress))
-                        return;
+                if (!d->updater->progress(progress))
+                    return;
 
-                    d->progressBar->setValue(((int) progress) * 100);
+                d->progressBar->setValue(int(progress * 100));
 
-                    std::string nextMessage;
-                    while (d->updater->nextStatusMessage(nextMessage))
-                        std::cerr << nextMessage << std::endl;
+                off_t fileSize;
+                if (d->updater->remoteFileSize(fileSize)) {
+                    double downloadedSize = progress * fileSize;
+                    std::stringstream ss;
+                    ss << std::fixed << std::setprecision(1)
+                       << downloadedSize / 1024.0f / 1024.0f << " MiB of " << fileSize / 1024.0f / 1024.0f << " MiB";
+                    d->progressLabel->setText(QString::fromStdString(ss.str()));
+                }
+
+                std::string nextMessage;
+                while (d->updater->nextStatusMessage(nextMessage))
+                    std::cerr << nextMessage << std::endl;
 
                 if (d->updater->isDone()) {
                     d->progressTimer->stop();
@@ -168,6 +182,7 @@ namespace appimage {
                     }
 
                     d->buttonBox->addButton("Close", QDialogButtonBox::RejectRole);
+
                     connect(d->buttonBox, &QDialogButtonBox::rejected, this, [this]() {
                         this->done(0);
                     });
