@@ -17,7 +17,7 @@
 // local headers
 #include "appimage/update/qt-ui.h"
 #include "appimage/update.h"
-#include "util.h"
+#include "../util.h"
 
 namespace appimage {
     namespace update {
