@@ -6,7 +6,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 # library with the Qt UI classes
-add_library(libappimageupdate-qt qt-updater.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
+add_library(libappimageupdate-qt qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
 target_link_libraries(libappimageupdate-qt libappimageupdate Qt5::Core Qt5::Widgets)
 target_include_directories(libappimageupdate-qt
     PUBLIC

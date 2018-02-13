@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QLayout>
 #include <QMessageBox>
+#include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QProgressDialog>
@@ -17,7 +18,9 @@
 // local headers
 #include "appimage/update/qt-ui.h"
 #include "appimage/update.h"
+#include "spoiler.h"
 #include "../util.h"
+
 
 namespace appimage {
     namespace update {
@@ -40,13 +43,21 @@ namespace appimage {
 
                 QTimer* progressTimer;
 
+                Spoiler* spoiler;
+                QVBoxLayout* spoilerLayout;
+                QPlainTextEdit* spoilerLog;
+
             public:
                 explicit Private(QString& pathToAppImage) : buttonBox(nullptr),
                                                             progressBar(nullptr),
                                                             mainLayout(nullptr),
                                                             label(nullptr),
                                                             progressTimer(nullptr),
-                                                            pathToAppImage(pathToAppImage)
+                                                            progressLabel(nullptr),
+                                                            pathToAppImage(pathToAppImage),
+                                                            spoiler(nullptr),
+                                                            spoilerLayout(nullptr),
+                                                            spoilerLog(nullptr)
                 {
                     if (!isFile(pathToAppImage.toStdString()))
                         throw std::runtime_error("No such file or directory: " + pathToAppImage.toStdString());
@@ -81,6 +92,7 @@ namespace appimage {
                     delete progressBar;
                     delete mainLayout;
                     delete progressTimer;
+                    delete spoiler;
                 }
 
             public:
@@ -107,7 +119,8 @@ namespace appimage {
                 // integrated in other apps
                 setModal(true);
 
-                resize(QSize(360, 150));
+                resize(QSize(450, 150));
+                setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
                 d->mainLayout = new QVBoxLayout();
                 setLayout(d->mainLayout);
@@ -122,7 +135,17 @@ namespace appimage {
                 layout()->addWidget(d->progressBar);
 
                 d->progressLabel = new QLabel(this);
+                d->progressLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                d->progressLabel->setText("Starting update...");
                 layout()->addWidget(d->progressLabel);
+
+                d->spoiler = new Spoiler("Details");
+                d->spoilerLayout = new QVBoxLayout();
+                d->spoilerLog = new QPlainTextEdit();
+                d->spoilerLog->setReadOnly(true);
+                d->spoilerLayout->addWidget(d->spoilerLog);
+                d->spoiler->setContentLayout(*d->spoilerLayout);
+                layout()->addWidget(d->spoiler);
 
                 d->buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
                 connect(d->buttonBox, SIGNAL(rejected()), this, SLOT(showCancelDialog()));
@@ -151,8 +174,14 @@ namespace appimage {
                 }
 
                 std::string nextMessage;
-                while (d->updater->nextStatusMessage(nextMessage))
+                while (d->updater->nextStatusMessage(nextMessage)) {
                     std::cerr << nextMessage << std::endl;
+
+                    d->spoilerLog->moveCursor(QTextCursor::End);
+                    std::ostringstream oss;
+                    oss << nextMessage << std::endl;
+                    d->spoilerLog->insertPlainText(QString::fromStdString(oss.str()));
+                }
 
                 if (d->updater->isDone()) {
                     d->progressTimer->stop();
