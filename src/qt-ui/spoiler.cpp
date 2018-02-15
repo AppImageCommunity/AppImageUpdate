@@ -1,5 +1,6 @@
 // based on https://stackoverflow.com/a/37927256
 
+#include <QApplication>
 #include <QPropertyAnimation>
 
 #include "spoiler.h"
@@ -34,6 +35,7 @@ Spoiler::Spoiler(const QString& title, const int animationDuration, QWidget* par
     mainLayout.setVerticalSpacing(0);
     mainLayout.setContentsMargins(0, 0, 0, 0);
     int row = 0;
+
     mainLayout.addWidget(&toggleButton, row, 0, 1, 1, Qt::AlignLeft);
     mainLayout.addWidget(&headerLine, row++, 2, 1, 1);
     mainLayout.addWidget(&contentArea, row, 0, 1, 3);
@@ -51,12 +53,16 @@ void Spoiler::setContentLayout(QLayout& contentLayout) {
     contentArea.setLayout(&contentLayout);
     const auto collapsedHeight = sizeHint().height() - contentArea.maximumHeight();
     auto contentHeight = contentLayout.sizeHint().height();
+
     for (int i = 0; i < toggleAnimation.animationCount() - 1; ++i) {
         auto* spoilerAnimation = dynamic_cast<QPropertyAnimation*>(toggleAnimation.animationAt(i));
         spoilerAnimation->setDuration(animationDuration);
         spoilerAnimation->setStartValue(collapsedHeight);
         spoilerAnimation->setEndValue(collapsedHeight + contentHeight);
     }
+
+    auto* w = QApplication::activeWindow();
+
     auto* contentAnimation = dynamic_cast<QPropertyAnimation*>(toggleAnimation.animationAt(toggleAnimation.animationCount() - 1));
     contentAnimation->setDuration(animationDuration);
     contentAnimation->setStartValue(0);

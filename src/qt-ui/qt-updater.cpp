@@ -47,6 +47,8 @@ namespace appimage {
                 QVBoxLayout* spoilerLayout;
                 QPlainTextEdit* spoilerLog;
 
+                bool finished;
+
             public:
                 explicit Private(QString& pathToAppImage) : buttonBox(nullptr),
                                                             progressBar(nullptr),
@@ -57,7 +59,8 @@ namespace appimage {
                                                             pathToAppImage(pathToAppImage),
                                                             spoiler(nullptr),
                                                             spoilerLayout(nullptr),
-                                                            spoilerLog(nullptr)
+                                                            spoilerLog(nullptr),
+                                                            finished(false)
                 {
                     if (!isFile(pathToAppImage.toStdString()))
                         throw std::runtime_error("No such file or directory: " + pathToAppImage.toStdString());
@@ -119,11 +122,11 @@ namespace appimage {
                 // integrated in other apps
                 setModal(true);
 
-                resize(QSize(450, 150));
-                setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
                 d->mainLayout = new QVBoxLayout();
                 setLayout(d->mainLayout);
+
+                // make sure the QDialog resizes with the spoiler
+                layout()->setSizeConstraint(QLayout::SetFixedSize);
 
                 d->label = new QLabel(QString("Updating " + d->appImageFileName + "..."));
                 layout()->addWidget(d->label);
@@ -184,6 +187,8 @@ namespace appimage {
                 }
 
                 if (d->updater->isDone()) {
+                    d->finished = true;
+
                     d->progressTimer->stop();
 
                     auto palette = d->progressBar->palette();
@@ -247,11 +252,12 @@ namespace appimage {
             }
 
             void QtUpdater::closeEvent(QCloseEvent* event) {
-                // ignore event...
-                event->ignore();
-
-                // ... and show cancel dialog
-                showCancelDialog();
+                if (!d->finished) {
+                    // ignore event...
+                    event->ignore();
+                    // ... and show cancel dialog
+                    showCancelDialog();
+                }
             }
 
             void QtUpdater::showEvent(QShowEvent* event) {
