@@ -42,23 +42,9 @@ add_executable(appimageupdatetool main.cpp)
 # link to core lib
 target_link_libraries(appimageupdatetool libappimageupdate args)
 
-# GUI application
-# TODO: replace with target_include_directories in FLTK CMake configuration
-include_directories(../lib/fltk)
-include_directories(${CMAKE_BINARY_DIR}/lib/fltk)
-include_directories(${X11_Xpm_INCLUDE_PATH})
-
-add_executable(AppImageUpdate gui_main.cpp)
-add_sanitizers(AppImageUpdate)
-
-# link libraries
-target_link_libraries(AppImageUpdate libappimageupdate fltk fltk_images libdesktopenvironments ${X11_Xpm_LIB} args)
-target_compile_definitions(AppImageUpdate PRIVATE -DFLTK_UI)
-
-
 # install targets
 install(
-    TARGETS libappimageupdate appimageupdatetool AppImageUpdate
+    TARGETS libappimageupdate appimageupdatetool
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static
@@ -66,8 +52,15 @@ install(
 )
 
 
+# include FLTK UI
+set(BUILD_FLTK_UI BOOL CACHE "Build FLTK UI (main AppImageUpdate application)" ON)
+if (BUILD_FLTK_UI)
+    add_subdirectory(fltk-ui)
+endif()
+
+
 # include Qt UI
-set(BUILD_QT_UI BOOL CACHE "bla" FALSE)
+set(BUILD_QT_UI BOOL CACHE "Build Qt UI (widget library and demo application)" OFF)
 if (BUILD_QT_UI)
     add_subdirectory(qt-ui)
 endif()
