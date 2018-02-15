@@ -49,6 +49,8 @@ namespace appimage {
 
                 bool finished;
 
+                const int minimumWidth;
+
             public:
                 explicit Private(QString& pathToAppImage) : buttonBox(nullptr),
                                                             progressBar(nullptr),
@@ -60,7 +62,8 @@ namespace appimage {
                                                             spoiler(nullptr),
                                                             spoilerLayout(nullptr),
                                                             spoilerLog(nullptr),
-                                                            finished(false)
+                                                            finished(false),
+                                                            minimumWidth(400)
                 {
                     if (!isFile(pathToAppImage.toStdString()))
                         throw std::runtime_error("No such file or directory: " + pathToAppImage.toStdString());
@@ -129,20 +132,23 @@ namespace appimage {
                 layout()->setSizeConstraint(QLayout::SetFixedSize);
 
                 d->label = new QLabel(QString("Updating " + d->appImageFileName + "..."));
+                d->label->setMinimumWidth(d->minimumWidth);
                 layout()->addWidget(d->label);
 
                 d->progressBar = new QProgressBar();
-                d->progressBar->resize(200, 24);
+                d->progressBar->setMinimumWidth(d->minimumWidth);
                 d->progressBar->setMinimum(0);
                 d->progressBar->setMaximum(100);
                 layout()->addWidget(d->progressBar);
 
                 d->progressLabel = new QLabel(this);
+                d->progressLabel->setMinimumWidth(d->minimumWidth);
                 d->progressLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
                 d->progressLabel->setText("Starting update...");
                 layout()->addWidget(d->progressLabel);
 
                 d->spoiler = new Spoiler("Details");
+                d->spoiler->resize(QSize(d->minimumWidth, 200));
                 d->spoilerLayout = new QVBoxLayout();
                 d->spoilerLog = new QPlainTextEdit();
                 d->spoilerLog->setReadOnly(true);
@@ -157,6 +163,8 @@ namespace appimage {
                 d->progressTimer = new QTimer(this);
                 connect(d->progressTimer, SIGNAL(timeout()), this, SLOT(updateProgress()));
                 d->progressTimer->start(100);
+
+                adjustSize();
             }
 
             void QtUpdater::updateProgress() {
