@@ -51,6 +51,8 @@ add_sanitizers(AppImageUpdate)
 
 # link libraries
 target_link_libraries(AppImageUpdate libappimageupdate fltk fltk_images libdesktopenvironments ${X11_Xpm_LIB} args)
+target_compile_definitions(AppImageUpdate PRIVATE -DFLTK_UI)
+
 
 # install targets
 install(
@@ -60,3 +62,10 @@ install(
     ARCHIVE DESTINATION lib/static
     INCLUDES DESTINATION include
 )
+
+
+# include Qt UI
+set(BUILD_QT_UI BOOL CACHE "bla" FALSE)
+if (BUILD_QT_UI)
+    add_subdirectory(qt-ui)
+endif()

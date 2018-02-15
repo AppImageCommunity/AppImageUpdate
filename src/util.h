@@ -7,6 +7,17 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unistd.h>
+
+#ifdef FLTK_UI
+    #include <FL/Fl.H>
+#endif
+#ifdef QT_UI
+    #include <QMessageBox>
+#endif
+
+// library includes
+#include <zsutil.h>
 
 namespace appimage {
     namespace update {
@@ -103,5 +114,55 @@ namespace appimage {
             std::ifstream ifs(path);
             return (bool) ifs && ifs.good();
         }
-    }
+
+        static void runApp(const std::string& path) {
+            // make executable
+            mode_t newPerms;
+            auto errCode = zsync2::getPerms(path, newPerms);
+
+            if (errCode != 0) {
+                std::ostringstream ss;
+                ss << "Error calling stat(): " << strerror(errCode);
+#ifdef FLTK_UI
+                fl_message("%s", ss.str().c_str());
+#endif
+#ifdef QT_UI
+                QMessageBox::critical(nullptr, "Error", QString::fromStdString(ss.str()), QMessageBox::Close);
+#endif
+                exit(1);
+            }
+
+            chmod(path.c_str(), newPerms | S_IXUSR);
+
+            // full path to AppImage, required for execl
+            char* realPathToAppImage;
+            if ((realPathToAppImage = realpath(path.c_str(), nullptr)) == nullptr) {
+                auto error = errno;
+                std::ostringstream ss;
+                ss << "Error resolving full path of AppImage: code " << error << ": " << strerror(error) << std::endl;
+#ifdef FLTK_UI
+                fl_message("%s", ss.str().c_str());
+#endif
+#ifdef QT_UI
+                QMessageBox::critical(nullptr, "Error", QString::fromStdString(ss.str()), QMessageBox::Close);
+#endif
+                exit(1);
+            }
+
+            if (fork() == 0) {
+                putenv(strdup("STARTED_BY_APPIMAGEUPDATE=1"));
+
+                std::cerr << "Running " << realPathToAppImage << std::endl;
+
+                // make sure to deactivate updater contained in the AppImage when running from AppImageUpdate
+                execl(realPathToAppImage, realPathToAppImage, nullptr);
+
+                // execle should never return, so if this code is reached, there must be an error
+                auto error = errno;
+                std::cerr << "Error executing AppImage " << realPathToAppImage << ": code " << error << ": "
+                          << strerror(error) << std::endl;
+                exit(1);
+            }
+        }
+    };
 }
