@@ -64,8 +64,11 @@ wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/lin
 chmod +x linuxdeployqt-continuous-x86_64.AppImage
 
 # bundle applications
-./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/appimageupdatetool.desktop -verbose=1 -bundle-non-qt-libs \
-    -executable=AppDir/usr/bin/AppImageUpdate -executable=AppDir/usr/bin/AppImageSelfUpdate -executable=AppDir/usr/bin/objdump \
+./linuxdeployqt-continuous-x86_64.AppImage \
+    AppDir/usr/share/applications/appimageupdatetool.desktop \
+    -verbose=1 -bundle-non-qt-libs \
+    -executable=AppDir/usr/bin/AppImageUpdate \
+    -executable=AppDir/usr/bin/objdump \
     -executable=AppDir/usr/bin/AppImageUpdate-Qt
 
 # get appimagetool
@@ -76,9 +79,19 @@ chmod +x appimagetool-x86_64.AppImage
 find AppDir -type f -iname '*.a' -delete
 rm -rf AppDir/usr/include
 
+if [ ! -x AppDir/usr/bin/appimageupdatetool ]; then
+    echo "Error: appimageupdatetool binary not found!"
+    exit 1
+fi
+
 # create appimageupdatetool AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \
     -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdatetool-*x86_64.AppImage.zsync'
+
+if [ ! -x AppDir/usr/bin/AppImageUpdate ]; then
+    echo "Error: AppImageUpdate binary not found!"
+    exit 1
+fi
 
 # change AppDir root to fit the GUI
 pushd AppDir
@@ -90,7 +103,12 @@ popd
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir \
     -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync'
 
-# change AppDir root to fit the GUI
+if [ ! -x AppDir/usr/bin/AppImageUpdate-Qt ]; then
+    echo "Error: AppImageUpdate-Qt binary not found!"
+    exit 1
+fi
+
+# change AppDir root to fit the Qt UI
 pushd AppDir
 rm AppRun && ln -s usr/bin/AppImageUpdate-Qt AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
