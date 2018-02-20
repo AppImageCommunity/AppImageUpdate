@@ -23,9 +23,13 @@ add_definitions("-DBUILD_DATE=\"${DATE}\"")
 add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
 # core library
-add_library(libappimageupdate ${CMAKE_CURRENT_SOURCE_DIR}/../include/appimage/update.h updater.cpp util.h)
+add_library(libappimageupdate ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp util.h)
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
-set_target_properties(libappimageupdate PROPERTIES PREFIX "")
+set_target_properties(libappimageupdate
+    PROPERTIES
+    PREFIX ""
+    PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update.h
+)
 # link thread libraries
 target_link_libraries(libappimageupdate PRIVATE ${CMAKE_THREAD_LIBS_INIT} libzsync2 ${CPR_LIBRARIES})
 # include directories, publicly
@@ -48,7 +52,7 @@ install(
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static
-    INCLUDES DESTINATION include
+    PUBLIC_HEADER DESTINATION include/appimage
 )
 
 

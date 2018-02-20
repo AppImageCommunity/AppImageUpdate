@@ -8,7 +8,11 @@ set(CMAKE_AUTOMOC ON)
 # library with the Qt UI classes
 add_library(libappimageupdate-qt SHARED qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
 target_link_libraries(libappimageupdate-qt libappimageupdate Qt5::Core Qt5::Widgets)
-set_target_properties(libappimageupdate-qt PROPERTIES PREFIX "")
+set_target_properties(libappimageupdate-qt
+    PROPERTIES
+    PREFIX ""
+    PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h
+)
 target_include_directories(libappimageupdate-qt
     PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -30,5 +34,5 @@ install(
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static
-    INCLUDES DESTINATION include
+    PUBLIC_HEADER DESTINATION include/appimage/update
 )
