@@ -26,10 +26,7 @@ OLD_CWD=$(readlink -f .)
 
 pushd "$BUILD_DIR"
 
-# TODO: fix setting those variables in the CMake configurations
 cmake "$REPO_ROOT" \
-    -DBUILD_CPR_TESTS=OFF \
-    -DUSE_SYSTEM_CURL=ON \
     -DBUILD_FLTK_UI=ON \
     -DBUILD_QT_UI=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
