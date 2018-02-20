@@ -59,6 +59,12 @@ int main(const int argc, const char** argv) {
         return 0;
     }
 
+    // check whether options which aren't compatible with each other are switched on
+    if (removeOldFile && overwriteOldFile) {
+        cerr << "Error: flags -O and -r must not be used with each other" << endl;
+        return 3;
+    }
+
     string pathToAppImage;
 
     // if a self-update is requested, check whether the path argument has been passed, and show an error
