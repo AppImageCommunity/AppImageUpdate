@@ -1,4 +1,4 @@
-#include <QDialog>
+#include <QtWidgets/QDialog>
 
 namespace appimage {
     namespace update {
