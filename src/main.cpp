@@ -59,12 +59,6 @@ int main(const int argc, const char** argv) {
         return 0;
     }
 
-    // check whether options which aren't compatible with each other are switched on
-    if (removeOldFile && overwriteOldFile) {
-        cerr << "Error: flags -O and -r must not be used with each other" << endl;
-        return 3;
-    }
-
     string pathToAppImage;
 
     // if a self-update is requested, check whether the path argument has been passed, and show an error
@@ -256,16 +250,24 @@ int main(const int argc, const char** argv) {
             fullPath = nullptr;
         }
 
-        if (fullPathToAppImage == newFilePath) {
-            cerr << "Skipping removal of old AppImage: old and new AppImage paths are equal" << endl;
-        } else {
+        if (fullPathToAppImage != newFilePath) {
             cerr << "Removing old AppImage: " << pathToAppImage << endl;
             unlink(pathToAppImage.c_str());
+        } else {
+            cerr << "Skipping removal of old AppImage: old and new AppImage filenames are equal" << endl;
+        }
+
+        // TODO: define suffix in some header
+        string backupPath = pathToAppImage + ".zs-old";
+
+        if (isFile(backupPath)) {
+            cerr << "Removing backup: " << backupPath << endl;
+            unlink(backupPath.c_str());
         }
     }
 
     cerr << "Update successful. "
-         << (overwriteOldFile ? "Updated existing file" : "New file created: ") << newFilePath
+         << (overwriteOldFile ? "Updated existing file " : "New file created: ") << newFilePath
          << endl;
 
     return 0;
