@@ -667,5 +667,21 @@ namespace appimage {
 
             return false;
         }
+
+        Updater::ValidationState Updater::validateSignature() {
+            return VALIDATION_FAILED;
+        }
+
+        std::string Updater::signatureValidationMessage(Updater::ValidationState state) {
+            static const std::map<ValidationState, std::string> validationMessages = {
+                {VALIDATION_PASSED, "Signature validation successful"},
+
+                // warning states
+                {VALIDATION_WARNING, "Signature validation warning"},
+
+                // error states
+                {VALIDATION_FAILED, "Signature validation failed"},
+            };
+        }
     }
 }

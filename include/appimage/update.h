@@ -21,6 +21,19 @@ namespace appimage {
                 ERROR,
             };
 
+            // Validation states. Returned by validate()
+            enum ValidationState {
+                // there is only one PASSED state, hence check like == PASSED
+                VALIDATION_PASSED = 0,
+
+                // warning states -- check like >= WARNING && < ERROR
+                VALIDATION_WARNING = 1000,
+                VALIDATION_UNKNOWN_KEY,
+
+                // error states -- check like >= ERROR
+                VALIDATION_FAILED = 2000,
+            };
+
         private:
             // opaque private class
             // without this pattern, the header would require C++11, which is undesirable
@@ -80,6 +93,14 @@ namespace appimage {
 
             // Returns the size of the remote file in bytes
             bool remoteFileSize(off_t& fileSize);
+
+            // Validate AppImage signature
+            // TODO: describe process
+            // Returns a ValidationState value. See ValidationState documentation for more information.
+            ValidationState validateSignature();
+
+            // Returns a description string of the given validation state.
+            std::string signatureValidationMessage(ValidationState state);
         };
     }
 }
