@@ -44,9 +44,6 @@ cp -v "$REPO_ROOT"/resources/*.desktop AppDir/usr/share/applications/
 cp -v "$REPO_ROOT"/resources/*.svg AppDir/usr/share/icons/hicolor/scalable/apps/
 cp -v "$REPO_ROOT"/resources/*.xpm AppDir/resources/
 
-# bundle objdump required for parsing update information
-cp /usr/bin/objdump AppDir/usr/bin/
-
 # determine Git commit ID
 # linuxdeployqt uses this for naming the file
 export VERSION=$(cd "$REPO_ROOT" && git rev-parse --short HEAD)
