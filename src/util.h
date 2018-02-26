@@ -19,6 +19,12 @@
 // library includes
 #include <zsutil.h>
 
+// AppImageKit includes
+extern "C" {
+    #include "getsection.h"
+}
+
+
 namespace appimage {
     namespace update {
         static void removeNewlineCharacters(std::string& str) {
@@ -164,5 +170,24 @@ namespace appimage {
                 exit(1);
             }
         }
-    };
-}
+
+        // Reads an ELF file section and returns its contents.
+        static std::string readElfSection(const std::string& filePath, const std::string& sectionName) {
+            unsigned long offset, length;
+
+            if (get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0) {
+                std::ostringstream oss;
+                oss << "Could not read ELF section " << sectionName << " from file " << filePath;
+                throw std::runtime_error(oss.str());
+            }
+
+            std::ifstream ifs(filePath);
+            ifs.seekg(offset);
+
+            std::vector<char> buffer(length+1, 0);
+            ifs.read(buffer.data(), length);
+
+            return buffer.data();
+        }
+    }; // namespace update
+} // namespace appimage

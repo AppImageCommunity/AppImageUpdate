@@ -22,8 +22,17 @@ add_definitions("-DAPPIMAGEUPDATE_GIT_COMMIT=\"${GIT_COMMIT}\"")
 add_definitions("-DBUILD_DATE=\"${DATE}\"")
 add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
+
+# include ELF micro library
+add_subdirectory(elf)
+
+
 # core library
-add_library(libappimageupdate ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp util.h)
+add_library(
+    libappimageupdate
+    ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp
+    util.h
+)
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libappimageupdate
     PROPERTIES
@@ -31,7 +40,7 @@ set_target_properties(libappimageupdate
     PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update.h
 )
 # link thread libraries
-target_link_libraries(libappimageupdate PRIVATE ${CMAKE_THREAD_LIBS_INIT} libzsync2 ${CPR_LIBRARIES})
+target_link_libraries(libappimageupdate PUBLIC elf PRIVATE ${CMAKE_THREAD_LIBS_INIT} libzsync2 ${CPR_LIBRARIES})
 # include directories, publicly
 target_include_directories(libappimageupdate PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
