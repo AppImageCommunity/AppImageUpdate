@@ -19,6 +19,12 @@
 // library includes
 #include <zsutil.h>
 
+// AppImageKit includes
+extern "C" {
+    #include "getsection.h"
+}
+
+
 namespace appimage {
     namespace update {
         static void removeNewlineCharacters(std::string& str) {
@@ -167,47 +173,21 @@ namespace appimage {
 
         // Reads an ELF file section and returns its contents.
         static std::string readElfSection(const std::string& filePath, const std::string& sectionName) {
-            // first of all, check whether there is an objdump binary next to the current one (probably
-            // the bundled one in the AppImages of AppImageUpdate), otherwise use the system wide
-            std::string objdump;
+            unsigned long offset, length;
 
-            {
-                // TODO: replace this Linux specific solution with something platform independent
-                std::vector<char> buffer(4096);
-                readlink("/proc/self/exe", buffer.data(), buffer.size());
-
-                auto pathToBinary = std::string(buffer.data());
-                auto slashPos = pathToBinary.find_last_of('/');
-                auto bundledObjdump = pathToBinary.substr(0, slashPos) + "/objdump";
-
-                if (isFile(bundledObjdump)) {
-                    objdump = bundledObjdump;
-                } else {
-                    objdump = "objdump";
-                }
+            if (get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0) {
+                std::ostringstream oss;
+                oss << "Could not read ELF section " << sectionName << " from file " << filePath;
+                throw std::runtime_error(oss.str());
             }
 
-            auto command = objdump + " -h \"" + filePath + "\"";
-
-            std::string match;
-            if (!callProgramAndGrepForLine(command, sectionName, match))
-                return "";
-
-            auto parts = split(match);
-            parts.erase(std::remove_if(parts.begin(), parts.end(),
-                [](std::string s) { return s.length() <= 0; }
-            ));
-
-            auto offset = (unsigned long) std::stoi(parts[5], nullptr, 16);
-            auto length = (unsigned long) std::stoi(parts[2], nullptr, 16);
-
             std::ifstream ifs(filePath);
+            ifs.seekg(offset);
 
-            ifs.seekg(offset, std::ios::beg);
-            std::vector<char> rawUpdateInformation(length, '\0');
-            ifs.read(rawUpdateInformation.data(), length);
+            std::vector<char> buffer(length+1, 0);
+            ifs.read(buffer.data(), length);
 
-            return rawUpdateInformation.data();
+            return buffer.data();
         }
     }; // namespace update
 } // namespace appimage
