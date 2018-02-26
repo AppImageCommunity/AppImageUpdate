@@ -72,6 +72,7 @@ namespace appimage {
                 std::string rawUpdateInformation;
                 UpdateInformationType updateInformationType;
                 std::string zsyncUrl;
+                std::vector<char> signature;
 
                 AppImage() : appImageVersion(-1), updateInformationType(INVALID) {};
             };
