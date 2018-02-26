@@ -139,47 +139,8 @@ namespace appimage {
 
                     updateInformation = rawUpdateInformation.data();
                 } else if (appImageType == 2) {
-                    // check whether update information can be found inside the file by calling objdump
-
-                    // first of all, check whether there is an objdump binary next to the current one (probably
-                    // the bundled one in the AppImages of AppImageUpdate), otherwise use the system wide
-                    std::string objdump;
-
-                    {
-                        // TODO: replace this Linux specific solution with something platform independent
-                        std::vector<char> buffer(4096);
-                        readlink("/proc/self/exe", buffer.data(), buffer.size());
-
-                        auto pathToBinary = std::string(buffer.data());
-                        auto slashPos = pathToBinary.find_last_of('/');
-                        auto bundledObjdump = pathToBinary.substr(0, slashPos) + "/objdump";
-
-                        if (isFile(bundledObjdump)) {
-                            objdump = bundledObjdump;
-                        } else {
-                            objdump = "objdump";
-                        }
-                    }
-
-                    auto command = objdump + " -h \"" + pathToAppImage + "\"";
-
-                    std::string match;
-                    if (!callProgramAndGrepForLine(command, ".upd_info", match))
-                        return nullptr;
-
-                    auto parts = split(match);
-                    parts.erase(std::remove_if(parts.begin(), parts.end(),
-                        [](std::string s) { return s.length() <= 0; }
-                    ));
-
-                    auto offset = (unsigned long) std::stoi(parts[5], nullptr, 16);
-                    auto length = (unsigned long) std::stoi(parts[2], nullptr, 16);
-
-                    ifs.seekg(offset, std::ios::beg);
-                    std::vector<char> rawUpdateInformation(length, '\0');
-                    ifs.read(rawUpdateInformation.data(), length);
-
-                    updateInformation = rawUpdateInformation.data();
+                    // try to read ELF section .upd_info
+                    updateInformation = readElfSection(pathToAppImage, ".upd_info");
                 } else {
                     // final try: type 1 AppImages do not have to set the magic bytes, although they should
                     // if the file is both an ELF and an ISO9660 file, we'll suspect it to be a type 1 AppImage, and
