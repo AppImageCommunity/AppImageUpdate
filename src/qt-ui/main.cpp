@@ -22,8 +22,6 @@ int main(int argc, char** argv) {
     cerr << "AppImageUpdate-Qt version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
          << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
 
-    QApplication app(argc, argv);
-
     QCommandLineParser parser;
 
     parser.addHelpOption();
@@ -48,12 +46,18 @@ int main(int argc, char** argv) {
 
     parser.addPositionalArgument("path", "Path to AppImage that should be updated", "<AppImage>");
 
-    parser.process(app);
+    QStringList arguments;
+    for (int i = 0; i < argc; i++)
+        arguments.push_back(argv[i]);
+
+    parser.parse(arguments);
 
     if (parser.isSet(showVersion)) {
         // version has been printed already, so we can just exit here
         return 0;
     }
+
+    QApplication app(argc, argv);
 
     QString pathToAppImage;
 
