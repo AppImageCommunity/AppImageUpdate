@@ -72,7 +72,7 @@ namespace appimage {
                 std::string rawUpdateInformation;
                 UpdateInformationType updateInformationType;
                 std::string zsyncUrl;
-                std::vector<char> signature;
+                std::string signature;
 
                 AppImage() : appImageVersion(-1), updateInformationType(INVALID) {};
             };
@@ -81,6 +81,10 @@ namespace appimage {
         public:
             void issueStatusMessage(const std::string& message) {
                 statusMessages.push_back(message);
+            }
+
+            static const std::string readAppImageSignature(const std::string& pathToAppImage) {
+                return readElfSection(pathToAppImage, ".sha256_sig");
             }
 
             const AppImage* readAppImage(const std::string& pathToAppImage) {
@@ -128,6 +132,9 @@ namespace appimage {
                 // read update information in the file
                 std::string updateInformation;
 
+                // also read signature in the file
+                std::string signature;
+
                 if (appImageType == 1) {
                     // update information is always at the same position, and has a fixed length
                     static constexpr auto position = 0x8373;
@@ -142,6 +149,9 @@ namespace appimage {
                 } else if (appImageType == 2) {
                     // try to read ELF section .upd_info
                     updateInformation = readElfSection(pathToAppImage, ".upd_info");
+
+                    // type 2 supports signatures, so we can extract it here, too
+                    signature = readAppImageSignature(pathToAppImage);
                 } else {
                     // final try: type 1 AppImages do not have to set the magic bytes, although they should
                     // if the file is both an ELF and an ISO9660 file, we'll suspect it to be a type 1 AppImage, and
@@ -334,6 +344,7 @@ namespace appimage {
                 appImage->rawUpdateInformation = updateInformation;
                 appImage->updateInformationType = uiType;
                 appImage->zsyncUrl = zsyncUrl;
+                appImage->signature = signature;
 
                 return appImage;
             }
@@ -435,6 +446,7 @@ namespace appimage {
                         zSyncClient->setCwd(dirPath);
                     } else {
                         // error unsupported type
+                        issueStatusMessage("Error: update method not implemented");
 
                         // cleanup
                         delete appImage;
