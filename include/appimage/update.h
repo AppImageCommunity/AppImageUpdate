@@ -28,10 +28,18 @@ namespace appimage {
 
                 // warning states -- check like >= WARNING && < ERROR
                 VALIDATION_WARNING = 1000,
+                VALIDATION_NOT_SIGNED,
                 VALIDATION_UNKNOWN_KEY,
+                VALIDATION_KEY_CHANGED,
 
                 // error states -- check like >= ERROR
                 VALIDATION_FAILED = 2000,
+                VALIDATION_GPG2_MISSING,
+                VALIDATION_GPG2_CALL_FAILED,
+                VALIDATION_TEMPDIR_CREATION_FAILED,
+                VALIDATION_NO_LONGER_SIGNED,
+                VALIDATION_BAD_SIGNATURE,
+                VALIDATION_UNKNOWN_KEY_AND_CANNOT_FIND_ON_KEYSERVER,
             };
 
         private:
@@ -100,7 +108,7 @@ namespace appimage {
             ValidationState validateSignature();
 
             // Returns a description string of the given validation state.
-            std::string signatureValidationMessage(ValidationState state);
+            static std::string signatureValidationMessage(const ValidationState state);
         };
     }
 }

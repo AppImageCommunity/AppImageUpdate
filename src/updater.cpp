@@ -13,7 +13,9 @@
 
 // library headers
 #include <zsclient.h>
+#include <hashlib/sha256.h>
 #include <cpr/cpr.h>
+#include <ftw.h>
 
 // local headers
 #include "appimage/update.h"
@@ -85,6 +87,47 @@ namespace appimage {
 
             static const std::string readAppImageSignature(const std::string& pathToAppImage) {
                 return readElfSection(pathToAppImage, ".sha256_sig");
+            }
+
+            static const std::string hashAppImage(const std::string& pathToAppImage) {
+                // read offset and length of signature section to skip it later
+                unsigned long offset, length;
+
+                if (!getElfSectionOffsetAndLength(pathToAppImage, ".sha256_sig", offset, length))
+                    return "";
+
+                std::ifstream ifs(pathToAppImage);
+
+                if (!ifs)
+                    return "";
+
+                SHA256 digest;
+
+                // validate.c uses "offset" as chunk size, but that value might be quite high, and therefore uses
+                // a lot of memory
+                // TODO: use a smaller value (maybe use a prime factorization and use the biggest prime factor?)
+                auto chunkSize = offset;
+
+                std::vector<char> buffer(chunkSize, 0);
+
+                long totalBytesRead = 0;
+
+                auto bufsize = buffer.size();
+
+                while (ifs.read(buffer.data(), bufsize)) {
+                    auto bytesRead = ifs.gcount();
+
+                    if (totalBytesRead == offset) {
+                        digest.add(std::vector<char>(length, 0).data(), length);
+                        digest.add(buffer.data() + length, bufsize - length);
+                    } else {
+                        digest.add(buffer.data(), static_cast<size_t>(bytesRead));
+                    }
+
+                    totalBytesRead += bytesRead;
+                }
+
+                return digest.getHash();
             }
 
             const AppImage* readAppImage(const std::string& pathToAppImage) {
@@ -682,19 +725,276 @@ namespace appimage {
         }
 
         Updater::ValidationState Updater::validateSignature() {
-            return VALIDATION_FAILED;
+            std::string pathToNewAppImage;
+            if (!this->pathToNewFile(pathToNewAppImage)) {
+                // return generic error
+                return VALIDATION_FAILED;
+            }
+
+            auto pathToOldAppImage = d->pathToAppImage;
+            if (pathToOldAppImage == pathToNewAppImage) {
+                pathToOldAppImage = pathToNewAppImage + ".zs-old";
+            }
+
+            auto oldSignature = d->readAppImageSignature(d->pathToAppImage);
+            auto newSignature = d->readAppImageSignature(pathToNewAppImage);
+
+            // remove any spaces and/or newline characters there might be on the left or right of the payload
+            zsync2::trim(oldSignature, '\n');
+            zsync2::trim(newSignature, '\n');
+            zsync2::trim(oldSignature);
+            zsync2::trim(newSignature);
+
+            auto oldSigned = !oldSignature.empty();
+            auto newSigned = !newSignature.empty();
+
+            auto oldDigest = d->hashAppImage(pathToOldAppImage);
+            auto newDigest = d->hashAppImage(pathToNewAppImage);
+
+            std::string tempDir;
+            {
+                char* buffer;
+
+                char* pattern = strdup("/tmp/AppImageUpdate-XXXXXX");
+                if ((buffer = mkdtemp(pattern)) == nullptr) {
+                    d->issueStatusMessage("Failed to create temporary directory");
+                    return VALIDATION_TEMPDIR_CREATION_FAILED;
+                }
+
+                tempDir = buffer;
+
+                free(pattern);
+            }
+
+            auto tempFile = [&tempDir](const std::string& filename, const std::string& contents) {
+                std::stringstream path;
+                path << tempDir << "/" << filename;
+
+                auto x = path.str();
+
+                std::ofstream ofs(path.str());
+                ofs << contents << std::flush;
+
+                return path.str();
+            };
+
+            if (!oldSigned && !newSigned)
+                return VALIDATION_NOT_SIGNED;
+
+            else if (oldSigned && !newSigned)
+                return VALIDATION_NO_LONGER_SIGNED;
+
+            // store digests and signatures in files so they can be passed to gpg2
+            auto oldDigestFilename = tempFile("old-digest", oldDigest);
+            auto newDigestFilename = tempFile("new-digest", newDigest);
+
+            auto oldSignatureFilename = tempFile("old-signature", oldSignature);
+            auto newSignatureFilename = tempFile("new-signature", newSignature);
+
+            auto cleanup = [&tempDir]() {
+                // cleanup
+                auto unlinkCb = [](const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+                    int rv = remove(fpath);
+                    if (rv)
+                        perror(fpath);
+                    return rv;
+                };
+                nftw(tempDir.c_str(), unlinkCb, 64, FTW_DEPTH | FTW_PHYS);
+                rmdir(tempDir.c_str());
+            };
+
+            // find gpg2 binary
+            auto gpg2Path = findInPATH("gpg2");
+            if (gpg2Path.empty()) {
+                cleanup();
+                return VALIDATION_GPG2_MISSING;
+            }
+
+            auto verifySignature = [this, &gpg2Path](const std::string& signatureFile, const std::string& digestFile,
+                                               bool& keyFound, bool& goodSignature, std::string& keyID,
+                                               std::string& keyOwner,
+                                               const std::string keyRingPath = ""
+            ) {
+                std::ostringstream oss;
+                oss << "'" << gpg2Path << "'";
+                if (!keyRingPath.empty()) {
+                    oss << " --keyring '" << keyRingPath << "'";
+                }
+                oss << " --verify '" << signatureFile << "' '" << digestFile << "' 2>&1";
+
+                auto command = oss.str();
+
+                // make sure output is in English
+                setenv("LANGUAGE", "C", 1);
+                setenv("LANG", "C", 1);
+                setenv("LC_ALL", "C", 1);
+
+                auto* proc = popen(command.c_str(), "r");
+
+                if (proc == nullptr)
+                    return false;
+
+                char* currentLine = nullptr;
+                size_t lineSize = 0;
+
+                keyFound = true;
+                goodSignature = false;
+
+                while (getline(&currentLine, &lineSize, proc) != -1) {
+                    std::string line = currentLine;
+
+                    d->issueStatusMessage(std::string("gpg2: ") + currentLine);
+
+                    trim(line, '\n');
+                    trim(line);
+
+                    auto splitOwner = [&line]() {
+                        auto parts = split(line, '"');
+
+                        if (parts.size() < 2)
+                            return std::string();
+
+                        auto skip = parts[0].length();
+
+                        return line.substr(skip + 1, line.length() - skip - 2);
+                    };
+
+                    if (stringStartsWith(line, "gpg: Signature made")) {
+                        // extract key
+                        auto parts = split(line);
+
+                        if (*(parts.end() - 3) == "key" && *(parts.end() - 2) == "ID")
+                            keyID = parts.back();
+
+                    } else if (stringStartsWith(line, "gpg: Good signature from")) {
+                        goodSignature = true;
+                        keyOwner = splitOwner();
+                    } else if (stringStartsWith(line, "gpg: BAD signature from")) {
+                        goodSignature = false;
+                        keyOwner = splitOwner();
+                    } else if (stringStartsWith(line, "gpg: Can't check signature: No public key")) {
+                        keyFound = false;
+                    }
+                }
+
+                auto rv = pclose(proc);
+
+                return true;
+            };
+
+            auto tempKeyRingPath = tempDir + "/keyring";
+
+            // create keyring file, otherwise GPG will complain
+            std::ofstream ofs(tempKeyRingPath);
+            ofs.close();
+
+            auto recvKey = [&gpg2Path, &tempKeyRingPath, this](const std::string& keyID) {
+                std::ostringstream oss;
+                oss << "'" << gpg2Path << "' --keyserver pool.sks-keyservers.net "
+                    << " --keyring '" << tempKeyRingPath << "'"
+                    << " --recv-keys '" << keyID << "'";
+
+                auto proc = popen(oss.str().c_str(), "r");
+
+                char* currentLine;
+                size_t lineSize;
+
+                while (getline(&currentLine, &lineSize, proc) != -1) {
+                    d->issueStatusMessage(std::string("gpg2: ") + currentLine);
+                }
+
+                return pclose(proc) == 0;
+            };
+
+            bool oldKeyFound, newKeyFound, oldSignatureGood, newSignatureGood;
+            std::string oldKeyID, newKeyID, oldKeyOwner, newKeyOwner;
+
+            if (oldSigned) {
+                if (!verifySignature(oldSignatureFilename, oldDigestFilename, oldKeyFound, oldSignatureGood, oldKeyID, oldKeyOwner)) {
+                    cleanup();
+                    return VALIDATION_GPG2_CALL_FAILED;
+                }
+
+                if (!oldKeyFound) {
+                    if (!recvKey(oldKeyID)) {
+                        return VALIDATION_UNKNOWN_KEY_AND_CANNOT_FIND_ON_KEYSERVER;
+                    }
+
+                    // don't overwrite oldKeyFound
+                    bool _;
+                    if (!verifySignature(oldSignatureFilename, oldDigestFilename, _, oldSignatureGood, oldKeyID, oldKeyOwner, tempKeyRingPath)) {
+                        cleanup();
+                        return VALIDATION_GPG2_CALL_FAILED;
+                    }
+                }
+            }
+
+            if (newSigned) {
+                if (!verifySignature(newSignatureFilename, oldSignatureFilename, newKeyFound, newSignatureGood, newKeyID, newKeyOwner)) {
+                    cleanup();
+                    return VALIDATION_GPG2_CALL_FAILED;
+                }
+
+                if (!newKeyFound) {
+                    if (!recvKey(oldKeyID)) {
+                        return VALIDATION_UNKNOWN_KEY_AND_CANNOT_FIND_ON_KEYSERVER;
+                    }
+
+                    // don't overwrite newKeyFound
+                    bool _;
+                    if (!verifySignature(newSignatureFilename, oldSignatureFilename, _, newSignatureGood, newKeyID, newKeyOwner, tempKeyRingPath)) {
+                        cleanup();
+                        return VALIDATION_GPG2_CALL_FAILED;
+                    }
+                }
+            }
+
+            if (!oldSignatureGood || !newSignatureGood) {
+                cleanup();
+                return VALIDATION_BAD_SIGNATURE;
+            }
+
+            if (!oldKeyFound || !newKeyFound) {
+                cleanup();
+                return VALIDATION_UNKNOWN_KEY;
+            }
+
+            if (oldSigned && newSigned) {
+                if (oldKeyID != newKeyID) {
+                    cleanup();
+                    return VALIDATION_KEY_CHANGED;
+                }
+            }
+
+            cleanup();
+            return VALIDATION_PASSED;
         }
 
-        std::string Updater::signatureValidationMessage(Updater::ValidationState state) {
+        std::string Updater::signatureValidationMessage(const Updater::ValidationState state) {
             static const std::map<ValidationState, std::string> validationMessages = {
                 {VALIDATION_PASSED, "Signature validation successful"},
 
                 // warning states
                 {VALIDATION_WARNING, "Signature validation warning"},
+                {VALIDATION_NOT_SIGNED, "AppImages not signed"},
+                {VALIDATION_UNKNOWN_KEY, "Unknown key used for signing"},
+                {VALIDATION_KEY_CHANGED, "Key changed for signing AppImages"},
 
                 // error states
                 {VALIDATION_FAILED, "Signature validation failed"},
+                {VALIDATION_GPG2_MISSING, "gpg2 command not found, please install"},
+                {VALIDATION_GPG2_CALL_FAILED, "Call to gpg2 failed"},
+                {VALIDATION_TEMPDIR_CREATION_FAILED, "Failed to create temporary directory"},
+                {VALIDATION_NO_LONGER_SIGNED, "AppImage no longer comes with signature"},
+                {VALIDATION_BAD_SIGNATURE, "Bad signature"},
+                {VALIDATION_UNKNOWN_KEY_AND_CANNOT_FIND_ON_KEYSERVER, "Unknown key and cannot find on keyserver"},
             };
+
+            if (validationMessages.count(state) > 0) {
+                return validationMessages.at(state);
+            }
+
+            return "Unknown validation state";
         }
     }
 }

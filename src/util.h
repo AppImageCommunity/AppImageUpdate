@@ -171,14 +171,25 @@ namespace appimage {
             }
         }
 
+        static bool getElfSectionOffsetAndLength(
+            const std::string& filePath, const std::string& sectionName,
+            unsigned long& offset, unsigned long& length
+        ) {
+            if (get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0) {
+                std::ostringstream oss;
+                oss << "Could not read ELF section " << sectionName << " from file " << filePath;
+                return false;
+            }
+
+            return true;
+        };
+
         // Reads an ELF file section and returns its contents.
         static std::string readElfSection(const std::string& filePath, const std::string& sectionName) {
             unsigned long offset, length;
 
-            if (get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0) {
-                std::ostringstream oss;
-                oss << "Could not read ELF section " << sectionName << " from file " << filePath;
-                throw std::runtime_error(oss.str());
+            if (!getElfSectionOffsetAndLength(filePath, sectionName, offset, length)) {
+                return "";
             }
 
             std::ifstream ifs(filePath);
@@ -189,5 +200,49 @@ namespace appimage {
 
             return buffer.data();
         }
+
+        static std::string findInPATH(const std::string& name) {
+            const std::string PATH = getenv("PATH");
+
+            for (const auto& path : split(PATH, ':')) {
+                std::ostringstream oss;
+                oss << path << "/" << name;
+
+                auto fullPath = oss.str();
+
+                if (isFile(fullPath))
+                    return fullPath;
+            }
+        }
+
+        static bool stringStartsWith(const std::string& string, const std::string& prefix) {
+            return strncmp(string.c_str(), prefix.c_str(), prefix.size()) == 0;
+        }
+
+        static std::string abspath(const std::string& path) {
+            char* fullPath = nullptr;
+
+            if ((fullPath = realpath(path.c_str(), nullptr)) == nullptr) {
+                auto error = errno;
+                std::cerr << "Failed to resolve full path to AppImage: " << strerror(error) << std::endl;
+                return "";
+            }
+
+            std::string rv = fullPath;
+
+            // clean up
+            free(fullPath);
+            fullPath = nullptr;
+
+            return rv;
+        }
+
+        static std::string pathToOldAppImage(const std::string& oldPath, const std::string& newPath) {
+            if (oldPath == newPath) {
+                return newPath + ".zs-old";
+            }
+
+            return abspath(oldPath);
+        };
     }; // namespace update
 } // namespace appimage
