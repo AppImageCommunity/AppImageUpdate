@@ -114,11 +114,15 @@ namespace appimage {
 
                 auto bufsize = buffer.size();
 
-                while (ifs.read(buffer.data(), bufsize)) {
-                    auto bytesRead = ifs.gcount();
+                std::streamsize bytesRead;
+
+                while (ifs) {
+                    ifs.read(buffer.data(), bufsize);
+
+                    bytesRead = ifs.gcount();
 
                     if (totalBytesRead == offset) {
-                        std::fill(buffer.begin(), buffer.begin() + length , '\0');
+                        std::fill(buffer.begin(), buffer.begin() + length, '\0');
                     }
 
                     digest.add(buffer.data(), static_cast<size_t>(bytesRead));
