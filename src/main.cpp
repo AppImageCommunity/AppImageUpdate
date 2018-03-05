@@ -232,6 +232,9 @@ int main(const int argc, const char** argv) {
 
     auto validationResult = updater.validateSignature();
 
+    while (updater.nextStatusMessage(nextMessage))
+        cout << nextMessage << endl;
+
     auto oldFilePath = pathToOldAppImage(pathToAppImage, newFilePath);
 
     if (validationResult >= Updater::VALIDATION_FAILED) {
