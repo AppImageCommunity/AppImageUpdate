@@ -815,8 +815,25 @@ namespace appimage {
                                                std::string& keyOwner,
                                                const std::string keyRingPath = ""
             ) {
+                std::ostringstream appImageUpdateKeyRingPath;
+                auto* APPDIR = getenv("APPDIR");
+
+                if (APPDIR != nullptr) {
+                    // if in an AppImage, build path relative to mountpoint
+                    appImageUpdateKeyRingPath << APPDIR << "/usr/share/appimageupdate/keyring.gpg";
+                } else {
+                    // otherwise, build path relative to application binary
+                    auto binPath = abspath("/proc/self/exe");
+                    char* dirPath = nullptr;
+
+                    if ((dirPath = dirname(const_cast<char*>(binPath.c_str()))) != nullptr) {
+                        appImageUpdateKeyRingPath << dirPath << "/../../resources/appimageupdate-keyring.gpg";
+                    }
+                }
+
                 std::ostringstream oss;
-                oss << "'" << gpg2Path << "'";
+                oss << "'" << gpg2Path << "'"
+                    << " --keyring '" << appImageUpdateKeyRingPath.str() << "'";
                 if (!keyRingPath.empty()) {
                     oss << " --keyring '" << keyRingPath << "'";
                 }
