@@ -860,10 +860,10 @@ namespace appimage {
                 while (getline(&currentLine, &lineSize, proc) != -1) {
                     std::string line = currentLine;
 
-                    d->issueStatusMessage(std::string("gpg2: ") + currentLine);
-
                     trim(line, '\n');
                     trim(line);
+
+                    d->issueStatusMessage(std::string("gpg2: ") + line);
 
                     auto splitOwner = [&line]() {
                         auto parts = split(line, '"');
