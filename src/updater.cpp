@@ -118,11 +118,10 @@ namespace appimage {
                     auto bytesRead = ifs.gcount();
 
                     if (totalBytesRead == offset) {
-                        digest.add(std::vector<char>(length, 0).data(), length);
-                        digest.add(buffer.data() + length, bufsize - length);
-                    } else {
-                        digest.add(buffer.data(), static_cast<size_t>(bytesRead));
+                        std::fill(buffer.begin(), buffer.begin() + length , '\0');
                     }
+
+                    digest.add(buffer.data(), static_cast<size_t>(bytesRead));
 
                     totalBytesRead += bytesRead;
                 }
