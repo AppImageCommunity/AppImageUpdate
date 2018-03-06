@@ -776,7 +776,7 @@ namespace appimage {
                 auto x = path.str();
 
                 std::ofstream ofs(path.str());
-                ofs << contents << std::flush;
+                ofs.write(contents.c_str(), contents.size());
 
                 return path.str();
             };
