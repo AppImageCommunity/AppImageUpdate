@@ -819,6 +819,30 @@ namespace appimage {
             std::ofstream ofs(tempKeyRingPath);
             ofs.close();
 
+            auto importKeyFromAppImage = [&tempKeyRingPath, &gpg2Path](const std::string& path) {
+                auto key = readElfSection(path, ".sig_key");
+
+                if (key.empty())
+                    return false;
+
+                std::ostringstream oss;
+                oss << "'" << gpg2Path << "' "
+                    << "--no-default-keyring --keyring '" << tempKeyRingPath << "' --import";
+
+                auto command = oss.str();
+
+                auto proc = popen(oss.str().c_str(), "w");
+
+                fwrite(key.c_str(), key.size(), sizeof(char), proc);
+
+                auto retval = pclose(proc);
+
+                return retval == 0;
+            };
+
+            importKeyFromAppImage(pathToOldAppImage);
+            importKeyFromAppImage(pathToNewAppImage);
+
             auto verifySignature = [this, &gpg2Path, &tempKeyRingPath](
                 const std::string& signatureFile, const std::string& digestFile,
                 bool& keyFound, bool& goodSignature,
