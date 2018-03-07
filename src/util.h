@@ -210,6 +210,7 @@ namespace appimage {
 
                 auto fullPath = oss.str();
 
+                // TODO: check whether file is actually executable
                 if (isFile(fullPath))
                     return fullPath;
             }

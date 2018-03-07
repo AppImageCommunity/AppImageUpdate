@@ -906,24 +906,6 @@ namespace appimage {
                 return true;
             };
 
-            auto recvKey = [&gpg2Path, &tempKeyRingPath, this](const std::string& keyID) {
-                std::ostringstream oss;
-                oss << "'" << gpg2Path << "' --keyserver pool.sks-keyservers.net "
-                    << " --keyring '" << tempKeyRingPath << "'"
-                    << " --recv-keys '" << keyID << "'";
-
-                auto proc = popen(oss.str().c_str(), "r");
-
-                char* currentLine;
-                size_t lineSize;
-
-                while (getline(&currentLine, &lineSize, proc) != -1) {
-                    d->issueStatusMessage(std::string("gpg2: ") + currentLine);
-                }
-
-                return pclose(proc) == 0;
-            };
-
             bool oldKeyFound = false, newKeyFound = false, oldSignatureGood = false, newSignatureGood = false;
             std::string oldKeyID, newKeyID, oldKeyOwner, newKeyOwner;
 
@@ -932,38 +914,12 @@ namespace appimage {
                     cleanup();
                     return VALIDATION_GPG2_CALL_FAILED;
                 }
-
-                if (!oldKeyFound) {
-                    if (!recvKey(oldKeyID)) {
-                        return VALIDATION_UNKNOWN_KEY_AND_CANNOT_FIND_ON_KEYSERVER;
-                    }
-
-                    // don't overwrite oldKeyFound
-                    bool _;
-                    if (!verifySignature(oldSignatureFilename, oldDigestFilename, _, oldSignatureGood, oldKeyID, oldKeyOwner)) {
-                        cleanup();
-                        return VALIDATION_GPG2_CALL_FAILED;
-                    }
-                }
             }
 
             if (newSigned) {
                 if (!verifySignature(newSignatureFilename, oldSignatureFilename, newKeyFound, newSignatureGood, newKeyID, newKeyOwner)) {
                     cleanup();
                     return VALIDATION_GPG2_CALL_FAILED;
-                }
-
-                if (!newKeyFound) {
-                    if (!recvKey(oldKeyID)) {
-                        return VALIDATION_UNKNOWN_KEY_AND_CANNOT_FIND_ON_KEYSERVER;
-                    }
-
-                    // don't overwrite newKeyFound
-                    bool _;
-                    if (!verifySignature(newSignatureFilename, oldSignatureFilename, _, newSignatureGood, newKeyID, newKeyOwner)) {
-                        cleanup();
-                        return VALIDATION_GPG2_CALL_FAILED;
-                    }
                 }
             }
 
@@ -973,8 +929,10 @@ namespace appimage {
             }
 
             if (!oldKeyFound || !newKeyFound) {
+                // if the keys haven't been embedded in the AppImages, we treat them as not signed
+                // see https://github.com/AppImage/AppImageUpdate/issues/16#issuecomment-370932698 for details
                 cleanup();
-                return VALIDATION_UNKNOWN_KEY;
+                return VALIDATION_NOT_SIGNED;
             }
 
             if (oldSigned && newSigned) {
@@ -995,7 +953,6 @@ namespace appimage {
                 // warning states
                 {VALIDATION_WARNING, "Signature validation warning"},
                 {VALIDATION_NOT_SIGNED, "AppImages not signed"},
-                {VALIDATION_UNKNOWN_KEY, "Unknown key used for signing"},
                 {VALIDATION_KEY_CHANGED, "Key changed for signing AppImages"},
 
                 // error states
@@ -1005,7 +962,6 @@ namespace appimage {
                 {VALIDATION_TEMPDIR_CREATION_FAILED, "Failed to create temporary directory"},
                 {VALIDATION_NO_LONGER_SIGNED, "AppImage no longer comes with signature"},
                 {VALIDATION_BAD_SIGNATURE, "Bad signature"},
-                {VALIDATION_UNKNOWN_KEY_AND_CANNOT_FIND_ON_KEYSERVER, "Unknown key and cannot find on keyserver"},
             };
 
             if (validationMessages.count(state) > 0) {
