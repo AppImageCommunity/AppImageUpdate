@@ -813,10 +813,16 @@ namespace appimage {
                 return VALIDATION_GPG2_MISSING;
             }
 
-            auto verifySignature = [this, &gpg2Path](const std::string& signatureFile, const std::string& digestFile,
-                                               bool& keyFound, bool& goodSignature, std::string& keyID,
-                                               std::string& keyOwner,
-                                               const std::string keyRingPath = ""
+            const auto tempKeyRingPath = tempDir + "/keyring";
+
+            // create keyring file, otherwise GPG will complain
+            std::ofstream ofs(tempKeyRingPath);
+            ofs.close();
+
+            auto verifySignature = [this, &gpg2Path, &tempKeyRingPath](
+                const std::string& signatureFile, const std::string& digestFile,
+                bool& keyFound, bool& goodSignature,
+                std::string& keyID, std::string& keyOwner
             ) {
                 std::ostringstream appImageUpdateKeyRingPath;
                 auto* APPDIR = getenv("APPDIR");
@@ -836,11 +842,9 @@ namespace appimage {
 
                 std::ostringstream oss;
                 oss << "'" << gpg2Path << "'"
-                    << " --keyring '" << appImageUpdateKeyRingPath.str() << "'";
-                if (!keyRingPath.empty()) {
-                    oss << " --keyring '" << keyRingPath << "'";
-                }
-                oss << " --verify '" << signatureFile << "' '" << digestFile << "' 2>&1";
+                    << " --keyring '" << appImageUpdateKeyRingPath.str() << "'"
+                    << " --keyring '" << tempKeyRingPath << "'"
+                    << " --verify '" << signatureFile << "' '" << digestFile << "' 2>&1";
 
                 auto command = oss.str();
 
@@ -902,12 +906,6 @@ namespace appimage {
                 return true;
             };
 
-            auto tempKeyRingPath = tempDir + "/keyring";
-
-            // create keyring file, otherwise GPG will complain
-            std::ofstream ofs(tempKeyRingPath);
-            ofs.close();
-
             auto recvKey = [&gpg2Path, &tempKeyRingPath, this](const std::string& keyID) {
                 std::ostringstream oss;
                 oss << "'" << gpg2Path << "' --keyserver pool.sks-keyservers.net "
@@ -926,7 +924,7 @@ namespace appimage {
                 return pclose(proc) == 0;
             };
 
-            bool oldKeyFound, newKeyFound, oldSignatureGood, newSignatureGood;
+            bool oldKeyFound = false, newKeyFound = false, oldSignatureGood = false, newSignatureGood = false;
             std::string oldKeyID, newKeyID, oldKeyOwner, newKeyOwner;
 
             if (oldSigned) {
@@ -942,7 +940,7 @@ namespace appimage {
 
                     // don't overwrite oldKeyFound
                     bool _;
-                    if (!verifySignature(oldSignatureFilename, oldDigestFilename, _, oldSignatureGood, oldKeyID, oldKeyOwner, tempKeyRingPath)) {
+                    if (!verifySignature(oldSignatureFilename, oldDigestFilename, _, oldSignatureGood, oldKeyID, oldKeyOwner)) {
                         cleanup();
                         return VALIDATION_GPG2_CALL_FAILED;
                     }
@@ -962,7 +960,7 @@ namespace appimage {
 
                     // don't overwrite newKeyFound
                     bool _;
-                    if (!verifySignature(newSignatureFilename, oldSignatureFilename, _, newSignatureGood, newKeyID, newKeyOwner, tempKeyRingPath)) {
+                    if (!verifySignature(newSignatureFilename, oldSignatureFilename, _, newSignatureGood, newKeyID, newKeyOwner)) {
                         cleanup();
                         return VALIDATION_GPG2_CALL_FAILED;
                     }
