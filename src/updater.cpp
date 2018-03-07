@@ -824,25 +824,8 @@ namespace appimage {
                 bool& keyFound, bool& goodSignature,
                 std::string& keyID, std::string& keyOwner
             ) {
-                std::ostringstream appImageUpdateKeyRingPath;
-                auto* APPDIR = getenv("APPDIR");
-
-                if (APPDIR != nullptr) {
-                    // if in an AppImage, build path relative to mountpoint
-                    appImageUpdateKeyRingPath << APPDIR << "/usr/share/appimageupdate/keyring.gpg";
-                } else {
-                    // otherwise, build path relative to application binary
-                    auto binPath = abspath("/proc/self/exe");
-                    char* dirPath = nullptr;
-
-                    if ((dirPath = dirname(const_cast<char*>(binPath.c_str()))) != nullptr) {
-                        appImageUpdateKeyRingPath << dirPath << "/../../resources/appimageupdate-keyring.gpg";
-                    }
-                }
-
                 std::ostringstream oss;
                 oss << "'" << gpg2Path << "'"
-                    << " --keyring '" << appImageUpdateKeyRingPath.str() << "'"
                     << " --keyring '" << tempKeyRingPath << "'"
                     << " --verify '" << signatureFile << "' '" << digestFile << "' 2>&1";
 
@@ -923,16 +906,16 @@ namespace appimage {
                 }
             }
 
-            if (!oldSignatureGood || !newSignatureGood) {
-                cleanup();
-                return VALIDATION_BAD_SIGNATURE;
-            }
-
             if (!oldKeyFound || !newKeyFound) {
                 // if the keys haven't been embedded in the AppImages, we treat them as not signed
                 // see https://github.com/AppImage/AppImageUpdate/issues/16#issuecomment-370932698 for details
                 cleanup();
                 return VALIDATION_NOT_SIGNED;
+            }
+
+            if (!oldSignatureGood || !newSignatureGood) {
+                cleanup();
+                return VALIDATION_BAD_SIGNATURE;
             }
 
             if (oldSigned && newSigned) {
