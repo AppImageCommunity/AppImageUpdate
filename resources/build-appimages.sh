@@ -73,7 +73,6 @@ chmod +x linuxdeployqt-continuous-x86_64.AppImage
     AppDir/usr/share/applications/appimageupdatetool.desktop \
     -verbose=1 -bundle-non-qt-libs \
     -executable=AppDir/usr/bin/AppImageUpdate \
-    -executable=AppDir/usr/bin/objdump \
     -executable=AppDir/usr/bin/AppImageUpdate-Qt
 
 # get appimagetool
