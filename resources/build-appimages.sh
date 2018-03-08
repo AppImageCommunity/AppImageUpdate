@@ -117,7 +117,9 @@ pushd AppDir
 rm usr/bin/AppImageUpdate-Qt
 rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
-find usr/lib/ -type f -print -delete
+find usr/lib/ -print -delete
+find usr/plugins/ -print -delete
+find usr/share/ -print -delete
 popd
 
 find AppDir/
@@ -146,7 +148,9 @@ pushd AppDir
 rm usr/bin/AppImageUpdate
 rm AppRun && ln -s usr/bin/appimageupdatetool AppRun
 rm *.desktop && cp usr/share/applications/appimageupdatetool.desktop .
-find usr/lib/ -type f -print -delete
+find usr/lib/ -print -delete
+find usr/plugins/ -print -delete
+find usr/share/ -print -delete
 popd
 
 find AppDir/
