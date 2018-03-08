@@ -140,8 +140,8 @@ fi
 # change AppDir root to fit the CLI
 pushd AppDir
 rm usr/bin/AppImageUpdate
-rm AppRun && ln -s usr/bin/AppImageUpdate-Qt AppRun
-rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
+rm AppRun && ln -s usr/bin/appimageupdatetool AppRun
+rm *.desktop && cp usr/share/applications/appimageupdatetool.desktop .
 find usr/lib/ -type f -print -delete
 popd
 
