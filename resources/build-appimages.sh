@@ -53,34 +53,49 @@ if [ "$TRAVIS_BUILD_NUMBER" != "" ]; then
     export VERSION="$TRAVIS_BUILD_NUMBER-$VERSION"
 fi
 
+
+# "unbundle" FLTK binaries
+find AppDir/usr/bin -type f -executable -iname 'fltk*' -print -delete
+find AppDir/usr/bin -type f -executable -iname 'fluid' -print -delete
+# also "unbundle" zsync2 binaries
+find AppDir/usr/bin -type f -executable -iname 'zsync*' -print -delete
+
+# remove other unnecessary data
+find AppDir -type f -iname '*.a' -delete
+rm -rf AppDir/usr/include
+
+
 # get linuxdeployqt
 wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
 chmod +x linuxdeployqt-continuous-x86_64.AppImage
-
-# bundle applications
-./linuxdeployqt-continuous-x86_64.AppImage \
-    AppDir/usr/share/applications/appimageupdatetool.desktop \
-    -verbose=1 -bundle-non-qt-libs \
-    -executable=AppDir/usr/bin/AppImageUpdate \
-    -executable=AppDir/usr/bin/objdump \
-    -executable=AppDir/usr/bin/AppImageUpdate-Qt
 
 # get appimagetool
 wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
 chmod +x appimagetool-x86_64.AppImage
 
-# remove unnecessary data
-find AppDir -type f -iname '*.a' -delete
-rm -rf AppDir/usr/include
 
-if [ ! -x AppDir/usr/bin/appimageupdatetool ]; then
-    echo "Error: appimageupdatetool binary not found!"
+### AppImageUpdate-Qt
+
+if [ ! -x AppDir/usr/bin/AppImageUpdate-Qt ]; then
+    echo "Error: AppImageUpdate-Qt binary not found!"
     exit 1
 fi
 
-# create appimageupdatetool AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \
-    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdatetool-*x86_64.AppImage.zsync'
+find AppDir/
+
+# bundle application
+./linuxdeployqt-continuous-x86_64.AppImage \
+    AppDir/usr/share/applications/AppImageUpdate-Qt.desktop \
+    -verbose=1 -bundle-non-qt-libs
+
+# create AppImageUpdate AppImage
+./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate-Qt.ignore AppDir \
+    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-Qt-*x86_64.AppImage.zsync'
+
+### AppImageUpdate-Qt
+
+
+### AppImageUpdate
 
 if [ ! -x AppDir/usr/bin/AppImageUpdate ]; then
     echo "Error: AppImageUpdate binary not found!"
@@ -89,28 +104,59 @@ fi
 
 # change AppDir root to fit the GUI
 pushd AppDir
+rm usr/bin/AppImageUpdate-Qt
 rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
+find usr/lib/ -print -delete
+find usr/plugins/ -print -delete
+find usr/share/ -type f -not -iname '*.desktop' -print -delete
+find usr/ -type d -empty -print -delete
 popd
+
+find AppDir/
+
+# bundle application
+./linuxdeployqt-continuous-x86_64.AppImage \
+    AppDir/usr/share/applications/AppImageUpdate.desktop \
+    -verbose=1 -bundle-non-qt-libs
 
 # create AppImageUpdate AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir \
     -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync'
 
-if [ ! -x AppDir/usr/bin/AppImageUpdate-Qt ]; then
-    echo "Error: AppImageUpdate-Qt binary not found!"
+if [ ! -x AppDir/usr/bin/appimageupdatetool ]; then
+    echo "Error: appimageupdatetool binary not found!"
     exit 1
 fi
 
-# change AppDir root to fit the Qt UI
+### AppImageUpdate
+
+
+### appimageupdatetool
+
+# change AppDir root to fit the CLI
 pushd AppDir
-rm AppRun && ln -s usr/bin/AppImageUpdate-Qt AppRun
-rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
+rm usr/bin/AppImageUpdate
+rm AppRun && ln -s usr/bin/appimageupdatetool AppRun
+rm *.desktop && cp usr/share/applications/appimageupdatetool.desktop .
+find usr/lib/ -print -delete
+find usr/share/ -type f -not -iname '*.desktop' -print -delete
+find usr/ -type d -empty -print -delete
 popd
 
-# create AppImageUpdate AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate-Qt.ignore AppDir \
-    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-Qt-*x86_64.AppImage.zsync'
+find AppDir/
+
+# bundle application
+./linuxdeployqt-continuous-x86_64.AppImage \
+    AppDir/usr/share/applications/appimageupdatetool.desktop \
+    -verbose=1 -bundle-non-qt-libs
+
+# create appimageupdatetool AppImage
+./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \
+    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdatetool-*x86_64.AppImage.zsync'
+
+### appimageupdatetool
+
 
 # move AppImages to old cwd
 mv {appimageupdatetool,AppImageUpdate}*.AppImage* "$OLD_CWD"/
