@@ -109,6 +109,19 @@ namespace appimage {
                 void startUpdate() {
                     updater->start();
                 }
+
+                void addLogMessage(const std::string& message) {
+                    spoilerLog->moveCursor(QTextCursor::End);
+                    std::ostringstream oss;
+                    if (spoilerLog->toPlainText().length() > 0)
+                        oss << std::endl;
+                    oss << message;
+                    spoilerLog->insertPlainText(QString::fromStdString(oss.str()));
+                }
+
+                void addLogMessage(const QString& message) {
+                    addLogMessage(message.toStdString());
+                }
             };
 
             QtUpdater::QtUpdater(QString& pathToAppImage) {
@@ -151,7 +164,7 @@ namespace appimage {
                 d->validationStateLabel = new QLabel(this);
                 d->validationStateLabel->setMinimumWidth(d->minimumWidth);
                 d->validationStateLabel->setText("");
-                d->validationStateLabel->setFixedWidth(180);
+                d->validationStateLabel->setFixedWidth(250);
                 d->labelLayout->addWidget(d->validationStateLabel, 0, Qt::AlignLeft);
 
                 d->progressLabel = new QLabel(this);
@@ -204,11 +217,7 @@ namespace appimage {
                 std::string nextMessage;
                 while (d->updater->nextStatusMessage(nextMessage)) {
                     std::cerr << nextMessage << std::endl;
-
-                    d->spoilerLog->moveCursor(QTextCursor::End);
-                    std::ostringstream oss;
-                    oss << nextMessage << std::endl;
-                    d->spoilerLog->insertPlainText(QString::fromStdString(oss.str()));
+                    d->addLogMessage(nextMessage);
                 }
 
                 if (d->updater->isDone()) {
@@ -216,18 +225,61 @@ namespace appimage {
 
                     d->progressTimer->stop();
 
-                    auto palette = d->progressBar->palette();
+                    auto setColor = [this](const QColor& color) {
+                        auto progressBarPalette = d->progressBar->palette();
+                        progressBarPalette.setColor(QPalette::Text, Qt::black);
+                        progressBarPalette.setColor(QPalette::HighlightedText, Qt::black);
+                        progressBarPalette.setColor(QPalette::Highlight, color);
+                        d->progressBar->setPalette(progressBarPalette);
+
+                        auto validationStateLabelPalette = d->validationStateLabel->palette();
+                        validationStateLabelPalette.setColor(QPalette::Background, color);
+                        d->validationStateLabel->setAutoFillBackground(true);
+                        d->validationStateLabel->setPalette(validationStateLabelPalette);
+                    };
+
+                    auto setText = [this](const QString& text) {
+                        d->validationStateLabel->setText(text);
+                    };
 
                     if (d->updater->hasError()) {
                         d->label->setText("Update failed!");
-                        palette.setColor(QPalette::Highlight, Qt::red);
+                        setColor(Qt::red);
+                    }
+
+                    auto validationState = d->updater->validateSignature();
+                    auto validationMessage = QString::fromStdString(Updater::signatureValidationMessage(validationState));
+
+                    d->addLogMessage("Signature validation state: " + validationMessage);
+
+                    if (validationState >= Updater::VALIDATION_FAILED) {
+                        setColor(Qt::red);
+                        setText("Error: " + validationMessage);
+
+                        std::string newFilePath;
+
+                        if (!d->updater->pathToNewFile(newFilePath))
+                            throw std::runtime_error("Failed to fetch new file path!");
+
+                        auto oldFilePath = pathToOldAppImage(d->pathToAppImage.toStdString(), newFilePath);
+
+                        d->addLogMessage(std::string("Signature validation failed, restoring old AppImage"));
+
+                        // restore original file
+                        std::remove(newFilePath.c_str());
+
+                        if (oldFilePath == newFilePath) {
+                            std::rename(oldFilePath.c_str(), newFilePath.c_str());
+                        }
+                    } else if (validationState >= Updater::VALIDATION_WARNING) {
+                        setColor(Qt::yellow);
+                        setText("Warning: " + validationMessage);
                     } else {
-                        d->label->setText("Update successful!");
-                        palette.setColor(QPalette::Highlight, Qt::green);
+                        setColor(Qt::green);
+                        setText(validationMessage);
                     }
 
                     // TODO: doesn't work with the Gtk+ platform theme
-                    d->progressBar->setPalette(palette);
 
                     // replace button box
                     disconnect(d->buttonBox, SIGNAL(rejected()));
