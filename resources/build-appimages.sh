@@ -62,6 +62,10 @@ find AppDir/usr/bin -type f -executable -iname 'fluid' -print -delete
 # also "unbundle" zsync2 binaries
 find AppDir/usr/bin -type f -executable -iname 'zsync*' -print -delete
 
+# remove other unnecessary data
+find AppDir -type f -iname '*.a' -delete
+rm -rf AppDir/usr/include
+
 if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
     for i in AppDir/usr/bin/*; do
         if [ -x "$i" ]; then
@@ -70,29 +74,25 @@ if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
     done
 fi
 
+
 # get linuxdeployqt
 wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
 chmod +x linuxdeployqt-continuous-x86_64.AppImage
-
-# bundle applications
-./linuxdeployqt-continuous-x86_64.AppImage \
-    AppDir/usr/share/applications/appimageupdatetool.desktop \
-    -verbose=1 -bundle-non-qt-libs \
-    -executable=AppDir/usr/bin/AppImageUpdate \
-    -executable=AppDir/usr/bin/AppImageUpdate-Qt
 
 # get appimagetool
 wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
 chmod +x appimagetool-x86_64.AppImage
 
-# remove unnecessary data
-find AppDir -type f -iname '*.a' -delete
-rm -rf AppDir/usr/include
 
 if [ ! -x AppDir/usr/bin/appimageupdatetool ]; then
     echo "Error: appimageupdatetool binary not found!"
     exit 1
 fi
+
+# bundle applications
+./linuxdeployqt-continuous-x86_64.AppImage \
+    AppDir/usr/share/applications/appimageupdatetool.desktop \
+    -verbose=1 -bundle-non-qt-libs
 
 # create appimageupdatetool AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \
@@ -107,7 +107,13 @@ fi
 pushd AppDir
 rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
+rm -rf usr/lib
 popd
+
+# bundle application
+./linuxdeployqt-continuous-x86_64.AppImage \
+    AppDir/usr/share/applications/AppImageUpdate.desktop \
+    -verbose=1 -bundle-non-qt-libs
 
 # create AppImageUpdate AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir \
@@ -123,6 +129,11 @@ pushd AppDir
 rm AppRun && ln -s usr/bin/AppImageUpdate-Qt AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
 popd
+
+# bundle application
+./linuxdeployqt-continuous-x86_64.AppImage \
+    AppDir/usr/share/applications/AppImageUpdate-Qt.desktop \
+    -verbose=1 -bundle-non-qt-libs
 
 # create AppImageUpdate AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate-Qt.ignore AppDir \
