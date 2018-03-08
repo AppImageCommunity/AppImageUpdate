@@ -107,7 +107,7 @@ fi
 pushd AppDir
 rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
-rm -rf usr/lib
+find usr/lib/ -type f -iname '*.so' -not -iname 'libappimageupdate*' -print -delete
 popd
 
 # bundle application
@@ -128,6 +128,7 @@ fi
 pushd AppDir
 rm AppRun && ln -s usr/bin/AppImageUpdate-Qt AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
+find usr/lib/ -type f -iname '*.so' -not -iname 'libappimageupdate*' -print -delete
 popd
 
 # bundle application
