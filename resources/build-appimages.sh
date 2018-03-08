@@ -56,6 +56,9 @@ if [ "$TRAVIS_BUILD_NUMBER" != "" ]; then
     export VERSION="$TRAVIS_BUILD_NUMBER-$VERSION"
 fi
 
+# "unbundle" FLTK binaries
+find AppDir/usr/bin -type f -executable -iname 'fltk*' -print -delete
+
 if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
     for i in AppDir/usr/bin/*; do
         if [ -x "$i" ]; then
