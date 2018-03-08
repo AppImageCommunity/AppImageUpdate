@@ -56,6 +56,14 @@ if [ "$TRAVIS_BUILD_NUMBER" != "" ]; then
     export VERSION="$TRAVIS_BUILD_NUMBER-$VERSION"
 fi
 
+if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
+    for i in AppDir/usr/bin/*; do
+        if [ -x "$i" ]; then
+            strip "$i"
+        fi
+    done
+fi
+
 # get linuxdeployqt
 wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
 chmod +x linuxdeployqt-continuous-x86_64.AppImage
