@@ -56,6 +56,7 @@ if [ "$TRAVIS_BUILD_NUMBER" != "" ]; then
     export VERSION="$TRAVIS_BUILD_NUMBER-$VERSION"
 fi
 
+
 # "unbundle" FLTK binaries
 find AppDir/usr/bin -type f -executable -iname 'fltk*' -print -delete
 find AppDir/usr/bin -type f -executable -iname 'fluid' -print -delete
@@ -65,14 +66,6 @@ find AppDir/usr/bin -type f -executable -iname 'zsync*' -print -delete
 # remove other unnecessary data
 find AppDir -type f -iname '*.a' -delete
 rm -rf AppDir/usr/include
-
-if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
-    for i in AppDir/usr/bin/*; do
-        if [ -x "$i" ]; then
-            strip "$i"
-        fi
-    done
-fi
 
 
 # get linuxdeployqt
