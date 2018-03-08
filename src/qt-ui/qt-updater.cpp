@@ -31,7 +31,9 @@ namespace appimage {
                 appimage::update::Updater* updater;
 
                 QLabel* label;
+                QHBoxLayout* labelLayout;
                 QLabel* progressLabel;
+                QLabel* validationStateLabel;
                 QDialogButtonBox* buttonBox;
 
                 QProgressBar* progressBar;
@@ -57,7 +59,9 @@ namespace appimage {
                                                             mainLayout(nullptr),
                                                             label(nullptr),
                                                             progressTimer(nullptr),
+                                                            labelLayout(nullptr),
                                                             progressLabel(nullptr),
+                                                            validationStateLabel(nullptr),
                                                             pathToAppImage(pathToAppImage),
                                                             spoiler(nullptr),
                                                             spoilerLayout(nullptr),
@@ -139,16 +143,29 @@ namespace appimage {
                 d->progressBar->setMinimumWidth(d->minimumWidth);
                 d->progressBar->setMinimum(0);
                 d->progressBar->setMaximum(100);
+                d->progressBar->resize(100, 20);
                 layout()->addWidget(d->progressBar);
+
+                d->labelLayout = new QHBoxLayout();
+
+                d->validationStateLabel = new QLabel(this);
+                d->validationStateLabel->setMinimumWidth(d->minimumWidth);
+                d->validationStateLabel->setText("");
+                d->validationStateLabel->setFixedWidth(180);
+                d->labelLayout->addWidget(d->validationStateLabel, 0, Qt::AlignLeft);
 
                 d->progressLabel = new QLabel(this);
                 d->progressLabel->setMinimumWidth(d->minimumWidth);
-                d->progressLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
                 d->progressLabel->setText("Starting update...");
-                layout()->addWidget(d->progressLabel);
+                d->progressLabel->setAlignment(Qt::AlignRight);
+                d->progressLabel->setFixedWidth(120);
+                d->labelLayout->addWidget(d->progressLabel, 0, Qt::AlignRight);
+
+                layout()->addItem(d->labelLayout);
+
 
                 d->spoiler = new Spoiler("Details");
-                d->spoiler->resize(QSize(d->minimumWidth, 200));
+                d->spoiler->resize(QSize(d->minimumWidth, 180));
                 d->spoilerLayout = new QVBoxLayout();
                 d->spoilerLog = new QPlainTextEdit();
                 d->spoilerLog->setReadOnly(true);
