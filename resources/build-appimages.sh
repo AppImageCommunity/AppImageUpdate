@@ -131,7 +131,8 @@ rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
 popd
 
 # bundle application
-env LD_LIBRARY_PATH="AppDir/usr/lib/" \
+find $(readlink -f "AppDir/usr/lib/")
+env LD_LIBRARY_PATH=$(readlink -f "AppDir/usr/lib/") \
     ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/AppImageUpdate-Qt.desktop \
     -verbose=1 -bundle-non-qt-libs
