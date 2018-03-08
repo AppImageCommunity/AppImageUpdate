@@ -112,6 +112,7 @@ fi
 
 # change AppDir root to fit the GUI
 pushd AppDir
+rm usr/bin/AppImageUpdate-Qt
 rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
 find usr/lib/ -type f -print -delete
@@ -138,6 +139,7 @@ fi
 
 # change AppDir root to fit the CLI
 pushd AppDir
+rm usr/bin/AppImageUpdate
 rm AppRun && ln -s usr/bin/AppImageUpdate-Qt AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
 find usr/lib/ -type f -print -delete
