@@ -58,6 +58,9 @@ fi
 
 # "unbundle" FLTK binaries
 find AppDir/usr/bin -type f -executable -iname 'fltk*' -print -delete
+find AppDir/usr/bin -type f -executable -iname 'fluid' -print -delete
+# also "unbundle" zsync2 binaries
+find AppDir/usr/bin -type f -executable -iname 'zsync*' -print -delete
 
 if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
     for i in AppDir/usr/bin/*; do
