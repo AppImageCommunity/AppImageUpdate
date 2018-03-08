@@ -91,6 +91,8 @@ if [ ! -x AppDir/usr/bin/AppImageUpdate-Qt ]; then
     exit 1
 fi
 
+find AppDir/
+
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/AppImageUpdate-Qt.desktop \
@@ -118,6 +120,8 @@ rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
 find usr/lib/ -type f -print -delete
 popd
 
+find AppDir/
+
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/AppImageUpdate.desktop \
@@ -144,6 +148,8 @@ rm AppRun && ln -s usr/bin/appimageupdatetool AppRun
 rm *.desktop && cp usr/share/applications/appimageupdatetool.desktop .
 find usr/lib/ -type f -print -delete
 popd
+
+find AppDir/
 
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
