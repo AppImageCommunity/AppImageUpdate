@@ -119,7 +119,7 @@ rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
 rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
 find usr/lib/ -print -delete
 find usr/plugins/ -print -delete
-find usr/share/ -print -delete
+find usr/share/ -not -iname '*.desktop' -print -delete
 popd
 
 find AppDir/
@@ -150,7 +150,7 @@ rm AppRun && ln -s usr/bin/appimageupdatetool AppRun
 rm *.desktop && cp usr/share/applications/appimageupdatetool.desktop .
 find usr/lib/ -print -delete
 find usr/plugins/ -print -delete
-find usr/share/ -print -delete
+find usr/share/ -not -iname '*.desktop' -print -delete
 popd
 
 find AppDir/
