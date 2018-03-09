@@ -92,7 +92,7 @@ find AppDir/
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/AppImageUpdate.desktop \
-    "${LINUXDEPLOYQT_ARGS[@]}" \
+    $LINUXDEPLOYQT_ARGS \
     -verbose=1 -bundle-non-qt-libs
 
 # create AppImageUpdate AppImage
@@ -124,7 +124,7 @@ find AppDir/
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/appimageupdatetool.desktop \
-    "${LINUXDEPLOYQT_ARGS[@]}" \
+    $LINUXDEPLOYQT_ARGS \
     -verbose=1 -bundle-non-qt-libs
 
 # create appimageupdatetool AppImage
