@@ -73,6 +73,13 @@ wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appima
 chmod +x appimagetool-x86_64.AppImage
 
 
+LINUXDEPLOYQT_ARGS=
+
+if [ "$CI" == "" ]; then
+    LINUXDEPLOYQT_ARGS="-no-copy-copyright-files"
+fi
+
+
 ### AppImageUpdate
 
 if [ ! -x AppDir/usr/bin/AppImageUpdate ]; then
@@ -80,21 +87,12 @@ if [ ! -x AppDir/usr/bin/AppImageUpdate ]; then
     exit 1
 fi
 
-# change AppDir root to fit the GUI
-pushd AppDir
-rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
-rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
-find usr/lib/ -print -delete
-find usr/plugins/ -print -delete
-find usr/share/ -type f -not -iname '*.desktop' -print -delete
-find usr/ -type d -empty -print -delete
-popd
-
 find AppDir/
 
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/AppImageUpdate.desktop \
+    "${LINUXDEPLOYQT_ARGS[@]}" \
     -verbose=1 -bundle-non-qt-libs
 
 # create AppImageUpdate AppImage
@@ -126,6 +124,7 @@ find AppDir/
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/appimageupdatetool.desktop \
+    "${LINUXDEPLOYQT_ARGS[@]}" \
     -verbose=1 -bundle-non-qt-libs
 
 # create appimageupdatetool AppImage
