@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.2)
 
 # ELF library
 # extracted from AppImageKit source code
-# TODO: either turn this into a real library and use it in both projects,
-# or add a submodule/ExternalProject and build a library from it
 
 # library requires C99
 set(CMAKE_C_STANDARD 99)
