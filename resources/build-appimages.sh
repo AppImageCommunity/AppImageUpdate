@@ -27,7 +27,6 @@ OLD_CWD=$(readlink -f .)
 pushd "$BUILD_DIR"
 
 cmake "$REPO_ROOT" \
-    -DBUILD_FLTK_UI=ON \
     -DBUILD_QT_UI=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -74,25 +73,11 @@ wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appima
 chmod +x appimagetool-x86_64.AppImage
 
 
-### AppImageUpdate-Qt
+LINUXDEPLOYQT_ARGS=
 
-if [ ! -x AppDir/usr/bin/AppImageUpdate-Qt ]; then
-    echo "Error: AppImageUpdate-Qt binary not found!"
-    exit 1
+if [ "$CI" == "" ]; then
+    LINUXDEPLOYQT_ARGS="-no-copy-copyright-files"
 fi
-
-find AppDir/
-
-# bundle application
-./linuxdeployqt-continuous-x86_64.AppImage \
-    AppDir/usr/share/applications/AppImageUpdate-Qt.desktop \
-    -verbose=1 -bundle-non-qt-libs
-
-# create AppImageUpdate AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate-Qt.ignore AppDir \
-    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-Qt-*x86_64.AppImage.zsync'
-
-### AppImageUpdate-Qt
 
 
 ### AppImageUpdate
@@ -102,22 +87,12 @@ if [ ! -x AppDir/usr/bin/AppImageUpdate ]; then
     exit 1
 fi
 
-# change AppDir root to fit the GUI
-pushd AppDir
-rm usr/bin/AppImageUpdate-Qt
-rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
-rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
-find usr/lib/ -print -delete
-find usr/plugins/ -print -delete
-find usr/share/ -type f -not -iname '*.desktop' -print -delete
-find usr/ -type d -empty -print -delete
-popd
-
 find AppDir/
 
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/AppImageUpdate.desktop \
+    $LINUXDEPLOYQT_ARGS \
     -verbose=1 -bundle-non-qt-libs
 
 # create AppImageUpdate AppImage
@@ -149,6 +124,7 @@ find AppDir/
 # bundle application
 ./linuxdeployqt-continuous-x86_64.AppImage \
     AppDir/usr/share/applications/appimageupdatetool.desktop \
+    $LINUXDEPLOYQT_ARGS \
     -verbose=1 -bundle-non-qt-libs
 
 # create appimageupdatetool AppImage

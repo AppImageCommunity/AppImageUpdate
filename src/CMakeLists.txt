@@ -65,13 +65,6 @@ install(
 )
 
 
-# include FLTK UI
-set(BUILD_FLTK_UI BOOL CACHE "Build FLTK UI (main AppImageUpdate application)" ON)
-if (BUILD_FLTK_UI)
-    add_subdirectory(fltk-ui)
-endif()
-
-
 # include Qt UI
 set(BUILD_QT_UI BOOL CACHE "Build Qt UI (widget library and demo application)" OFF)
 if (BUILD_QT_UI)
