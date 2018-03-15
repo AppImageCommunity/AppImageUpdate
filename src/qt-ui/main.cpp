@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     QCommandLineOption selfUpdate("self-update", "Update the tool itself and exit.");
     parser.addOption(selfUpdate);
 
-    parser.addPositionalArgument("path", "Path to AppImage that should be updated", "<AppImage>");
+    parser.addPositionalArgument("path", "Path to AppImage that should be updated", "<path>");
 
     QStringList arguments;
     for (int i = 0; i < argc; i++)
