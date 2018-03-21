@@ -19,7 +19,7 @@ using namespace std;
 using namespace appimage::update;
 
 int main(int argc, char** argv) {
-    cerr << "AppImageUpdate-Qt version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
+    cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
          << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
 
     QCommandLineParser parser;
