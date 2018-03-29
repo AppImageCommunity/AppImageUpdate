@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
                 "AppImage (*.appimage *.AppImage);;All files (*)"
             );
             if (pathToAppImage.isNull()) {
-                cerr << "No file selected, exiting.";
+                cerr << "No file selected, exiting." << std::endl;
                 return 1;
             }
         }
