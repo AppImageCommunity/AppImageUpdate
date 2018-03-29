@@ -281,29 +281,34 @@ namespace appimage {
                             downloadUrl << "https://dl.bintray.com/" << username << "/" << repository << "/"
                                         << filename;
 
-                            std::stringstream redirectorUrl;
-                            redirectorUrl << "https://bintray.com/" << username << "/" << repository << "/"
-                                          << packageName << "/_latestVersion";
+                            if (downloadUrl.str().find("_latestVersion") == std::string::npos) {
+                                zsyncUrl = downloadUrl.str();
+                            } else {
+                                std::stringstream redirectorUrl;
+                                redirectorUrl << "https://bintray.com/" << username << "/" << repository << "/"
+                                              << packageName << "/_latestVersion";
 
-                            auto versionResponse = cpr::Head(redirectorUrl.str());
-                            // this request is supposed to be redirected
-                            // due to how cpr works, we can't check for a redirection status, as we get the response for
-                            // the redirected request
-                            // therefore, we check for a 2xx response, and then can inspect and compare the redirected URL
-                            if (versionResponse.status_code >= 200 && versionResponse.status_code < 400) {
-                                auto redirectedUrl = versionResponse.url;
+                                auto versionResponse = cpr::Head(redirectorUrl.str());
+                                // this request is supposed to be redirected
+                                // due to how cpr works, we can't check for a redirection status, as we get the response for
+                                // the redirected request
+                                // therefore, we check for a 2xx response, and then can inspect and compare the redirected URL
+                                if (versionResponse.status_code >= 200 && versionResponse.status_code < 400) {
+                                    auto redirectedUrl = versionResponse.url;
 
-                                // if they're different, it's probably been successful
-                                if (redirectorUrl.str() != redirectedUrl) {
-                                    // the last part will contain the current version
-                                    auto packageVersion = static_cast<std::string>(split(redirectedUrl, '/').back());
-                                    auto urlTemplate = downloadUrl.str();
+                                    // if they're different, it's probably been successful
+                                    if (redirectorUrl.str() != redirectedUrl) {
+                                        // the last part will contain the current version
+                                        auto packageVersion = static_cast<std::string>(split(redirectedUrl, '/').back());
+                                        auto urlTemplate = downloadUrl.str();
 
-                                    // split by _latestVersion, insert correct value, compose final value
-                                    auto pos = urlTemplate.find("_latestVersion");
-                                    auto firstPart = urlTemplate.substr(0, pos);
-                                    auto secondPart = urlTemplate.substr(pos + std::string("_latestVersion").length());
-                                    zsyncUrl = firstPart + packageVersion + secondPart;
+                                        // split by _latestVersion, insert correct value, compose final value
+                                        auto pos = urlTemplate.find("_latestVersion");
+
+                                        auto firstPart = urlTemplate.substr(0, pos);
+                                        auto secondPart = urlTemplate.substr(pos + std::string("_latestVersion").length());
+                                        zsyncUrl = firstPart + packageVersion + secondPart;
+                                    }
                                 }
                             }
                         }
