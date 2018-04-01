@@ -30,6 +30,7 @@ add_subdirectory(elf)
 # core library
 add_library(
     libappimageupdate
+    SHARED
     ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp
     util.h
 )
@@ -50,6 +51,33 @@ target_include_directories(libappimageupdate PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/include>
 )
 
+
+# core library
+add_library(
+    libappimageupdate_static
+    STATIC
+    ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp
+    util.h
+)
+# since the target is called libsomething, one doesn't need CMake's additional lib prefix
+set_target_properties(libappimageupdate_static
+    PROPERTIES
+    PREFIX ""
+    OUTPUT_NAME "libappimageupdate"
+    PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update.h
+)
+# link thread libraries
+target_link_libraries(libappimageupdate_static PUBLIC elf PRIVATE ${CMAKE_THREAD_LIBS_INIT} libzsync2 ${CPR_LIBRARIES})
+# include directories, publicly
+target_include_directories(libappimageupdate_static PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    # FIXME: works for now, but should be possible without these workaround
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/lib/cpr/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/include>
+)
+
+
 # CLI application
 add_executable(appimageupdatetool main.cpp)
 # link to core lib
@@ -57,16 +85,16 @@ target_link_libraries(appimageupdatetool libappimageupdate args)
 
 # install targets
 install(
-    TARGETS libappimageupdate appimageupdatetool
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib/static
-    PUBLIC_HEADER DESTINATION include/appimage
+    TARGETS libappimageupdate libappimageupdate_static appimageupdatetool
+    RUNTIME DESTINATION bin COMPONENT APPIMAGEUPDATETOOL
+    LIBRARY DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE
+    ARCHIVE DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE
+    PUBLIC_HEADER DESTINATION include/appimage COMPONENT LIBAPPIMAGEUPDATE-DEV
 )
 
 
 # include Qt UI
 set(BUILD_QT_UI BOOL CACHE "Build Qt UI (widget library and demo application)" OFF)
-if (BUILD_QT_UI)
+if(BUILD_QT_UI)
     add_subdirectory(qt-ui)
 endif()

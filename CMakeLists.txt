@@ -37,3 +37,6 @@ add_subdirectory(lib)
 
 # core source directory, contains its own CMakeLists.txt
 add_subdirectory(src)
+
+# packaging
+include(${PROJECT_SOURCE_DIR}/cmake/cpack-deb.cmake)
