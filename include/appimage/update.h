@@ -1,6 +1,7 @@
 #pragma once
 
 // global headers
+#include <sys/types.h>
 #include <string>
 
 namespace appimage {
