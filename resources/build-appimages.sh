@@ -114,7 +114,7 @@ pushd AppDir
 rm usr/bin/AppImageUpdate
 rm AppRun && ln -s usr/bin/appimageupdatetool AppRun
 rm *.desktop && cp usr/share/applications/appimageupdatetool.desktop .
-find usr/lib/ -print -delete
+find usr/lib/ -type f -not -iname '*libappimageupdate*' -print -delete
 find usr/plugins/ -print -delete
 find usr/share/ -type f -not -iname '*.desktop' -print -delete
 find usr/ -type d -empty -print -delete
