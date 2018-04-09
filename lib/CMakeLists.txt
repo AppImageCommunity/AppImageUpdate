@@ -1,1 +1,1 @@
-add_subdirectory(zsync2)
+add_subdirectory(zsync2 EXCLUDE_FROM_ALL)
