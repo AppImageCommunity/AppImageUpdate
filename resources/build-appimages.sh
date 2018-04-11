@@ -35,13 +35,16 @@ cmake "$REPO_ROOT" \
 mkdir -p AppDir
 
 # now, compile and install to AppDir
-make -j$(nproc) install DESTDIR=AppDir
+make -j$(nproc) install DESTDIR=AppImageUpdate.AppDir
+make -j$(nproc) install DESTDIR=appimageupdatetool.AppDir
 
-# install resources into AppDir
-mkdir -p AppDir/usr/share/{applications,icons/hicolor/scalable/apps/} AppDir/resources
-cp -v "$REPO_ROOT"/resources/*.desktop AppDir/usr/share/applications/
-cp -v "$REPO_ROOT"/resources/*.svg AppDir/usr/share/icons/hicolor/scalable/apps/
-cp -v "$REPO_ROOT"/resources/*.xpm AppDir/resources/
+# install resources into AppDirs
+for appdir in AppImageUpdate.AppDir appimageupdatetool.AppDir; do
+    mkdir -p "$appdir"/usr/share/{applications,icons/hicolor/scalable/apps/} "$appdir"/resources
+    cp -v "$REPO_ROOT"/resources/*.desktop "$appdir"/usr/share/applications/
+    cp -v "$REPO_ROOT"/resources/*.svg "$appdir"/usr/share/icons/hicolor/scalable/apps/
+    cp -v "$REPO_ROOT"/resources/*.xpm "$appdir"/resources/
+done
 
 # determine Git commit ID
 # linuxdeployqt uses this for naming the file
@@ -53,15 +56,15 @@ if [ "$TRAVIS_BUILD_NUMBER" != "" ]; then
 fi
 
 
-# "unbundle" FLTK binaries
-find AppDir/usr/bin -type f -executable -iname 'fltk*' -print -delete
-find AppDir/usr/bin -type f -executable -iname 'fluid' -print -delete
-# also "unbundle" zsync2 binaries
-find AppDir/usr/bin -type f -executable -iname 'zsync*' -print -delete
+# remove unnecessary binaries from AppDirs
+rm AppImageUpdate.AppDir/usr/bin/appimageupdatetool
+rm appimageupdatetool.AppDir/usr/bin/AppImageUpdate
+rm appimageupdatetool.AppDir/usr/lib/*qt*.so*
+
 
 # remove other unnecessary data
-find AppDir -type f -iname '*.a' -delete
-rm -rf AppDir/usr/include
+find {appimageupdatetool,AppImageUpdate}.AppDir -type f -iname '*.a' -delete
+rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 
 
 # get linuxdeployqt
@@ -76,64 +79,23 @@ chmod +x appimagetool-x86_64.AppImage
 LINUXDEPLOYQT_ARGS=
 
 if [ "$CI" == "" ]; then
-    LINUXDEPLOYQT_ARGS="-no-copy-copyright-files"
+    LINUXDEPLOYQT_ARGS=" -no-copy-copyright-files"
 fi
 
 
-### AppImageUpdate
+for app in appimageupdatetool AppImageUpdate; do
+    find "$app".AppDir/
 
-if [ ! -x AppDir/usr/bin/AppImageUpdate ]; then
-    echo "Error: AppImageUpdate binary not found!"
-    exit 1
-fi
+    # bundle application
+    ./linuxdeployqt-continuous-x86_64.AppImage \
+        "$app".AppDir/usr/share/applications/"$app".desktop \
+        $LINUXDEPLOYQT_ARGS \
+        -verbose=1 -bundle-non-qt-libs
 
-find AppDir/
-
-# bundle application
-./linuxdeployqt-continuous-x86_64.AppImage \
-    AppDir/usr/share/applications/AppImageUpdate.desktop \
-    $LINUXDEPLOYQT_ARGS \
-    -verbose=1 -bundle-non-qt-libs
-
-# create AppImageUpdate AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir \
-    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync'
-
-if [ ! -x AppDir/usr/bin/appimageupdatetool ]; then
-    echo "Error: appimageupdatetool binary not found!"
-    exit 1
-fi
-
-### AppImageUpdate
-
-
-### appimageupdatetool
-
-# change AppDir root to fit the CLI
-pushd AppDir
-rm usr/bin/AppImageUpdate
-rm AppRun && ln -s usr/bin/appimageupdatetool AppRun
-rm *.desktop && cp usr/share/applications/appimageupdatetool.desktop .
-find usr/lib/ -type f -not -iname '*libappimageupdate*' -print -delete
-find usr/plugins/ -print -delete
-find usr/share/ -type f -not -iname '*.desktop' -print -delete
-find usr/ -type d -empty -print -delete
-popd
-
-find AppDir/
-
-# bundle application
-./linuxdeployqt-continuous-x86_64.AppImage \
-    AppDir/usr/share/applications/appimageupdatetool.desktop \
-    $LINUXDEPLOYQT_ARGS \
-    -verbose=1 -bundle-non-qt-libs
-
-# create appimageupdatetool AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \
-    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdatetool-*x86_64.AppImage.zsync'
-
-### appimageupdatetool
-
+    # create AppImageUpdate AppImage
+    ./appimagetool-x86_64.AppImage -v "$app".AppDir \
+        -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync'
+done
 
 # move AppImages to old cwd
 mv {appimageupdatetool,AppImageUpdate}*.AppImage* "$OLD_CWD"/
