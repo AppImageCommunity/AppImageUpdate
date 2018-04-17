@@ -52,18 +52,18 @@ namespace appimage {
                 const int minimumWidth;
 
             public:
-                explicit Private(QString& pathToAppImage) : buttonBox(nullptr),
-                                                            progressBar(nullptr),
-                                                            mainLayout(nullptr),
-                                                            label(nullptr),
-                                                            progressTimer(nullptr),
-                                                            progressLabel(nullptr),
-                                                            pathToAppImage(pathToAppImage),
-                                                            spoiler(nullptr),
-                                                            spoilerLayout(nullptr),
-                                                            spoilerLog(nullptr),
-                                                            finished(false),
-                                                            minimumWidth(400)
+                explicit Private(const QString& pathToAppImage) : buttonBox(nullptr),
+                                                                  progressBar(nullptr),
+                                                                  mainLayout(nullptr),
+                                                                  label(nullptr),
+                                                                  progressTimer(nullptr),
+                                                                  progressLabel(nullptr),
+                                                                  pathToAppImage(pathToAppImage),
+                                                                  spoiler(nullptr),
+                                                                  spoilerLayout(nullptr),
+                                                                  spoilerLog(nullptr),
+                                                                  finished(false),
+                                                                  minimumWidth(400)
                 {
                     if (!isFile(pathToAppImage.toStdString()))
                         throw std::runtime_error("No such file or directory: " + pathToAppImage.toStdString());
@@ -107,7 +107,7 @@ namespace appimage {
                 }
             };
 
-            QtUpdater::QtUpdater(QString& pathToAppImage) {
+            QtUpdater::QtUpdater(const QString& pathToAppImage) {
                 d = new Private(pathToAppImage);
 
                 init();
@@ -274,13 +274,23 @@ namespace appimage {
                 d->startUpdate();
             }
 
-            void QtUpdater::runUpdatedAppImage() {
-                std::string pathToNewAppImage;
+            bool QtUpdater::pathToNewFile(QString& pathToNewAppImage) const {
+                std::string stdPathToNewAppImage;
 
-                if (!d->updater->pathToNewFile(pathToNewAppImage))
+                if (!d->updater->pathToNewFile(stdPathToNewAppImage))
+                    return false;
+
+                pathToNewAppImage = QString::fromStdString(stdPathToNewAppImage);
+                return true;
+            }
+
+            void QtUpdater::runUpdatedAppImage() {
+                QString pathToNewAppImage;
+
+                if (!pathToNewFile(pathToNewAppImage))
                     throw std::runtime_error("Could not detect path to new AppImage");
 
-                runApp(pathToNewAppImage);
+                runApp(pathToNewAppImage.toStdString());
                 done(0);
             }
 

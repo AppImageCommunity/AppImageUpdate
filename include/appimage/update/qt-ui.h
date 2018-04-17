@@ -11,7 +11,7 @@ namespace appimage {
                 Private* d;
 
             public:
-                explicit QtUpdater(QString& pathToAppImage);
+                explicit QtUpdater(const QString& pathToAppImage);
                 ~QtUpdater() override;
 
             Q_SIGNALS:
@@ -41,6 +41,9 @@ namespace appimage {
                 // AppImage, this method configures the instance automatically)
                 // returns nullptr if application isn't run from within an AppImage
                 static QtUpdater* fromEnv();
+
+                // returns path to updated AppImage
+                bool pathToNewFile(QString& pathToNewAppImage) const;
             };
         }
     }
