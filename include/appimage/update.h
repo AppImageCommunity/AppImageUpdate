@@ -72,15 +72,15 @@ namespace appimage {
 
             // Parses AppImage file, and returns a formatted string describing it
             // in case of success, sets description and returns true, false otherwise
-            bool describeAppImage(std::string& description);
+            bool describeAppImage(std::string& description) const;
 
             // Sets path to the path of the file created by the update and returns true as soon as this value is
             // available (after a successful update at the latest)
             // Returns false in case of errors, or when the path is not available yet
-            bool pathToNewFile(std::string& path);
+            bool pathToNewFile(std::string& path) const;
 
             // Returns the size of the remote file in bytes
-            bool remoteFileSize(off_t& fileSize);
+            bool remoteFileSize(off_t& fileSize) const;
         };
     }
 }

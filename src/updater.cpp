@@ -614,7 +614,7 @@ namespace appimage {
             return d->checkForChanges(updateAvailable, method);
         }
 
-        bool Updater::describeAppImage(std::string& description) {
+        bool Updater::describeAppImage(std::string& description) const {
             std::ostringstream oss;
 
             auto* appImage = d->readAppImage(d->pathToAppImage);
@@ -657,7 +657,7 @@ namespace appimage {
             return true;
         }
 
-        bool Updater::pathToNewFile(std::string& path) {
+        bool Updater::pathToNewFile(std::string& path) const {
             // only available update method is via ZSync
             if (d->zSyncClient)
                 return d->zSyncClient->pathToNewFile(path);
@@ -665,7 +665,7 @@ namespace appimage {
             return false;
         }
 
-        bool Updater::remoteFileSize(off_t& fileSize) {
+        bool Updater::remoteFileSize(off_t& fileSize) const {
             // only available update method is via ZSync
             if (d->zSyncClient != nullptr)
                 return d->zSyncClient->remoteFileSize(fileSize);
