@@ -51,6 +51,8 @@ namespace appimage {
 
                 const int minimumWidth;
 
+                bool enableRunUpdatedAppImageButton;
+
             public:
                 explicit Private(const QString& pathToAppImage) : buttonBox(nullptr),
                                                                   progressBar(nullptr),
@@ -221,9 +223,9 @@ namespace appimage {
 
                     d->buttonBox = new QDialogButtonBox();
 
-                    if (!d->updater->hasError()) {
+                    if (!d->updater->hasError() && d->enableRunUpdatedAppImageButton) {
                         d->buttonBox->addButton("Run updated AppImage", QDialogButtonBox::AcceptRole);
-                        connect(d->buttonBox, SIGNAL(accepted()), this, [this](){
+                        connect(d->buttonBox, &QDialogButtonBox::accepted, this, [this](){
                             emit runUpdatedAppImageClicked();
                         });
                     }
@@ -345,6 +347,10 @@ namespace appimage {
                 } else {
                     QDialog::keyPressEvent(event);
                 }
+            }
+
+            void QtUpdater::enableRunUpdatedAppImageButton(bool enable) {
+                d->enableRunUpdatedAppImageButton = enable;
             }
         }
     }

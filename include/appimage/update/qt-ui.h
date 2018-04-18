@@ -45,6 +45,9 @@ namespace appimage {
 
                 // returns path to updated AppImage
                 bool pathToNewFile(QString& pathToNewAppImage) const;
+
+                // enable or disable the button to run the updated AppImage
+                void enableRunUpdatedAppImageButton(bool enable = true);
             };
         }
     }
