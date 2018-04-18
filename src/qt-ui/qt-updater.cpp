@@ -251,10 +251,12 @@ namespace appimage {
                     return 2;
 
                 if (changesAvailable) {
-                    std::cerr << "Update available" << std::endl;
+                    if (writeToStderr)
+                        std::cerr << "Update available" << std::endl;
                     return 1;
                 } else {
-                    std::cerr << "AppImage already up to date" << std::endl;
+                    if (writeToStderr)
+                        std::cerr << "AppImage already up to date" << std::endl;
                     return 0;
                 }
             }
