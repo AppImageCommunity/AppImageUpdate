@@ -165,6 +165,9 @@ namespace appimage {
                 d->progressTimer->start(100);
 
                 adjustSize();
+
+                // default run action
+                connect(this, SIGNAL(runUpdatedAppImageClicked()), this, SLOT(runUpdatedAppImage()));
             }
 
             void QtUpdater::updateProgress() {
@@ -220,7 +223,9 @@ namespace appimage {
 
                     if (!d->updater->hasError()) {
                         d->buttonBox->addButton("Run updated AppImage", QDialogButtonBox::AcceptRole);
-                        connect(d->buttonBox, SIGNAL(accepted()), this, SLOT(runUpdatedAppImage()));
+                        connect(d->buttonBox, SIGNAL(accepted()), this, [this](){
+                            emit runUpdatedAppImageClicked();
+                        });
                     }
 
                     d->buttonBox->addButton("Close", QDialogButtonBox::RejectRole);

@@ -16,6 +16,7 @@ namespace appimage {
 
             Q_SIGNALS:
                 void canceled();
+                void runUpdatedAppImageClicked();
 
             private Q_SLOTS:
                 void updateProgress();
