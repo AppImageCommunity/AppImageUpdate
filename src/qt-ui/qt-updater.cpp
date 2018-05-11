@@ -53,21 +53,21 @@ namespace appimage {
 
                 const int minimumWidth;
 
+                bool enableRunUpdatedAppImageButton;
+
             public:
-                explicit Private(QString& pathToAppImage) : buttonBox(nullptr),
-                                                            progressBar(nullptr),
-                                                            mainLayout(nullptr),
-                                                            label(nullptr),
-                                                            progressTimer(nullptr),
-                                                            labelLayout(nullptr),
-                                                            progressLabel(nullptr),
-                                                            validationStateLabel(nullptr),
-                                                            pathToAppImage(pathToAppImage),
-                                                            spoiler(nullptr),
-                                                            spoilerLayout(nullptr),
-                                                            spoilerLog(nullptr),
-                                                            finished(false),
-                                                            minimumWidth(400)
+                explicit Private(const QString& pathToAppImage) : buttonBox(nullptr),
+                                                                  progressBar(nullptr),
+                                                                  mainLayout(nullptr),
+                                                                  label(nullptr),
+                                                                  progressTimer(nullptr),
+                                                                  progressLabel(nullptr),
+                                                                  pathToAppImage(pathToAppImage),
+                                                                  spoiler(nullptr),
+                                                                  spoilerLayout(nullptr),
+                                                                  spoilerLog(nullptr),
+                                                                  finished(false),
+                                                                  minimumWidth(400)
                 {
                     if (!isFile(pathToAppImage.toStdString()))
                         throw std::runtime_error("No such file or directory: " + pathToAppImage.toStdString());
@@ -124,7 +124,7 @@ namespace appimage {
                 }
             };
 
-            QtUpdater::QtUpdater(QString& pathToAppImage) {
+            QtUpdater::QtUpdater(const QString& pathToAppImage) {
                 d = new Private(pathToAppImage);
 
                 init();
@@ -195,6 +195,9 @@ namespace appimage {
                 d->progressTimer->start(100);
 
                 adjustSize();
+
+                // default run action
+                connect(this, SIGNAL(runUpdatedAppImageClicked()), this, SLOT(runUpdatedAppImage()));
             }
 
             void QtUpdater::updateProgress() {
@@ -287,9 +290,11 @@ namespace appimage {
 
                     d->buttonBox = new QDialogButtonBox();
 
-                    if (!d->updater->hasError()) {
+                    if (!d->updater->hasError() && d->enableRunUpdatedAppImageButton) {
                         d->buttonBox->addButton("Run updated AppImage", QDialogButtonBox::AcceptRole);
-                        connect(d->buttonBox, SIGNAL(accepted()), this, SLOT(runUpdatedAppImage()));
+                        connect(d->buttonBox, &QDialogButtonBox::accepted, this, [this](){
+                            emit runUpdatedAppImageClicked();
+                        });
                     }
 
                     d->buttonBox->addButton("Close", QDialogButtonBox::RejectRole);
@@ -320,10 +325,12 @@ namespace appimage {
                     return 2;
 
                 if (changesAvailable) {
-                    std::cerr << "Update available" << std::endl;
+                    if (writeToStderr)
+                        std::cerr << "Update available" << std::endl;
                     return 1;
                 } else {
-                    std::cerr << "AppImage already up to date" << std::endl;
+                    if (writeToStderr)
+                        std::cerr << "AppImage already up to date" << std::endl;
                     return 0;
                 }
             }
@@ -343,13 +350,23 @@ namespace appimage {
                 d->startUpdate();
             }
 
-            void QtUpdater::runUpdatedAppImage() {
-                std::string pathToNewAppImage;
+            bool QtUpdater::pathToNewFile(QString& pathToNewAppImage) const {
+                std::string stdPathToNewAppImage;
 
-                if (!d->updater->pathToNewFile(pathToNewAppImage))
+                if (!d->updater->pathToNewFile(stdPathToNewAppImage))
+                    return false;
+
+                pathToNewAppImage = QString::fromStdString(stdPathToNewAppImage);
+                return true;
+            }
+
+            void QtUpdater::runUpdatedAppImage() {
+                QString pathToNewAppImage;
+
+                if (!pathToNewFile(pathToNewAppImage))
                     throw std::runtime_error("Could not detect path to new AppImage");
 
-                runApp(pathToNewAppImage);
+                runApp(pathToNewAppImage.toStdString());
                 done(0);
             }
 
@@ -397,6 +414,10 @@ namespace appimage {
                 } else {
                     QDialog::keyPressEvent(event);
                 }
+            }
+
+            void QtUpdater::enableRunUpdatedAppImageButton(bool enable) {
+                d->enableRunUpdatedAppImageButton = enable;
             }
         }
     }

@@ -21,7 +21,7 @@
 
 // AppImageKit includes
 extern "C" {
-    #include "getsection.h"
+    #include "appimage/appimage.h"
 }
 
 
@@ -175,7 +175,7 @@ namespace appimage {
             const std::string& filePath, const std::string& sectionName,
             unsigned long& offset, unsigned long& length
         ) {
-            return get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0;
+            return appimage_get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0;
         };
 
         // Reads an ELF file section and returns its contents.

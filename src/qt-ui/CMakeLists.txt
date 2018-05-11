@@ -21,18 +21,18 @@ target_include_directories(libappimageupdate-qt
 target_compile_definitions(libappimageupdate-qt PRIVATE -DQT_UI)
 
 # Qt GUI application
-add_executable(AppImageUpdate-Qt main.cpp)
-add_sanitizers(AppImageUpdate-Qt)
+add_executable(AppImageUpdate main.cpp)
+add_sanitizers(AppImageUpdate)
 
 # link libraries
-target_link_libraries(AppImageUpdate-Qt libappimageupdate libappimageupdate-qt)
-target_compile_definitions(AppImageUpdate-Qt PRIVATE -DQT_UI)
+target_link_libraries(AppImageUpdate libappimageupdate libappimageupdate-qt)
+target_compile_definitions(AppImageUpdate PRIVATE -DQT_UI)
 
 # install targets
 install(
-    TARGETS libappimageupdate-qt AppImageUpdate-Qt
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib/static
-    PUBLIC_HEADER DESTINATION include/appimage/update
+    TARGETS libappimageupdate-qt AppImageUpdate
+    RUNTIME DESTINATION bin COMPONENT APPIMAGEUPDATE
+    LIBRARY DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE-QT
+    ARCHIVE DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE-QT
+    PUBLIC_HEADER DESTINATION include/appimage/update COMPONENT LIBAPPIMAGEUPDATE-QT-DEV
 )

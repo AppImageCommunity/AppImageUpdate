@@ -27,7 +27,6 @@ OLD_CWD=$(readlink -f .)
 pushd "$BUILD_DIR"
 
 cmake "$REPO_ROOT" \
-    -DBUILD_FLTK_UI=ON \
     -DBUILD_QT_UI=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -36,13 +35,16 @@ cmake "$REPO_ROOT" \
 mkdir -p AppDir
 
 # now, compile and install to AppDir
-make -j$(nproc) install DESTDIR=AppDir
+make -j$(nproc) install DESTDIR=AppImageUpdate.AppDir
+make -j$(nproc) install DESTDIR=appimageupdatetool.AppDir
 
-# install resources into AppDir
-mkdir -p AppDir/usr/share/{applications,icons/hicolor/scalable/apps/} AppDir/resources
-cp -v "$REPO_ROOT"/resources/*.desktop AppDir/usr/share/applications/
-cp -v "$REPO_ROOT"/resources/*.svg AppDir/usr/share/icons/hicolor/scalable/apps/
-cp -v "$REPO_ROOT"/resources/*.xpm AppDir/resources/
+# install resources into AppDirs
+for appdir in AppImageUpdate.AppDir appimageupdatetool.AppDir; do
+    mkdir -p "$appdir"/usr/share/{applications,icons/hicolor/scalable/apps/} "$appdir"/resources
+    cp -v "$REPO_ROOT"/resources/*.desktop "$appdir"/usr/share/applications/
+    cp -v "$REPO_ROOT"/resources/*.svg "$appdir"/usr/share/icons/hicolor/scalable/apps/
+    cp -v "$REPO_ROOT"/resources/*.xpm "$appdir"/resources/
+done
 
 # determine Git commit ID
 # linuxdeployqt uses this for naming the file
@@ -53,64 +55,47 @@ if [ "$TRAVIS_BUILD_NUMBER" != "" ]; then
     export VERSION="$TRAVIS_BUILD_NUMBER-$VERSION"
 fi
 
+
+# remove unnecessary binaries from AppDirs
+rm AppImageUpdate.AppDir/usr/bin/appimageupdatetool
+rm appimageupdatetool.AppDir/usr/bin/AppImageUpdate
+rm appimageupdatetool.AppDir/usr/lib/*qt*.so*
+
+
+# remove other unnecessary data
+find {appimageupdatetool,AppImageUpdate}.AppDir -type f -iname '*.a' -delete
+rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
+
+
 # get linuxdeployqt
 wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
 chmod +x linuxdeployqt-continuous-x86_64.AppImage
-
-# bundle applications
-./linuxdeployqt-continuous-x86_64.AppImage \
-    AppDir/usr/share/applications/appimageupdatetool.desktop \
-    -verbose=1 -bundle-non-qt-libs \
-    -executable=AppDir/usr/bin/AppImageUpdate \
-    -executable=AppDir/usr/bin/objdump \
-    -executable=AppDir/usr/bin/AppImageUpdate-Qt
 
 # get appimagetool
 wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
 chmod +x appimagetool-x86_64.AppImage
 
-# remove unnecessary data
-find AppDir -type f -iname '*.a' -delete
-rm -rf AppDir/usr/include
 
-if [ ! -x AppDir/usr/bin/appimageupdatetool ]; then
-    echo "Error: appimageupdatetool binary not found!"
-    exit 1
+LINUXDEPLOYQT_ARGS=
+
+if [ "$CI" == "" ]; then
+    LINUXDEPLOYQT_ARGS=" -no-copy-copyright-files"
 fi
 
-# create appimageupdatetool AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/appimageupdatetool.ignore AppDir \
-    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|appimageupdatetool-*x86_64.AppImage.zsync'
 
-if [ ! -x AppDir/usr/bin/AppImageUpdate ]; then
-    echo "Error: AppImageUpdate binary not found!"
-    exit 1
-fi
+for app in appimageupdatetool AppImageUpdate; do
+    find "$app".AppDir/
 
-# change AppDir root to fit the GUI
-pushd AppDir
-rm AppRun && ln -s usr/bin/AppImageUpdate AppRun
-rm *.desktop && cp usr/share/applications/AppImageUpdate.desktop .
-popd
+    # bundle application
+    ./linuxdeployqt-continuous-x86_64.AppImage \
+        "$app".AppDir/usr/share/applications/"$app".desktop \
+        $LINUXDEPLOYQT_ARGS \
+        -verbose=1 -bundle-non-qt-libs
 
-# create AppImageUpdate AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate.ignore AppDir \
-    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-*x86_64.AppImage.zsync'
-
-if [ ! -x AppDir/usr/bin/AppImageUpdate-Qt ]; then
-    echo "Error: AppImageUpdate-Qt binary not found!"
-    exit 1
-fi
-
-# change AppDir root to fit the Qt UI
-pushd AppDir
-rm AppRun && ln -s usr/bin/AppImageUpdate-Qt AppRun
-rm *.desktop && cp usr/share/applications/AppImageUpdate-Qt.desktop .
-popd
-
-# create AppImageUpdate AppImage
-./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/AppImageUpdate-Qt.ignore AppDir \
-    -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|AppImageUpdate-Qt-*x86_64.AppImage.zsync'
+    # create AppImageUpdate AppImage
+    ./appimagetool-x86_64.AppImage -v "$app".AppDir \
+        -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync'
+done
 
 # move AppImages to old cwd
 mv {appimageupdatetool,AppImageUpdate}*.AppImage* "$OLD_CWD"/

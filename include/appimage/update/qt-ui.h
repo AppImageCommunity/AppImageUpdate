@@ -11,11 +11,12 @@ namespace appimage {
                 Private* d;
 
             public:
-                explicit QtUpdater(QString& pathToAppImage);
+                explicit QtUpdater(const QString& pathToAppImage);
                 ~QtUpdater() override;
 
             Q_SIGNALS:
                 void canceled();
+                void runUpdatedAppImageClicked();
 
             private Q_SLOTS:
                 void updateProgress();
@@ -41,6 +42,12 @@ namespace appimage {
                 // AppImage, this method configures the instance automatically)
                 // returns nullptr if application isn't run from within an AppImage
                 static QtUpdater* fromEnv();
+
+                // returns path to updated AppImage
+                bool pathToNewFile(QString& pathToNewAppImage) const;
+
+                // enable or disable the button to run the updated AppImage
+                void enableRunUpdatedAppImageButton(bool enable = true);
             };
         }
     }

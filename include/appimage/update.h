@@ -1,6 +1,7 @@
 #pragma once
 
 // global headers
+#include <sys/types.h>
 #include <string>
 
 namespace appimage {
@@ -90,16 +91,12 @@ namespace appimage {
 
             // Parses AppImage file, and returns a formatted string describing it
             // in case of success, sets description and returns true, false otherwise
-            bool describeAppImage(std::string& description);
+            bool describeAppImage(std::string& description) const;
 
             // Sets path to the path of the file created by the update and returns true as soon as this value is
             // available (after a successful update at the latest)
             // Returns false in case of errors, or when the path is not available yet
-            bool pathToNewFile(std::string& path);
-
-            // Returns the size of the remote file in bytes
-            bool remoteFileSize(off_t& fileSize);
-
+            bool pathToNewFile(std::string& path) const;
             // Validate AppImage signature
             // TODO: describe process
             // Returns a ValidationState value. See ValidationState documentation for more information.
@@ -107,6 +104,9 @@ namespace appimage {
 
             // Returns a description string of the given validation state.
             static std::string signatureValidationMessage(const ValidationState state);
+
+            // Returns the size of the remote file in bytes
+            bool remoteFileSize(off_t& fileSize) const;
         };
     }
 }

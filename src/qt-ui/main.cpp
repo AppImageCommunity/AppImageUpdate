@@ -19,7 +19,7 @@ using namespace std;
 using namespace appimage::update;
 
 int main(int argc, char** argv) {
-    cerr << "AppImageUpdate-Qt version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
+    cerr << "AppImageUpdate version " << APPIMAGEUPDATE_VERSION << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
          << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
 
     QCommandLineParser parser;
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     QCommandLineOption selfUpdate("self-update", "Update the tool itself and exit.");
     parser.addOption(selfUpdate);
 
-    parser.addPositionalArgument("path", "Path to AppImage that should be updated", "<AppImage>");
+    parser.addPositionalArgument("path", "Path to AppImage that should be updated", "<path>");
 
     QStringList arguments;
     for (int i = 0; i < argc; i++)
@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
                 "AppImage (*.appimage *.AppImage);;All files (*)"
             );
             if (pathToAppImage.isNull()) {
-                cerr << "No file selected, exiting.";
+                cerr << "No file selected, exiting." << std::endl;
                 return 1;
             }
         }
