@@ -23,9 +23,9 @@ add_library(
     elf
     STATIC
     "${SOURCE_DIR}/light_elf.h" "${SOURCE_DIR}/light_byteswap.h" "${SOURCE_DIR}/elf.c"
-    "${SOURCE_DIR}/getsection.c" "${SOURCE_DIR}/getsection.h"
+    "${SOURCE_DIR}/getsection.c" "${AppImageKit_SOURCE_DIR}/include/appimage/appimage.h"
 )
 
 target_include_directories(elf PUBLIC
-    $<BUILD_INTERFACE:${AppImageKit_SOURCE_DIR}/src/>
+    $<BUILD_INTERFACE:${AppImageKit_SOURCE_DIR}/include/>
 )

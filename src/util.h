@@ -21,7 +21,7 @@
 
 // AppImageKit includes
 extern "C" {
-    #include "getsection.h"
+    #include "appimage/appimage.h"
 }
 
 
@@ -175,7 +175,7 @@ namespace appimage {
         static std::string readElfSection(const std::string& filePath, const std::string& sectionName) {
             unsigned long offset, length;
 
-            if (get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0) {
+            if (appimage_get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0) {
                 std::ostringstream oss;
                 oss << "Could not read ELF section " << sectionName << " from file " << filePath;
                 throw std::runtime_error(oss.str());
