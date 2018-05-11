@@ -173,9 +173,11 @@ namespace appimage {
 
         // Reads an ELF file section and returns its contents.
         static std::string readElfSection(const std::string& filePath, const std::string& sectionName) {
-            unsigned long offset, length;
+            unsigned long offset = 0, length = 0;
 
-            if (appimage_get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0)
+            auto rv = appimage_get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length);
+
+            if (!rv || offset == 0 || length == 0)
                 return "";
 
             std::ifstream ifs(filePath);
