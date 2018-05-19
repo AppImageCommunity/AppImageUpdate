@@ -94,7 +94,7 @@ for app in appimageupdatetool AppImageUpdate; do
 
     # create AppImageUpdate AppImage
     ./appimagetool-x86_64.AppImage -v "$app".AppDir \
-        -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync'
+        -u gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync"
 done
 
 # move AppImages to old cwd
