@@ -34,7 +34,8 @@ cd ..
 
 sudo apt -y install libssl-dev libinotifytools0-dev libarchive-dev libfuse-dev liblzma-dev 
 
-cd ./build/src/elf/AppImageKit-src/
+git clone https://github.com/AppImage/AppImageKit
+cd AppImageKit/
 
 mkdir build/
 cd build/
@@ -73,7 +74,9 @@ cd ..
 
 # Also compile libappimage; work in progress
 
-cd ./src/elf/AppImageKit-src/
+git clone https://github.com/AppImage/AppImageKit
+cd AppImageKit/
+
 mkdir build
 cd build
 cmake3 -DUSE_SYSTEM_XZ=ON -DUSE_SYSTEM_INOTIFY_TOOLS=ON -DUSE_SYSTEM_LIBARCHIVE=ON -DUSE_SYSTEM_GTEST=ON ..
