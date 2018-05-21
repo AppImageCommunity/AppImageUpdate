@@ -1,4 +1,6 @@
-# Building
+# Building the libraries
+
+This page describes how to build `libappimageupdate` and `libappimage`. 
 
 ## Ubuntu 18.04
 
@@ -39,6 +41,8 @@ sudo make install
 ```
 cat /etc/redhat-release 
 # CentOS Linux release 7.2.1511 (Core) 
+
+# Compile and install libappimageupdate
 
 wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 rpm -ivh epel-release-latest-7.noarch.rpm
