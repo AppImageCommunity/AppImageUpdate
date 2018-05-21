@@ -1,8 +1,17 @@
-# Building the libraries
+# Building AppImageUpdate
 
-This page describes how to build `libappimageupdate` and `libappimage`. 
+## Building the AppImages of AppImageUpdate and appimageupdatetool
 
-## Ubuntu 18.04
+This section describes how to build `AppImageUpdate.AppImage` and `appimageupdatetool.AppImage`. This implies using as few -dev packages from the distribution as possible and privately bundling everything that cannot reasonably be assumed to be there in the default installation of all target systems (distributions).
+
+We generally recommend to use our pre-built AppImages if possible.
+See https://github.com/AppImage/AppImageUpdate/blob/rewrite/.travis.yml for how these get built.
+
+## Building the libraries
+
+This section describes how to build `libappimageupdate` and `libappimage` for consumption in distribution packaging. This implies using as many -dev packages from the distribution as possible.
+
+### Ubuntu 18.04
 
 ```# Compile and install libappimageupdate
 
@@ -36,7 +45,7 @@ make -j$(nproc)
 sudo make install
 ```
 
-## CentOS 7
+### CentOS 7
 
 ```
 cat /etc/redhat-release 
