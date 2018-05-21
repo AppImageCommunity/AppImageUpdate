@@ -28,8 +28,10 @@ cd ./build/src/elf/AppImageKit-src/
 mkdir build/
 cd build/
 
-cmake -DUSE_SYSTEM_XZ=ON -DUSE_SYSTEM_INOTIFY_TOOLS=ON -DUSE_SYSTEM_LIBARCHIVE=ON -DUSE_SYSTEM_GTEST=OFF ..
+cmake -DUSE_SYSTEM_XZ=ON -DUSE_SYSTEM_INOTIFY_TOOLS=ON -DUSE_SYSTEM_LIBARCHIVE=ON -DUSE_SYSTEM_GTEST=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
 make -j$(nproc)
+
+sudo make install
 ```
 
 ## CentOS 7
