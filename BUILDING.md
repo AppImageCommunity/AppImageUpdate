@@ -34,7 +34,7 @@ cd ..
 
 sudo apt -y install libssl-dev libinotifytools0-dev libarchive-dev libfuse-dev liblzma-dev 
 
-git clone https://github.com/AppImage/AppImageKit
+git clone --recursive https://github.com/AppImage/AppImageKit
 cd AppImageKit/
 
 mkdir build/
