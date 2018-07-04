@@ -108,6 +108,14 @@ namespace appimage {
                 void startUpdate() {
                     updater->start();
                 }
+
+                void printStatusMessages(const QtUpdater* self, Updater& updater) {
+                    std::string nextMessage;
+
+                    while (updater.nextStatusMessage(nextMessage)) {
+                        emit self->newStatusMessage(nextMessage);
+                    }
+                }
             };
 
             QtUpdater::QtUpdater(const QString& pathToAppImage) {
@@ -171,6 +179,22 @@ namespace appimage {
 
                 // default run action
                 connect(this, SIGNAL(runUpdatedAppImageClicked()), this, SLOT(runUpdatedAppImage()));
+
+                // connect log method
+                connect(this, SIGNAL(newStatusMessage(const std::string&)), this, SLOT(processNewStatusMessage(const std::string&)));
+            }
+
+            void QtUpdater::processNewStatusMessage(const std::string& nextMessage) {
+                // print message to stderr
+                std::cerr << nextMessage << std::endl;
+
+                // if spoilerLog is available, also print message there
+                if (d->spoilerLog != nullptr) {
+                    d->spoilerLog->moveCursor(QTextCursor::End);
+                    std::ostringstream oss;
+                    oss << nextMessage << std::endl;
+                    d->spoilerLog->insertPlainText(QString::fromStdString(oss.str()));
+                }
             }
 
             void QtUpdater::updateProgress() {
@@ -190,15 +214,7 @@ namespace appimage {
                     d->progressLabel->setText(QString::fromStdString(ss.str()));
                 }
 
-                std::string nextMessage;
-                while (d->updater->nextStatusMessage(nextMessage)) {
-                    std::cerr << nextMessage << std::endl;
-
-                    d->spoilerLog->moveCursor(QTextCursor::End);
-                    std::ostringstream oss;
-                    oss << nextMessage << std::endl;
-                    d->spoilerLog->insertPlainText(QString::fromStdString(oss.str()));
-                }
+                d->printStatusMessages(this, *d->updater);
 
                 if (d->updater->isDone()) {
                     d->finished = true;
@@ -249,11 +265,7 @@ namespace appimage {
                 auto result = updater.checkForChanges(changesAvailable);
 
                 // print all messages that might be available
-                if (writeToStderr) {
-                    std::string nextMessage;
-                    while (updater.nextStatusMessage(nextMessage))
-                        std::cerr << nextMessage << std::endl;
-                }
+                d->printStatusMessages(this, updater);
 
                 if (!result)
                     return 2;

@@ -17,12 +17,14 @@ namespace appimage {
             Q_SIGNALS:
                 void canceled();
                 void runUpdatedAppImageClicked();
+                void newStatusMessage(const std::string& message) const;
 
             private Q_SLOTS:
                 void updateProgress();
                 void runUpdatedAppImage();
                 void showCancelDialog();
                 void cancelUpdate();
+                void processNewStatusMessage(const std::string& newStatusMessage);
 
             private:
                 void init();
