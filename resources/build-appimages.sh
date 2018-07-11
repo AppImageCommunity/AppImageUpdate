@@ -67,34 +67,18 @@ find {appimageupdatetool,AppImageUpdate}.AppDir -type f -iname '*.a' -delete
 rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 
 
-# get linuxdeployqt
-wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
-chmod +x linuxdeployqt-continuous-x86_64.AppImage
-
-# get appimagetool
-wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-chmod +x appimagetool-x86_64.AppImage
-
-
-LINUXDEPLOYQT_ARGS=
-
-if [ "$CI" == "" ]; then
-    LINUXDEPLOYQT_ARGS=" -no-copy-copyright-files"
-fi
-
+# get linuxdeploy and its qt plugin
+wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+wget https://github.com/TheAssassin/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+chmod +x linuxdeploy*.AppImage
 
 for app in appimageupdatetool AppImageUpdate; do
     find "$app".AppDir/
 
-    # bundle application
-    ./linuxdeployqt-continuous-x86_64.AppImage \
-        "$app".AppDir/usr/share/applications/"$app".desktop \
-        $LINUXDEPLOYQT_ARGS \
-        -verbose=1 -bundle-non-qt-libs
+    export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync"
 
-    # create AppImageUpdate AppImage
-    ./appimagetool-x86_64.AppImage -v "$app".AppDir \
-        -u "gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync"
+    # bundle application
+    ./linuxdeploy-x86_64.AppImage --appdir "$app".AppDir --init-appdir --plugin qt --output appimage
 done
 
 # move AppImages to old cwd
