@@ -260,6 +260,13 @@ namespace appimage {
             int QtUpdater::checkForUpdates(bool writeToStderr) const {
                 appimage::update::Updater updater(d->pathToAppImage.toStdString());
 
+                try {
+                    if (updater.updateInformation().empty())
+                        return -1;
+                } catch (const std::runtime_error&) {
+                    return -1;
+                }
+
                 bool changesAvailable = false;
 
                 auto result = updater.checkForChanges(changesAvailable);
