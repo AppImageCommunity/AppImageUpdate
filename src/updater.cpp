@@ -672,5 +672,14 @@ namespace appimage {
 
             return false;
         }
+
+        std::string Updater::updateInformation() const {
+            const auto* appImage = d->readAppImage(d->pathToAppImage);
+
+            if (appImage == nullptr)
+                throw std::runtime_error("Failed to parse AppImage");
+
+            return appImage->rawUpdateInformation;
+        }
     }
 }
