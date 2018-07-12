@@ -76,9 +76,11 @@ for app in appimageupdatetool AppImageUpdate; do
     find "$app".AppDir/
 
     export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync"
+    
+    if [ "$app" == "AppImageUpdate"]; then export EXTRA_FLAGS="--plugin qt"; fi
 
     # bundle application
-    ./linuxdeploy-x86_64.AppImage --appdir "$app".AppDir --init-appdir --plugin qt --output appimage
+    ./linuxdeploy-x86_64.AppImage --appdir "$app".AppDir --init-appdir --output appimage "${EXTRA_FLAGS[@]}"
 done
 
 # move AppImages to old cwd
