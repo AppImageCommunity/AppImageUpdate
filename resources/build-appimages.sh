@@ -79,6 +79,8 @@ for app in appimageupdatetool AppImageUpdate; do
     
     if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
 
+    unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
+
     # bundle application
     ./linuxdeploy-x86_64.AppImage -n "$app" --appdir "$app".AppDir --init-appdir --output appimage "${EXTRA_FLAGS[@]}"
 done
