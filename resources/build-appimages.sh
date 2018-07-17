@@ -76,10 +76,8 @@ for app in appimageupdatetool AppImageUpdate; do
     find "$app".AppDir/
 
     export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync"
-    
-    if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
 
-    unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
+    if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
 
     # bundle application
     ./linuxdeploy-x86_64.AppImage -n "$app" --appdir "$app".AppDir --init-appdir --output appimage "${EXTRA_FLAGS[@]}"
