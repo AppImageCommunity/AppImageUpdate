@@ -110,17 +110,12 @@ namespace appimage {
                     updater->start();
                 }
 
-                void addLogMessage(const std::string& message) {
-                    spoilerLog->moveCursor(QTextCursor::End);
-                    std::ostringstream oss;
-                    if (spoilerLog->toPlainText().length() > 0)
-                        oss << std::endl;
-                    oss << message;
-                    spoilerLog->insertPlainText(QString::fromStdString(oss.str()));
-                }
+                void printStatusMessages(const QtUpdater* self, Updater& updater) {
+                    std::string nextMessage;
 
-                void addLogMessage(const QString& message) {
-                    addLogMessage(message.toStdString());
+                    while (updater.nextStatusMessage(nextMessage)) {
+                        emit self->newStatusMessage(nextMessage);
+                    }
                 }
             };
 
@@ -156,29 +151,16 @@ namespace appimage {
                 d->progressBar->setMinimumWidth(d->minimumWidth);
                 d->progressBar->setMinimum(0);
                 d->progressBar->setMaximum(100);
-                d->progressBar->resize(100, 20);
                 layout()->addWidget(d->progressBar);
-
-                d->labelLayout = new QHBoxLayout();
-
-                d->validationStateLabel = new QLabel(this);
-                d->validationStateLabel->setMinimumWidth(d->minimumWidth);
-                d->validationStateLabel->setText("");
-                d->validationStateLabel->setFixedWidth(250);
-                d->labelLayout->addWidget(d->validationStateLabel, 0, Qt::AlignLeft);
 
                 d->progressLabel = new QLabel(this);
                 d->progressLabel->setMinimumWidth(d->minimumWidth);
+                d->progressLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
                 d->progressLabel->setText("Starting update...");
-                d->progressLabel->setAlignment(Qt::AlignRight);
-                d->progressLabel->setFixedWidth(120);
-                d->labelLayout->addWidget(d->progressLabel, 0, Qt::AlignRight);
-
-                layout()->addItem(d->labelLayout);
-
+                layout()->addWidget(d->progressLabel);
 
                 d->spoiler = new Spoiler("Details");
-                d->spoiler->resize(QSize(d->minimumWidth, 180));
+                d->spoiler->resize(QSize(d->minimumWidth, 200));
                 d->spoilerLayout = new QVBoxLayout();
                 d->spoilerLog = new QPlainTextEdit();
                 d->spoilerLog->setReadOnly(true);
@@ -198,6 +180,22 @@ namespace appimage {
 
                 // default run action
                 connect(this, SIGNAL(runUpdatedAppImageClicked()), this, SLOT(runUpdatedAppImage()));
+
+                // connect log method
+                connect(this, SIGNAL(newStatusMessage(const std::string&)), this, SLOT(processNewStatusMessage(const std::string&)));
+            }
+
+            void QtUpdater::processNewStatusMessage(const std::string& nextMessage) {
+                // print message to stderr
+                std::cerr << nextMessage << std::endl;
+
+                // if spoilerLog is available, also print message there
+                if (d->spoilerLog != nullptr) {
+                    d->spoilerLog->moveCursor(QTextCursor::End);
+                    std::ostringstream oss;
+                    oss << nextMessage << std::endl;
+                    d->spoilerLog->insertPlainText(QString::fromStdString(oss.str()));
+                }
             }
 
             void QtUpdater::updateProgress() {
@@ -217,72 +215,25 @@ namespace appimage {
                     d->progressLabel->setText(QString::fromStdString(ss.str()));
                 }
 
-                std::string nextMessage;
-                while (d->updater->nextStatusMessage(nextMessage)) {
-                    std::cerr << nextMessage << std::endl;
-                    d->addLogMessage(nextMessage);
-                }
+                d->printStatusMessages(this, *d->updater);
 
                 if (d->updater->isDone()) {
                     d->finished = true;
 
                     d->progressTimer->stop();
 
-                    auto setColor = [this](const QColor& color) {
-                        auto progressBarPalette = d->progressBar->palette();
-                        progressBarPalette.setColor(QPalette::Text, Qt::black);
-                        progressBarPalette.setColor(QPalette::HighlightedText, Qt::black);
-                        progressBarPalette.setColor(QPalette::Highlight, color);
-                        d->progressBar->setPalette(progressBarPalette);
-
-                        auto validationStateLabelPalette = d->validationStateLabel->palette();
-                        validationStateLabelPalette.setColor(QPalette::Background, color);
-                        d->validationStateLabel->setAutoFillBackground(true);
-                        d->validationStateLabel->setPalette(validationStateLabelPalette);
-                    };
-
-                    auto setText = [this](const QString& text) {
-                        d->validationStateLabel->setText(text);
-                    };
+                    auto palette = d->progressBar->palette();
 
                     if (d->updater->hasError()) {
                         d->label->setText("Update failed!");
-                        setColor(Qt::red);
-                    }
-
-                    auto validationState = d->updater->validateSignature();
-                    auto validationMessage = QString::fromStdString(Updater::signatureValidationMessage(validationState));
-
-                    d->addLogMessage("Signature validation state: " + validationMessage);
-
-                    if (validationState >= Updater::VALIDATION_FAILED) {
-                        setColor(Qt::red);
-                        setText("Error: " + validationMessage);
-
-                        std::string newFilePath;
-
-                        if (!d->updater->pathToNewFile(newFilePath))
-                            throw std::runtime_error("Failed to fetch new file path!");
-
-                        auto oldFilePath = pathToOldAppImage(d->pathToAppImage.toStdString(), newFilePath);
-
-                        d->addLogMessage(std::string("Signature validation failed, restoring old AppImage"));
-
-                        // restore original file
-                        std::remove(newFilePath.c_str());
-
-                        if (oldFilePath == newFilePath) {
-                            std::rename(oldFilePath.c_str(), newFilePath.c_str());
-                        }
-                    } else if (validationState >= Updater::VALIDATION_WARNING) {
-                        setColor(Qt::yellow);
-                        setText("Warning: " + validationMessage);
+                        palette.setColor(QPalette::Highlight, Qt::red);
                     } else {
-                        setColor(Qt::green);
-                        setText(validationMessage);
+                        d->label->setText("Update successful!");
+                        palette.setColor(QPalette::Highlight, Qt::green);
                     }
 
                     // TODO: doesn't work with the Gtk+ platform theme
+                    d->progressBar->setPalette(palette);
 
                     // replace button box
                     disconnect(d->buttonBox, SIGNAL(rejected()));
@@ -310,16 +261,19 @@ namespace appimage {
             int QtUpdater::checkForUpdates(bool writeToStderr) const {
                 appimage::update::Updater updater(d->pathToAppImage.toStdString());
 
+                try {
+                    if (updater.updateInformation().empty())
+                        return -1;
+                } catch (const std::runtime_error&) {
+                    return -1;
+                }
+
                 bool changesAvailable = false;
 
                 auto result = updater.checkForChanges(changesAvailable);
 
                 // print all messages that might be available
-                if (writeToStderr) {
-                    std::string nextMessage;
-                    while (updater.nextStatusMessage(nextMessage))
-                        std::cerr << nextMessage << std::endl;
-                }
+                d->printStatusMessages(this, updater);
 
                 if (!result)
                     return 2;

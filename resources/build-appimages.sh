@@ -26,10 +26,15 @@ OLD_CWD=$(readlink -f .)
 
 pushd "$BUILD_DIR"
 
+if [ "$ARCH" == "i386" ]; then
+    EXTRA_CMAKE_ARGS=("-DCMAKE_TOOLCHAIN_FILE=$REPO_ROOT/cmake/toolchains/i386-linux-gnu.cmake")
+fi
+
 cmake "$REPO_ROOT" \
     -DBUILD_QT_UI=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
-    -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    "${EXTRA_CMAKE_ARGS[@]}"
 
 # create AppDir
 mkdir -p AppDir
@@ -67,34 +72,19 @@ find {appimageupdatetool,AppImageUpdate}.AppDir -type f -iname '*.a' -delete
 rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 
 
-# get linuxdeployqt
-wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
-chmod +x linuxdeployqt-continuous-x86_64.AppImage
-
-# get appimagetool
-wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-chmod +x appimagetool-x86_64.AppImage
-
-
-LINUXDEPLOYQT_ARGS=
-
-if [ "$CI" == "" ]; then
-    LINUXDEPLOYQT_ARGS=" -no-copy-copyright-files"
-fi
-
+# get linuxdeploy and its qt plugin
+wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-"$ARCH".AppImage
+chmod +x linuxdeploy*.AppImage
 
 for app in appimageupdatetool AppImageUpdate; do
     find "$app".AppDir/
 
-    # bundle application
-    ./linuxdeployqt-continuous-x86_64.AppImage \
-        "$app".AppDir/usr/share/applications/"$app".desktop \
-        $LINUXDEPLOYQT_ARGS \
-        -verbose=1 -bundle-non-qt-libs
+    export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*"$ARCH".AppImage.zsync"
 
-    # create AppImageUpdate AppImage
-    ./appimagetool-x86_64.AppImage -v "$app".AppDir \
-        -u 'gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync'
+    if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
+
+    # bundle application
+    ./linuxdeploy-"$ARCH".AppImage -n "$app" --appdir "$app".AppDir --init-appdir --output appimage "${EXTRA_FLAGS[@]}"
 done
 
 # move AppImages to old cwd

@@ -171,34 +171,17 @@ namespace appimage {
             }
         }
 
-        static bool getElfSectionOffsetAndLength(
-            const std::string& filePath, const std::string& sectionName,
-            unsigned long& offset, unsigned long& length
-        ) {
-            return appimage_get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length) != 0;
-        };
-
         // Reads an ELF file section and returns its contents.
         static std::string readElfSection(const std::string& filePath, const std::string& sectionName) {
-            unsigned long offset, length;
+            unsigned long offset = 0, length = 0;
 
-            if (getElfSectionOffsetAndLength(filePath, sectionName, offset, length) != 0) {
-                return "";
-            }
-            if (offset == 0 || length == 0)
-                return "";
+            auto rv = appimage_get_elf_section_offset_and_length(filePath.c_str(), sectionName.c_str(), &offset, &length);
 
-            std::ifstream ifs(filePath, std::ios::ate | std::ios::binary);
-
-            if (!ifs)
+            if (!rv || offset == 0 || length == 0)
                 return "";
 
-            auto fileSize = (unsigned long) ifs.tellg();
-
-            if (fileSize < (offset + length))
-                return "";
-
-            ifs.seekg(offset, std::ios::beg);
+            std::ifstream ifs(filePath);
+            ifs.seekg(offset);
 
             std::vector<char> buffer(length+1, 0);
             ifs.read(buffer.data(), length);

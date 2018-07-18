@@ -107,6 +107,11 @@ namespace appimage {
 
             // Returns the size of the remote file in bytes
             bool remoteFileSize(off_t& fileSize) const;
+
+            // Returns update information string found in the AppImage
+            // return value will be empty if there's no update information in the AppImage
+            // throws std::runtime_error if AppImage can't be parsed
+            std::string updateInformation() const;
         };
     }
 }

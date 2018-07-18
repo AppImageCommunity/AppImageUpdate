@@ -91,9 +91,9 @@ namespace appimage {
 
             static const std::string hashAppImage(const std::string& pathToAppImage) {
                 // read offset and length of signature section to skip it later
-                unsigned long offset, length;
+                unsigned long offset = 0, length = 0;
 
-                if (!getElfSectionOffsetAndLength(pathToAppImage, ".sha256_sig", offset, length))
+                if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sha256_sig", &offset, &length))
                     return "";
 
                 std::ifstream ifs(pathToAppImage);
@@ -981,6 +981,15 @@ namespace appimage {
             }
 
             return "Unknown validation state";
+        }
+
+        std::string Updater::updateInformation() const {
+            const auto* appImage = d->readAppImage(d->pathToAppImage);
+
+            if (appImage == nullptr)
+                throw std::runtime_error("Failed to parse AppImage");
+
+            return appImage->rawUpdateInformation;
         }
     }
 }
