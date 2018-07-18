@@ -26,10 +26,15 @@ OLD_CWD=$(readlink -f .)
 
 pushd "$BUILD_DIR"
 
+if [ "$ARCH" == "i386" ]; then
+    EXTRA_CMAKE_ARGS=("-DCMAKE_TOOLCHAIN_FILE=$REPO_ROOT/cmake/toolchains/i386-linux-gnu.cmake")
+fi
+
 cmake "$REPO_ROOT" \
     -DBUILD_QT_UI=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
-    -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    "${EXTRA_CMAKE_ARGS[@]}"
 
 # create AppDir
 mkdir -p AppDir
