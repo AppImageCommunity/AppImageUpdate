@@ -68,19 +68,18 @@ rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 
 
 # get linuxdeploy and its qt plugin
-wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-wget https://github.com/TheAssassin/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-"$ARCH".AppImage
 chmod +x linuxdeploy*.AppImage
 
 for app in appimageupdatetool AppImageUpdate; do
     find "$app".AppDir/
 
-    export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*x86_64.AppImage.zsync"
+    export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*"$ARCH".AppImage.zsync"
 
     if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
 
     # bundle application
-    ./linuxdeploy-x86_64.AppImage -n "$app" --appdir "$app".AppDir --init-appdir --output appimage "${EXTRA_FLAGS[@]}"
+    ./linuxdeploy-"$ARCH".AppImage -n "$app" --appdir "$app".AppDir --init-appdir --output appimage "${EXTRA_FLAGS[@]}"
 done
 
 # move AppImages to old cwd

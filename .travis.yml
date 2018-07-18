@@ -3,12 +3,27 @@ compiler: gcc
 sudo: require
 dist: trusty
 
-addons:
-  apt:
-    sources:
-      - sourceline: "ppa:beineri/opt-qt593-trusty"
-    packages:
-      - qt59base
+matrix:
+  include:
+    - env: ARCH=x86_64
+      addons:
+        apt:
+          sources:
+            - sourceline: "ppa:beineri/opt-qt593-trusty"
+          packages:
+            - qt59base
+    - env: ARCH=i386
+      addons:
+        apt:
+          sources:
+            - sourceline: "ppa:beineri/opt-qt593-trusty"
+          packages:
+            - gcc-multilib
+            - g++-multilib
+            - qt59base:i386
+            - libx11-dev:i386
+            - libcurl4-openssl-dev:i386
+            - libcurl3:i386
 
 install:
   - source /opt/qt*/bin/qt*-env.sh
