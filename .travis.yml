@@ -23,6 +23,7 @@ matrix:
             - qt59base:i386
             - libx11-dev:i386
             - libcurl4-openssl-dev:i386
+            - libgl1-mesa-dev:i386
 
 install:
   - source /opt/qt*/bin/qt*-env.sh
