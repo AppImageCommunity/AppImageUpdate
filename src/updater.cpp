@@ -125,9 +125,9 @@ namespace appimage {
                 // being nulled & skipped before reading data from the file again
                 std::streamsize bytesToSkip = 0;
 
-                ifs.seekg (0, ifs.end);
+                ifs.seekg(0, ifs.end);
                 const ssize_t fileSize = ifs.tellg();
-                ifs.seekg (0, ifs.beg);
+                ifs.seekg(0, ifs.beg);
 
                 while (ifs) {
                     ssize_t bytesRead = 0;
@@ -141,7 +141,9 @@ namespace appimage {
                         if (count <= 0)
                             return;
 
-                        std::fill(buffer.begin(), buffer.begin() + count, '\0');
+                        const auto start = buffer.begin() + bytesRead;
+                        std::fill_n(start, count, '\0');
+
                         bytesRead += count;
                         totalBytesRead += count;
                         bytesLeftInChunk -= count;
@@ -152,7 +154,7 @@ namespace appimage {
                         if (count <= 0)
                             return;
 
-                        ifs.read(buffer.data(), count);
+                        ifs.read(buffer.data() + bytesRead, count);
                         bytesRead += ifs.gcount();
                         totalBytesRead += count;
                         bytesLeftInChunk -= bytesRead;
@@ -189,9 +191,9 @@ namespace appimage {
 
                     // check whether one of the sections that must be skipped are in the current chunk, and if they
                     // are, skip those sections in the current and future sections
+                    checkSkipSection(updInfoOffset, updInfoLength);
                     checkSkipSection(sigOffset, sigLength);
                     checkSkipSection(keyOffset, keyLength);
-                    checkSkipSection(updInfoOffset, updInfoLength);
 
                     // read remaining bytes in chunk, given the file has still data to be read
                     if (ifs && bytesLeftInChunk > 0) {
@@ -200,6 +202,7 @@ namespace appimage {
 
                     // update hash with data from buffer
                     digest.add(buffer.data(), static_cast<size_t>(bytesRead));
+                    ofs.write(buffer.data(), bytesRead);
                 }
 
                 return digest.getHash();
@@ -811,12 +814,12 @@ namespace appimage {
                 return VALIDATION_FAILED;
             }
 
-            auto pathToOldAppImage = d->pathToAppImage;
+            auto pathToOldAppImage = abspath(d->pathToAppImage);
             if (pathToOldAppImage == pathToNewAppImage) {
                 pathToOldAppImage = pathToNewAppImage + ".zs-old";
             }
 
-            auto oldSignature = d->readAppImageSignature(d->pathToAppImage);
+            auto oldSignature = d->readAppImageSignature(pathToOldAppImage);
             auto newSignature = d->readAppImageSignature(pathToNewAppImage);
 
             // remove any spaces and/or newline characters there might be on the left or right of the payload
