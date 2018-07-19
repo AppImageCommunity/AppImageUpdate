@@ -91,9 +91,13 @@ namespace appimage {
 
             static const std::string hashAppImage(const std::string& pathToAppImage) {
                 // read offset and length of signature section to skip it later
-                unsigned long offset = 0, length = 0;
+                unsigned long sigOffset = 0, sigLength = 0;
+                unsigned long keyOffset = 0, keyLength = 0;
 
-                if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sha256_sig", &offset, &length))
+                if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sha256_sig", &sigOffset, &sigLength))
+                    return "";
+
+                if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sig_key", &keyOffset, &keyLength))
                     return "";
 
                 std::ifstream ifs(pathToAppImage);
@@ -106,28 +110,91 @@ namespace appimage {
                 // validate.c uses "offset" as chunk size, but that value might be quite high, and therefore uses
                 // a lot of memory
                 // TODO: use a smaller value (maybe use a prime factorization and use the biggest prime factor?)
-                auto chunkSize = offset;
+                const ssize_t chunkSize = 4096;
 
                 std::vector<char> buffer(chunkSize, 0);
 
-                long totalBytesRead = 0;
+                ssize_t totalBytesRead = 0;
 
-                auto bufsize = buffer.size();
+                // bytes that should be skipped when reading the next chunk
+                // when e.g., a section that must be ignored spans over more than one chunk, this amount of bytes is
+                // being nulled & skipped before reading data from the file again
+                std::streamsize bytesToSkip = 0;
 
-                std::streamsize bytesRead;
+                ifs.seekg (0, ifs.end);
+                const ssize_t fileSize = ifs.tellg();
+                ifs.seekg (0, ifs.beg);
 
                 while (ifs) {
-                    ifs.read(buffer.data(), bufsize);
+                    ssize_t bytesRead = 0;
 
-                    bytesRead = ifs.gcount();
+                    auto bytesLeftInChunk = std::min(chunkSize, (fileSize - totalBytesRead));
 
-                    if (totalBytesRead == offset) {
-                        std::fill(buffer.begin(), buffer.begin() + length, '\0');
+                    if (bytesLeftInChunk <= 0)
+                        break;
+
+                    auto skipBytes = [&bytesRead, &bytesLeftInChunk, &buffer, &ifs, &totalBytesRead](ssize_t count) {
+                        if (count <= 0)
+                            return;
+
+                        std::fill(buffer.begin(), buffer.begin() + count, '\0');
+                        bytesRead += count;
+                        totalBytesRead += count;
+                        bytesLeftInChunk -= count;
+                        ifs.seekg(count, std::ios::cur);
+                    };
+
+                    auto readBytes = [&bytesRead, &bytesLeftInChunk, &buffer, &ifs, &totalBytesRead](ssize_t count) {
+                        if (count <= 0)
+                            return;
+
+                        ifs.read(buffer.data(), count);
+                        bytesRead += ifs.gcount();
+                        totalBytesRead += count;
+                        bytesLeftInChunk -= bytesRead;
+                    };
+
+                    auto checkSkipSection = [&](const ssize_t sectionOffset, const ssize_t sectionLength) {
+                        // check whether signature starts in current chunk
+                        const ssize_t sectionOffsetDelta = sectionOffset - totalBytesRead;
+
+                        if (sectionOffsetDelta >= 0 && sectionOffsetDelta < bytesLeftInChunk) {
+                            // read until section begins
+                            readBytes(sectionOffsetDelta);
+
+                            // calculate how many bytes must be nulled in this chunk
+                            // the rest will be nulled in the following chunk(s)
+                            auto bytesLeft = sectionLength;
+                            const auto bytesToNullInCurrentChunk = std::min(bytesLeftInChunk, bytesLeft);
+
+                            // null these bytes
+                            skipBytes(bytesToNullInCurrentChunk);
+
+                            // calculate how many bytes must be nulled in future chunks
+                            bytesLeft -= bytesToNullInCurrentChunk;
+                            bytesToSkip = bytesLeft;
+                        }
+                    };
+
+                    // check whether bytes must be skipped from previous sections
+                    if (bytesToSkip > 0) {
+                        auto bytesToSkipInCurrentChunk = std::min(chunkSize, bytesToSkip);
+                        skipBytes(bytesToSkipInCurrentChunk);
+                        bytesToSkip -= bytesToSkipInCurrentChunk;
                     }
 
-                    digest.add(buffer.data(), static_cast<size_t>(bytesRead));
+                    // check whether one of the sections that must be skipped are in the current chunk, and if they
+                    // are, skip those sections in the current and future sections
+                    checkSkipSection(sigOffset, sigLength);
+                    checkSkipSection(keyOffset, keyLength);
 
-                    totalBytesRead += bytesRead;
+                    // read remaining bytes in chunk, given the file has still data to be read
+                    if (ifs && bytesLeftInChunk > 0) {
+                        readBytes(bytesLeftInChunk);
+                    }
+
+                    // update hash with data from buffer
+                    digest.add(buffer.data(), static_cast<size_t>(bytesRead));
                 }
 
                 return digest.getHash();
@@ -759,6 +826,9 @@ namespace appimage {
             auto oldDigest = d->hashAppImage(pathToOldAppImage);
             auto newDigest = d->hashAppImage(pathToNewAppImage);
 
+            auto oldDigestOrig = readElfSection(pathToOldAppImage, ".sha256_sig");
+            auto newDigestOrig = readElfSection(pathToNewAppImage, ".sha256_sig");
+
             std::string tempDir;
             {
                 char* buffer;
@@ -929,7 +999,7 @@ namespace appimage {
             }
 
             if (newSigned) {
-                if (!verifySignature(newSignatureFilename, oldSignatureFilename, newKeyFound, newSignatureGood, newKeyID, newKeyOwner)) {
+                if (!verifySignature(newSignatureFilename, newDigestFilename, newKeyFound, newSignatureGood, newKeyID, newKeyOwner)) {
                     cleanup();
                     return VALIDATION_GPG2_CALL_FAILED;
                 }
