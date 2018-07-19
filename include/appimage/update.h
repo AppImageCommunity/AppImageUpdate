@@ -97,13 +97,14 @@ namespace appimage {
             // available (after a successful update at the latest)
             // Returns false in case of errors, or when the path is not available yet
             bool pathToNewFile(std::string& path) const;
+
             // Validate AppImage signature
             // TODO: describe process
             // Returns a ValidationState value. See ValidationState documentation for more information.
             ValidationState validateSignature();
 
             // Returns a description string of the given validation state.
-            static std::string signatureValidationMessage(const ValidationState state);
+            static std::string signatureValidationMessage(const ValidationState& state);
 
             // Returns the size of the remote file in bytes
             bool remoteFileSize(off_t& fileSize) const;

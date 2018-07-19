@@ -958,7 +958,7 @@ namespace appimage {
             return VALIDATION_PASSED;
         }
 
-        std::string Updater::signatureValidationMessage(const Updater::ValidationState state) {
+        std::string Updater::signatureValidationMessage(const Updater::ValidationState& state) {
             static const std::map<ValidationState, std::string> validationMessages = {
                 {VALIDATION_PASSED, "Signature validation successful"},
 
