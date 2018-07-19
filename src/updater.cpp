@@ -93,11 +93,15 @@ namespace appimage {
                 // read offset and length of signature section to skip it later
                 unsigned long sigOffset = 0, sigLength = 0;
                 unsigned long keyOffset = 0, keyLength = 0;
+                unsigned long updInfoOffset = 0, updInfoLength = 0;
 
                 if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sha256_sig", &sigOffset, &sigLength))
                     return "";
 
                 if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sig_key", &keyOffset, &keyLength))
+                    return "";
+
+                if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".upd_info", &updInfoOffset, &updInfoLength))
                     return "";
 
                 std::ifstream ifs(pathToAppImage);
@@ -187,6 +191,7 @@ namespace appimage {
                     // are, skip those sections in the current and future sections
                     checkSkipSection(sigOffset, sigLength);
                     checkSkipSection(keyOffset, keyLength);
+                    checkSkipSection(updInfoOffset, updInfoLength);
 
                     // read remaining bytes in chunk, given the file has still data to be read
                     if (ifs && bytesLeftInChunk > 0) {
