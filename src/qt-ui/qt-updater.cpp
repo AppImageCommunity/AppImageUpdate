@@ -224,12 +224,26 @@ namespace appimage {
 
                     auto palette = d->progressBar->palette();
 
+                    const auto validationResult = d->updater->validateSignature();
+                    const auto validationMessage = QString::fromStdString(d->updater->signatureValidationMessage(validationResult));
+
                     if (d->updater->hasError()) {
                         d->label->setText("Update failed!");
                         palette.setColor(QPalette::Highlight, Qt::red);
                     } else {
-                        d->label->setText("Update successful!");
-                        palette.setColor(QPalette::Highlight, Qt::green);
+                        if (validationResult != d->updater->VALIDATION_PASSED) {
+                            if (validationResult >= d->updater->VALIDATION_WARNING && validationResult < d->updater->VALIDATION_FAILED) {
+                                d->label->setText("Signature validation problem: " + validationMessage);
+                                palette.setColor(QPalette::Highlight, Qt::yellow);
+                            } else {
+                                d->label->setText("Signature validation error: " + validationMessage);
+                                palette.setColor(QPalette::Highlight, Qt::red);
+                                QMessageBox::critical(this, "Error", "Signature validation error:\n\n" + validationMessage);
+                            }
+                        } else {
+                            d->label->setText("Update successful!");
+                            palette.setColor(QPalette::Highlight, Qt::green);
+                        }
                     }
 
                     // TODO: doesn't work with the Gtk+ platform theme
@@ -241,7 +255,7 @@ namespace appimage {
 
                     d->buttonBox = new QDialogButtonBox();
 
-                    if (!d->updater->hasError() && d->enableRunUpdatedAppImageButton) {
+                    if (!d->updater->hasError() && validationResult < d->updater->VALIDATION_FAILED && d->enableRunUpdatedAppImageButton) {
                         d->buttonBox->addButton("Run updated AppImage", QDialogButtonBox::AcceptRole);
                         connect(d->buttonBox, &QDialogButtonBox::accepted, this, [this](){
                             emit runUpdatedAppImageClicked();
