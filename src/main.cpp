@@ -238,21 +238,20 @@ int main(const int argc, const char** argv) {
     auto oldFilePath = pathToOldAppImage(pathToAppImage, newFilePath);
 
     if (validationResult >= Updater::VALIDATION_FAILED) {
-        cerr << "Validation error: " << Updater::signatureValidationMessage(validationResult) << endl;
+        // validation failed, restore original file to prevent bad things from happening
+        updater.restoreOriginalFile();
 
-        // restore original file
-        std::remove(newFilePath.c_str());
-
-        if (oldFilePath == newFilePath) {
-            std::rename(oldFilePath.c_str(), newFilePath.c_str());
-        }
+        cerr << "Validation error: " << Updater::signatureValidationMessage(validationResult) << endl
+             << "Restoring original file" << endl;
 
         return 1;
     }
 
-    if (validationResult >= Updater::VALIDATION_WARNING) {
+    if (validationResult >= Updater::VALIDATION_WARNING)
         cerr << "Validation warning: " << Updater::signatureValidationMessage(validationResult) << endl;
-    }
+
+    if (validationResult <= Updater::VALIDATION_WARNING)
+        cerr << "Signature validation passed" << endl;
 
     if (removeOldFile) {
         if (isFile(oldFilePath)) {

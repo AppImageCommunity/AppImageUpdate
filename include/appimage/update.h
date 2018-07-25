@@ -113,6 +113,9 @@ namespace appimage {
             // return value will be empty if there's no update information in the AppImage
             // throws std::runtime_error if AppImage can't be parsed
             std::string updateInformation() const;
+
+            // Restore original file, e.g., after a signature validation error
+            bool restoreOriginalFile();
         };
     }
 }

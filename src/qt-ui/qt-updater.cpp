@@ -236,9 +236,11 @@ namespace appimage {
                                 d->label->setText("Signature validation problem: " + validationMessage);
                                 palette.setColor(QPalette::Highlight, Qt::yellow);
                             } else {
-                                d->label->setText("Signature validation error: " + validationMessage);
+                                d->updater->restoreOriginalFile();
+                                const QString message = "Signature validation error: " + validationMessage;
+                                d->label->setText(message);
                                 palette.setColor(QPalette::Highlight, Qt::red);
-                                QMessageBox::critical(this, "Error", "Signature validation error:\n\n" + validationMessage);
+                                QMessageBox::critical(this, "Error", message + "\n\nRestoring original file");
                             }
                         } else {
                             d->label->setText("Update successful!");

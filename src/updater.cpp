@@ -1063,5 +1063,25 @@ namespace appimage {
 
             return appImage->rawUpdateInformation;
         }
+
+        bool Updater::restoreOriginalFile() {
+            std::string newFilePath;
+
+            if (!pathToNewFile(newFilePath)) {
+                throw std::runtime_error("Failed to get path to new file");
+            }
+
+            // make sure to compare absolute, resolved paths
+            newFilePath = abspath(newFilePath);
+
+            const auto& oldFilePath = abspath(d->pathToAppImage);
+
+            // restore original file
+            std::remove(newFilePath.c_str());
+
+            if (oldFilePath == newFilePath) {
+                std::rename((newFilePath + ".zs-old").c_str(), newFilePath.c_str());
+            }
+        }
     }
 }
