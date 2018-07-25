@@ -227,6 +227,7 @@ namespace appimage {
                     const auto validationResult = d->updater->validateSignature();
                     const auto validationMessage = QString::fromStdString(d->updater->signatureValidationMessage(validationResult));
 
+                    // TODO: refactor this block, it's quite difficult to understand right now
                     if (d->updater->hasError()) {
                         d->label->setText("Update failed!");
                         palette.setColor(QPalette::Highlight, Qt::red);
@@ -243,6 +244,8 @@ namespace appimage {
                                 QMessageBox::critical(this, "Error", message + "\n\nRestoring original file");
                             }
                         } else {
+                            if (validationResult == d->updater->VALIDATION_PASSED)
+                                newStatusMessage("Signature validation passed");
                             d->label->setText("Update successful!");
                             palette.setColor(QPalette::Highlight, Qt::green);
                         }
