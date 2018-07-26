@@ -188,5 +188,50 @@ namespace appimage {
 
             return buffer.data();
         }
+
+        static std::string findInPATH(const std::string& name) {
+            const std::string PATH = getenv("PATH");
+
+            for (const auto& path : split(PATH, ':')) {
+                std::ostringstream oss;
+                oss << path << "/" << name;
+
+                auto fullPath = oss.str();
+
+                // TODO: check whether file is actually executable
+                if (isFile(fullPath))
+                    return fullPath;
+            }
+        }
+
+        static bool stringStartsWith(const std::string& string, const std::string& prefix) {
+            return strncmp(string.c_str(), prefix.c_str(), prefix.size()) == 0;
+        }
+
+        static std::string abspath(const std::string& path) {
+            char* fullPath = nullptr;
+
+            if ((fullPath = realpath(path.c_str(), nullptr)) == nullptr) {
+                auto error = errno;
+                std::cerr << "Failed to resolve full path to AppImage: " << strerror(error) << std::endl;
+                return "";
+            }
+
+            std::string rv = fullPath;
+
+            // clean up
+            free(fullPath);
+            fullPath = nullptr;
+
+            return rv;
+        }
+
+        static std::string pathToOldAppImage(const std::string& oldPath, const std::string& newPath) {
+            if (oldPath == newPath) {
+                return newPath + ".zs-old";
+            }
+
+            return abspath(oldPath);
+        };
     }; // namespace update
 } // namespace appimage

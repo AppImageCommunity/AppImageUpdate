@@ -31,7 +31,9 @@ namespace appimage {
                 appimage::update::Updater* updater;
 
                 QLabel* label;
+                QHBoxLayout* labelLayout;
                 QLabel* progressLabel;
+                QLabel* validationStateLabel;
                 QDialogButtonBox* buttonBox;
 
                 QProgressBar* progressBar;
@@ -65,8 +67,7 @@ namespace appimage {
                                                                   spoilerLayout(nullptr),
                                                                   spoilerLog(nullptr),
                                                                   finished(false),
-                                                                  minimumWidth(400),
-                                                                  enableRunUpdatedAppImageButton(true)
+                                                                  minimumWidth(400)
                 {
                     if (!isFile(pathToAppImage.toStdString()))
                         throw std::runtime_error("No such file or directory: " + pathToAppImage.toStdString());
@@ -223,12 +224,31 @@ namespace appimage {
 
                     auto palette = d->progressBar->palette();
 
+                    const auto validationResult = d->updater->validateSignature();
+                    const auto validationMessage = QString::fromStdString(d->updater->signatureValidationMessage(validationResult));
+
+                    // TODO: refactor this block, it's quite difficult to understand right now
                     if (d->updater->hasError()) {
                         d->label->setText("Update failed!");
                         palette.setColor(QPalette::Highlight, Qt::red);
                     } else {
-                        d->label->setText("Update successful!");
-                        palette.setColor(QPalette::Highlight, Qt::green);
+                        if (validationResult != d->updater->VALIDATION_PASSED) {
+                            if (validationResult >= d->updater->VALIDATION_WARNING && validationResult < d->updater->VALIDATION_FAILED) {
+                                d->label->setText("Signature validation problem: " + validationMessage);
+                                palette.setColor(QPalette::Highlight, Qt::yellow);
+                            } else {
+                                d->updater->restoreOriginalFile();
+                                const QString message = "Signature validation error: " + validationMessage;
+                                d->label->setText(message);
+                                palette.setColor(QPalette::Highlight, Qt::red);
+                                QMessageBox::critical(this, "Error", message + "\n\nRestoring original file");
+                            }
+                        } else {
+                            if (validationResult == d->updater->VALIDATION_PASSED)
+                                newStatusMessage("Signature validation passed");
+                            d->label->setText("Update successful!");
+                            palette.setColor(QPalette::Highlight, Qt::green);
+                        }
                     }
 
                     // TODO: doesn't work with the Gtk+ platform theme
@@ -240,7 +260,7 @@ namespace appimage {
 
                     d->buttonBox = new QDialogButtonBox();
 
-                    if (!d->updater->hasError() && d->enableRunUpdatedAppImageButton) {
+                    if (!d->updater->hasError() && validationResult < d->updater->VALIDATION_FAILED && d->enableRunUpdatedAppImageButton) {
                         d->buttonBox->addButton("Run updated AppImage", QDialogButtonBox::AcceptRole);
                         connect(d->buttonBox, &QDialogButtonBox::accepted, this, [this](){
                             emit runUpdatedAppImageClicked();

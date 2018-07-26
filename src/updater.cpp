@@ -13,7 +13,9 @@
 
 // library headers
 #include <zsclient.h>
+#include <hashlib/sha256.h>
 #include <cpr/cpr.h>
+#include <ftw.h>
 
 // local headers
 #include "appimage/update.h"
@@ -72,6 +74,7 @@ namespace appimage {
                 std::string rawUpdateInformation;
                 UpdateInformationType updateInformationType;
                 std::string zsyncUrl;
+                std::string signature;
 
                 AppImage() : appImageVersion(-1), updateInformationType(INVALID) {};
             };
@@ -80,6 +83,123 @@ namespace appimage {
         public:
             void issueStatusMessage(const std::string& message) {
                 statusMessages.push_back(message);
+            }
+
+            static const std::string readAppImageSignature(const std::string& pathToAppImage) {
+                return readElfSection(pathToAppImage, ".sha256_sig");
+            }
+
+            static const std::string hashAppImage(const std::string& pathToAppImage) {
+                // read offset and length of signature section to skip it later
+                unsigned long sigOffset = 0, sigLength = 0;
+                unsigned long keyOffset = 0, keyLength = 0;
+
+                if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sha256_sig", &sigOffset, &sigLength))
+                    return "";
+
+                if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sig_key", &keyOffset, &keyLength))
+                    return "";
+
+                std::ifstream ifs(pathToAppImage);
+
+                if (!ifs)
+                    return "";
+
+                SHA256 digest;
+
+                // validate.c uses "offset" as chunk size, but that value might be quite high, and therefore uses
+                // a lot of memory
+                // TODO: use a smaller value (maybe use a prime factorization and use the biggest prime factor?)
+                const ssize_t chunkSize = 4096;
+
+                std::vector<char> buffer(chunkSize, 0);
+
+                ssize_t totalBytesRead = 0;
+
+                // bytes that should be skipped when reading the next chunk
+                // when e.g., a section that must be ignored spans over more than one chunk, this amount of bytes is
+                // being nulled & skipped before reading data from the file again
+                std::streamsize bytesToSkip = 0;
+
+                ifs.seekg(0, ifs.end);
+                const ssize_t fileSize = ifs.tellg();
+                ifs.seekg(0, ifs.beg);
+
+                while (ifs) {
+                    ssize_t bytesRead = 0;
+
+                    auto bytesLeftInChunk = std::min(chunkSize, (fileSize - totalBytesRead));
+
+                    if (bytesLeftInChunk <= 0)
+                        break;
+
+                    auto skipBytes = [&bytesRead, &bytesLeftInChunk, &buffer, &ifs, &totalBytesRead](ssize_t count) {
+                        if (count <= 0)
+                            return;
+
+                        const auto start = buffer.begin() + bytesRead;
+                        std::fill_n(start, count, '\0');
+
+                        bytesRead += count;
+                        totalBytesRead += count;
+                        bytesLeftInChunk -= count;
+                        ifs.seekg(count, std::ios::cur);
+                    };
+
+                    auto readBytes = [&bytesRead, &bytesLeftInChunk, &buffer, &ifs, &totalBytesRead](ssize_t count) {
+                        if (count <= 0)
+                            return;
+
+                        ifs.read(buffer.data() + bytesRead, count);
+                        bytesRead += ifs.gcount();
+                        totalBytesRead += count;
+                        bytesLeftInChunk -= bytesRead;
+                    };
+
+                    auto checkSkipSection = [&](const ssize_t sectionOffset, const ssize_t sectionLength) {
+                        // check whether signature starts in current chunk
+                        const ssize_t sectionOffsetDelta = sectionOffset - totalBytesRead;
+
+                        if (sectionOffsetDelta >= 0 && sectionOffsetDelta < bytesLeftInChunk) {
+                            // read until section begins
+                            readBytes(sectionOffsetDelta);
+
+                            // calculate how many bytes must be nulled in this chunk
+                            // the rest will be nulled in the following chunk(s)
+                            auto bytesLeft = sectionLength;
+                            const auto bytesToNullInCurrentChunk = std::min(bytesLeftInChunk, bytesLeft);
+
+                            // null these bytes
+                            skipBytes(bytesToNullInCurrentChunk);
+
+                            // calculate how many bytes must be nulled in future chunks
+                            bytesLeft -= bytesToNullInCurrentChunk;
+                            bytesToSkip = bytesLeft;
+                        }
+                    };
+
+                    // check whether bytes must be skipped from previous sections
+                    if (bytesToSkip > 0) {
+                        auto bytesToSkipInCurrentChunk = std::min(chunkSize, bytesToSkip);
+                        skipBytes(bytesToSkipInCurrentChunk);
+                        bytesToSkip -= bytesToSkipInCurrentChunk;
+                    }
+
+                    // check whether one of the sections that must be skipped are in the current chunk, and if they
+                    // are, skip those sections in the current and future sections
+                    checkSkipSection(sigOffset, sigLength);
+                    checkSkipSection(keyOffset, keyLength);
+
+                    // read remaining bytes in chunk, given the file has still data to be read
+                    if (ifs && bytesLeftInChunk > 0) {
+                        readBytes(bytesLeftInChunk);
+                    }
+
+                    // update hash with data from buffer
+                    digest.add(buffer.data(), static_cast<size_t>(bytesRead));
+                }
+
+                return digest.getHash();
             }
 
             const AppImage* readAppImage(const std::string& pathToAppImage) {
@@ -127,6 +247,9 @@ namespace appimage {
                 // read update information in the file
                 std::string updateInformation;
 
+                // also read signature in the file
+                std::string signature;
+
                 if (appImageType == 1) {
                     // update information is always at the same position, and has a fixed length
                     static constexpr auto position = 0x8373;
@@ -141,6 +264,9 @@ namespace appimage {
                 } else if (appImageType == 2) {
                     // try to read ELF section .upd_info
                     updateInformation = readElfSection(pathToAppImage, ".upd_info");
+
+                    // type 2 supports signatures, so we can extract it here, too
+                    signature = readAppImageSignature(pathToAppImage);
                 } else {
                     // final try: type 1 AppImages do not have to set the magic bytes, although they should
                     // if the file is both an ELF and an ISO9660 file, we'll suspect it to be a type 1 AppImage, and
@@ -338,6 +464,7 @@ namespace appimage {
                 appImage->rawUpdateInformation = updateInformation;
                 appImage->updateInformationType = uiType;
                 appImage->zsyncUrl = zsyncUrl;
+                appImage->signature = signature;
 
                 return appImage;
             }
@@ -439,6 +566,7 @@ namespace appimage {
                         zSyncClient->setCwd(dirPath);
                     } else {
                         // error unsupported type
+                        issueStatusMessage("Error: update method not implemented");
 
                         // cleanup
                         delete appImage;
@@ -673,6 +801,260 @@ namespace appimage {
             return false;
         }
 
+        Updater::ValidationState Updater::validateSignature() {
+            std::string pathToNewAppImage;
+            if (!this->pathToNewFile(pathToNewAppImage)) {
+                // return generic error
+                return VALIDATION_FAILED;
+            }
+
+            auto pathToOldAppImage = abspath(d->pathToAppImage);
+            if (pathToOldAppImage == pathToNewAppImage) {
+                pathToOldAppImage = pathToNewAppImage + ".zs-old";
+            }
+
+            auto oldSignature = d->readAppImageSignature(pathToOldAppImage);
+            auto newSignature = d->readAppImageSignature(pathToNewAppImage);
+
+            // remove any spaces and/or newline characters there might be on the left or right of the payload
+            zsync2::trim(oldSignature, '\n');
+            zsync2::trim(newSignature, '\n');
+            zsync2::trim(oldSignature);
+            zsync2::trim(newSignature);
+
+            auto oldSigned = !oldSignature.empty();
+            auto newSigned = !newSignature.empty();
+
+            auto oldDigest = d->hashAppImage(pathToOldAppImage);
+            auto newDigest = d->hashAppImage(pathToNewAppImage);
+
+            auto oldDigestOrig = readElfSection(pathToOldAppImage, ".sha256_sig");
+            auto newDigestOrig = readElfSection(pathToNewAppImage, ".sha256_sig");
+
+            std::string tempDir;
+            {
+                char* buffer;
+
+                char* pattern = strdup("/tmp/AppImageUpdate-XXXXXX");
+                if ((buffer = mkdtemp(pattern)) == nullptr) {
+                    d->issueStatusMessage("Failed to create temporary directory");
+                    return VALIDATION_TEMPDIR_CREATION_FAILED;
+                }
+
+                tempDir = buffer;
+
+                free(pattern);
+            }
+
+            auto tempFile = [&tempDir](const std::string& filename, const std::string& contents) {
+                std::stringstream path;
+                path << tempDir << "/" << filename;
+
+                auto x = path.str();
+
+                std::ofstream ofs(path.str());
+                ofs.write(contents.c_str(), contents.size());
+
+                return path.str();
+            };
+
+            if (!oldSigned && !newSigned)
+                return VALIDATION_NOT_SIGNED;
+
+            else if (oldSigned && !newSigned)
+                return VALIDATION_NO_LONGER_SIGNED;
+
+            // store digests and signatures in files so they can be passed to gpg2
+            auto oldDigestFilename = tempFile("old-digest", oldDigest);
+            auto newDigestFilename = tempFile("new-digest", newDigest);
+
+            auto oldSignatureFilename = tempFile("old-signature", oldSignature);
+            auto newSignatureFilename = tempFile("new-signature", newSignature);
+
+            auto cleanup = [&tempDir]() {
+                // cleanup
+                auto unlinkCb = [](const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+                    int rv = remove(fpath);
+                    if (rv)
+                        perror(fpath);
+                    return rv;
+                };
+                nftw(tempDir.c_str(), unlinkCb, 64, FTW_DEPTH | FTW_PHYS);
+                rmdir(tempDir.c_str());
+            };
+
+            // find gpg2 binary
+            auto gpg2Path = findInPATH("gpg2");
+            if (gpg2Path.empty()) {
+                cleanup();
+                return VALIDATION_GPG2_MISSING;
+            }
+
+            const auto tempKeyRingPath = tempDir + "/keyring";
+
+            // create keyring file, otherwise GPG will complain
+            std::ofstream ofs(tempKeyRingPath);
+            ofs.close();
+
+            auto importKeyFromAppImage = [&tempKeyRingPath, &gpg2Path](const std::string& path) {
+                auto key = readElfSection(path, ".sig_key");
+
+                if (key.empty())
+                    return false;
+
+                std::ostringstream oss;
+                oss << "'" << gpg2Path << "' "
+                    << "--no-default-keyring --keyring '" << tempKeyRingPath << "' --import";
+
+                auto command = oss.str();
+
+                auto proc = popen(oss.str().c_str(), "w");
+
+                fwrite(key.c_str(), key.size(), sizeof(char), proc);
+
+                auto retval = pclose(proc);
+
+                return retval == 0;
+            };
+
+            importKeyFromAppImage(pathToOldAppImage);
+            importKeyFromAppImage(pathToNewAppImage);
+
+            auto verifySignature = [this, &gpg2Path, &tempKeyRingPath](
+                const std::string& signatureFile, const std::string& digestFile,
+                bool& keyFound, bool& goodSignature,
+                std::string& keyID, std::string& keyOwner
+            ) {
+                std::ostringstream oss;
+                oss << "'" << gpg2Path << "'"
+                    << " --keyring '" << tempKeyRingPath << "'"
+                    << " --verify '" << signatureFile << "' '" << digestFile << "' 2>&1";
+
+                auto command = oss.str();
+
+                // make sure output is in English
+                setenv("LANGUAGE", "C", 1);
+                setenv("LANG", "C", 1);
+                setenv("LC_ALL", "C", 1);
+
+                auto* proc = popen(command.c_str(), "r");
+
+                if (proc == nullptr)
+                    return false;
+
+                char* currentLine = nullptr;
+                size_t lineSize = 0;
+
+                keyFound = true;
+                goodSignature = false;
+
+                while (getline(&currentLine, &lineSize, proc) != -1) {
+                    std::string line = currentLine;
+
+                    trim(line, '\n');
+                    trim(line);
+
+                    d->issueStatusMessage(std::string("gpg2: ") + line);
+
+                    auto splitOwner = [&line]() {
+                        auto parts = split(line, '"');
+
+                        if (parts.size() < 2)
+                            return std::string();
+
+                        auto skip = parts[0].length();
+
+                        return line.substr(skip + 1, line.length() - skip - 2);
+                    };
+
+                    if (stringStartsWith(line, "gpg: Signature made")) {
+                        // extract key
+                        auto parts = split(line);
+
+                        if (*(parts.end() - 3) == "key" && *(parts.end() - 2) == "ID")
+                            keyID = parts.back();
+
+                    } else if (stringStartsWith(line, "gpg: Good signature from")) {
+                        goodSignature = true;
+                        keyOwner = splitOwner();
+                    } else if (stringStartsWith(line, "gpg: BAD signature from")) {
+                        goodSignature = false;
+                        keyOwner = splitOwner();
+                    } else if (stringStartsWith(line, "gpg: Can't check signature: No public key")) {
+                        keyFound = false;
+                    }
+                }
+
+                auto rv = pclose(proc);
+
+                return true;
+            };
+
+            bool oldKeyFound = false, newKeyFound = false, oldSignatureGood = false, newSignatureGood = false;
+            std::string oldKeyID, newKeyID, oldKeyOwner, newKeyOwner;
+
+            if (oldSigned) {
+                if (!verifySignature(oldSignatureFilename, oldDigestFilename, oldKeyFound, oldSignatureGood, oldKeyID, oldKeyOwner)) {
+                    cleanup();
+                    return VALIDATION_GPG2_CALL_FAILED;
+                }
+            }
+
+            if (newSigned) {
+                if (!verifySignature(newSignatureFilename, newDigestFilename, newKeyFound, newSignatureGood, newKeyID, newKeyOwner)) {
+                    cleanup();
+                    return VALIDATION_GPG2_CALL_FAILED;
+                }
+            }
+
+            if (!oldKeyFound || !newKeyFound) {
+                // if the keys haven't been embedded in the AppImages, we treat them as not signed
+                // see https://github.com/AppImage/AppImageUpdate/issues/16#issuecomment-370932698 for details
+                cleanup();
+                return VALIDATION_NOT_SIGNED;
+            }
+
+            if (!oldSignatureGood || !newSignatureGood) {
+                cleanup();
+                return VALIDATION_BAD_SIGNATURE;
+            }
+
+            if (oldSigned && newSigned) {
+                if (oldKeyID != newKeyID) {
+                    cleanup();
+                    return VALIDATION_KEY_CHANGED;
+                }
+            }
+
+            cleanup();
+            return VALIDATION_PASSED;
+        }
+
+        std::string Updater::signatureValidationMessage(const Updater::ValidationState& state) {
+            static const std::map<ValidationState, std::string> validationMessages = {
+                {VALIDATION_PASSED, "Signature validation successful"},
+
+                // warning states
+                {VALIDATION_WARNING, "Signature validation warning"},
+                {VALIDATION_NOT_SIGNED, "AppImages not signed"},
+                {VALIDATION_KEY_CHANGED, "Key changed for signing AppImages"},
+
+                // error states
+                {VALIDATION_FAILED, "Signature validation failed"},
+                {VALIDATION_GPG2_MISSING, "gpg2 command not found, please install"},
+                {VALIDATION_GPG2_CALL_FAILED, "Call to gpg2 failed"},
+                {VALIDATION_TEMPDIR_CREATION_FAILED, "Failed to create temporary directory"},
+                {VALIDATION_NO_LONGER_SIGNED, "AppImage no longer comes with signature"},
+                {VALIDATION_BAD_SIGNATURE, "Bad signature"},
+            };
+
+            if (validationMessages.count(state) > 0) {
+                return validationMessages.at(state);
+            }
+
+            return "Unknown validation state";
+        }
+
         std::string Updater::updateInformation() const {
             const auto* appImage = d->readAppImage(d->pathToAppImage);
 
@@ -680,6 +1062,26 @@ namespace appimage {
                 throw std::runtime_error("Failed to parse AppImage");
 
             return appImage->rawUpdateInformation;
+        }
+
+        bool Updater::restoreOriginalFile() {
+            std::string newFilePath;
+
+            if (!pathToNewFile(newFilePath)) {
+                throw std::runtime_error("Failed to get path to new file");
+            }
+
+            // make sure to compare absolute, resolved paths
+            newFilePath = abspath(newFilePath);
+
+            const auto& oldFilePath = abspath(d->pathToAppImage);
+
+            // restore original file
+            std::remove(newFilePath.c_str());
+
+            if (oldFilePath == newFilePath) {
+                std::rename((newFilePath + ".zs-old").c_str(), newFilePath.c_str());
+            }
         }
     }
 }

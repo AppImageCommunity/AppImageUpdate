@@ -230,39 +230,35 @@ int main(const int argc, const char** argv) {
         return 1;
     }
 
+    auto validationResult = updater.validateSignature();
+
+    while (updater.nextStatusMessage(nextMessage))
+        cout << nextMessage << endl;
+
+    auto oldFilePath = pathToOldAppImage(pathToAppImage, newFilePath);
+
+    if (validationResult >= Updater::VALIDATION_FAILED) {
+        // validation failed, restore original file to prevent bad things from happening
+        updater.restoreOriginalFile();
+
+        cerr << "Validation error: " << Updater::signatureValidationMessage(validationResult) << endl
+             << "Restoring original file" << endl;
+
+        return 1;
+    }
+
+    if (validationResult >= Updater::VALIDATION_WARNING)
+        cerr << "Validation warning: " << Updater::signatureValidationMessage(validationResult) << endl;
+
+    if (validationResult <= Updater::VALIDATION_WARNING)
+        cerr << "Signature validation passed" << endl;
+
     if (removeOldFile) {
-        std::string fullPathToAppImage;
-
-        // resolve full path to AppImage
-        {
-            char* fullPath = nullptr;
-
-            if ((fullPath = realpath(pathToAppImage.c_str(), nullptr)) == nullptr) {
-                auto error = errno;
-                cerr << "Failed to resolve full path to AppImage: " << strerror(error) << endl;
-                return 1;
-            }
-
-            fullPathToAppImage = fullPath;
-
-            // clean up
-            free(fullPath);
-            fullPath = nullptr;
-        }
-
-        if (fullPathToAppImage != newFilePath) {
-            cerr << "Removing old AppImage: " << pathToAppImage << endl;
-            unlink(pathToAppImage.c_str());
+        if (isFile(oldFilePath)) {
+            cerr << "Removing old AppImage: " << oldFilePath << endl;
+            unlink(oldFilePath.c_str());
         } else {
-            cerr << "Skipping removal of old AppImage: old and new AppImage filenames are equal" << endl;
-        }
-
-        // TODO: define suffix in some header
-        string backupPath = pathToAppImage + ".zs-old";
-
-        if (isFile(backupPath)) {
-            cerr << "Removing backup: " << backupPath << endl;
-            unlink(backupPath.c_str());
+            cerr << "Warning: could not find old AppImage: " << oldFilePath << endl;
         }
     }
 

@@ -22,6 +22,25 @@ namespace appimage {
                 ERROR,
             };
 
+            // Validation states. Returned by validate()
+            enum ValidationState {
+                // there is only one PASSED state, hence check like == PASSED
+                VALIDATION_PASSED = 0,
+
+                // warning states -- check like >= WARNING && < ERROR
+                VALIDATION_WARNING = 1000,
+                VALIDATION_NOT_SIGNED,
+
+                // error states -- check like >= ERROR
+                VALIDATION_FAILED = 2000,
+                VALIDATION_KEY_CHANGED,
+                VALIDATION_GPG2_MISSING,
+                VALIDATION_GPG2_CALL_FAILED,
+                VALIDATION_TEMPDIR_CREATION_FAILED,
+                VALIDATION_NO_LONGER_SIGNED,
+                VALIDATION_BAD_SIGNATURE,
+            };
+
         private:
             // opaque private class
             // without this pattern, the header would require C++11, which is undesirable
@@ -79,6 +98,14 @@ namespace appimage {
             // Returns false in case of errors, or when the path is not available yet
             bool pathToNewFile(std::string& path) const;
 
+            // Validate AppImage signature
+            // TODO: describe process
+            // Returns a ValidationState value. See ValidationState documentation for more information.
+            ValidationState validateSignature();
+
+            // Returns a description string of the given validation state.
+            static std::string signatureValidationMessage(const ValidationState& state);
+
             // Returns the size of the remote file in bytes
             bool remoteFileSize(off_t& fileSize) const;
 
@@ -86,6 +113,9 @@ namespace appimage {
             // return value will be empty if there's no update information in the AppImage
             // throws std::runtime_error if AppImage can't be parsed
             std::string updateInformation() const;
+
+            // Restore original file, e.g., after a signature validation error
+            bool restoreOriginalFile();
         };
     }
 }
