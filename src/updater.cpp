@@ -1037,15 +1037,15 @@ namespace appimage {
                 // warning states
                 {VALIDATION_WARNING, "Signature validation warning"},
                 {VALIDATION_NOT_SIGNED, "AppImages not signed"},
-                {VALIDATION_KEY_CHANGED, "Key changed for signing AppImages"},
+                {VALIDATION_GPG2_MISSING, "gpg2 command not found, please install"},
 
                 // error states
                 {VALIDATION_FAILED, "Signature validation failed"},
-                {VALIDATION_GPG2_MISSING, "gpg2 command not found, please install"},
                 {VALIDATION_GPG2_CALL_FAILED, "Call to gpg2 failed"},
                 {VALIDATION_TEMPDIR_CREATION_FAILED, "Failed to create temporary directory"},
                 {VALIDATION_NO_LONGER_SIGNED, "AppImage no longer comes with signature"},
                 {VALIDATION_BAD_SIGNATURE, "Bad signature"},
+                {VALIDATION_KEY_CHANGED, "Key changed for signing AppImages"},
             };
 
             if (validationMessages.count(state) > 0) {
