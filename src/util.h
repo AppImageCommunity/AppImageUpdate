@@ -202,6 +202,8 @@ namespace appimage {
                 if (isFile(fullPath))
                     return fullPath;
             }
+
+            return "";
         }
 
         static bool stringStartsWith(const std::string& string, const std::string& prefix) {
