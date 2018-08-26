@@ -1036,7 +1036,7 @@ namespace appimage {
 
                 // warning states
                 {VALIDATION_WARNING, "Signature validation warning"},
-                {VALIDATION_NOT_SIGNED, "AppImages not signed"},
+                {VALIDATION_NOT_SIGNED, "AppImage not signed"},
                 {VALIDATION_GPG2_MISSING, "gpg2 command not found, please install"},
 
                 // error states
