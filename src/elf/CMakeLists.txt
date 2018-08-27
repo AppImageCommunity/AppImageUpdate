@@ -13,8 +13,7 @@ download_project(
     PROJ AppImageKit
     PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
     GIT_REPOSITORY https://github.com/AppImage/AppImageKit
-    GIT_TAG appimagetool/master
-    UPDATE_DISCONNECTED 1
+    GIT_TAG 6470b9b8e9def5a77300c9d6a4563933f848514b
 )
 
 set(SOURCE_DIR "${AppImageKit_SOURCE_DIR}/src/")
