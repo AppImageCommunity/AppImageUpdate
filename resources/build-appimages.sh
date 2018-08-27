@@ -74,6 +74,7 @@ rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 
 # get linuxdeploy and its qt plugin
 wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-"$ARCH".AppImage
+wget https://github.com/TheAssassin/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-"$ARCH".AppImage
 chmod +x linuxdeploy*.AppImage
 
 for app in appimageupdatetool AppImageUpdate; do
