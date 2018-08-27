@@ -84,7 +84,7 @@ for app in appimageupdatetool AppImageUpdate; do
     if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
 
     # bundle application
-    ./linuxdeploy-"$ARCH".AppImage -n "$app" --appdir "$app".AppDir --init-appdir --output appimage "${EXTRA_FLAGS[@]}"
+    ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}"
 done
 
 # move AppImages to old cwd
