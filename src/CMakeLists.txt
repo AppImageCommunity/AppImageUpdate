@@ -83,6 +83,10 @@ add_executable(appimageupdatetool main.cpp)
 # link to core lib
 target_link_libraries(appimageupdatetool libappimageupdate args)
 
+# set up rpath
+set_target_properties(libappimageupdate libappimageupdate_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
+set_target_properties(appimageupdatetool PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
+
 # install targets
 install(
     TARGETS libappimageupdate libappimageupdate_static appimageupdatetool

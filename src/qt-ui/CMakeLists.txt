@@ -28,6 +28,10 @@ add_sanitizers(AppImageUpdate)
 target_link_libraries(AppImageUpdate libappimageupdate libappimageupdate-qt)
 target_compile_definitions(AppImageUpdate PRIVATE -DQT_UI)
 
+# set up rpath
+set_target_properties(libappimageupdate-qt PROPERTIES INSTALL_RPATH "\$ORIGIN")
+set_target_properties(AppImageUpdate PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
+
 # install targets
 install(
     TARGETS libappimageupdate-qt AppImageUpdate
