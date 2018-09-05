@@ -21,7 +21,7 @@
 
 // AppImageKit includes
 extern "C" {
-    #include "appimage/appimage.h"
+    #include "appimage/appimage_shared.h"
 }
 
 

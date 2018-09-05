@@ -13,3 +13,6 @@
 [submodule "lib/sanitizers-cmake"]
 	path = lib/sanitizers-cmake
 	url = https://github.com/arsenm/sanitizers-cmake
+[submodule "lib/libappimage"]
+	path = lib/libappimage
+	url = https://github.com/AppImage/libappimage.git

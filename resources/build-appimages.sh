@@ -4,7 +4,7 @@ set -x
 set -e
 
 # use RAM disk if possible
-if [ -d /dev/shm ]; then
+if [ "$CI" == "" ] && [ -d /dev/shm ]; then
     TEMP_BASE=/dev/shm
 else
     TEMP_BASE=/tmp
@@ -26,6 +26,8 @@ OLD_CWD=$(readlink -f .)
 
 pushd "$BUILD_DIR"
 
+export ARCH=${ARCH:-$(uname -m)}
+
 if [ "$ARCH" == "i386" ]; then
     EXTRA_CMAKE_ARGS=("-DCMAKE_TOOLCHAIN_FILE=$REPO_ROOT/cmake/toolchains/i386-linux-gnu.cmake")
 fi
@@ -36,18 +38,14 @@ cmake "$REPO_ROOT" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     "${EXTRA_CMAKE_ARGS[@]}"
 
-# create AppDir
-mkdir -p AppDir
-
 # now, compile and install to AppDir
-make -j$(nproc) install DESTDIR=AppImageUpdate.AppDir
-make -j$(nproc) install DESTDIR=appimageupdatetool.AppDir
+make -j$(nproc)
+make install DESTDIR=AppImageUpdate.AppDir
+make install DESTDIR=appimageupdatetool.AppDir
 
 # install resources into AppDirs
 for appdir in AppImageUpdate.AppDir appimageupdatetool.AppDir; do
-    mkdir -p "$appdir"/usr/share/{applications,icons/hicolor/scalable/apps/} "$appdir"/resources
-    cp -v "$REPO_ROOT"/resources/*.desktop "$appdir"/usr/share/applications/
-    cp -v "$REPO_ROOT"/resources/*.svg "$appdir"/usr/share/icons/hicolor/scalable/apps/
+    mkdir -p "$appdir"/resources
     cp -v "$REPO_ROOT"/resources/*.xpm "$appdir"/resources/
 done
 
@@ -85,7 +83,7 @@ for app in appimageupdatetool AppImageUpdate; do
     if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
 
     # bundle application
-    ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}"
+    ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/AppImage.svg
 done
 
 # move AppImages to old cwd
