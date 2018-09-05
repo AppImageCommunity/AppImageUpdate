@@ -23,10 +23,6 @@ add_definitions("-DBUILD_DATE=\"${DATE}\"")
 add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
 
-# include ELF micro library
-add_subdirectory(elf)
-
-
 # core library
 add_library(
     libappimageupdate
@@ -41,7 +37,12 @@ set_target_properties(libappimageupdate
     PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update.h
 )
 # link thread libraries
-target_link_libraries(libappimageupdate PUBLIC elf PRIVATE ${CMAKE_THREAD_LIBS_INIT} libzsync2 ${CPR_LIBRARIES})
+target_link_libraries(libappimageupdate
+    PUBLIC libappimage_shared
+    PRIVATE ${CMAKE_THREAD_LIBS_INIT}
+    PRIVATE libzsync2
+    PRIVATE ${CPR_LIBRARIES}
+)
 # include directories, publicly
 target_include_directories(libappimageupdate PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
