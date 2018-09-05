@@ -36,12 +36,10 @@ cmake "$REPO_ROOT" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     "${EXTRA_CMAKE_ARGS[@]}"
 
-# create AppDir
-mkdir -p AppDir
-
 # now, compile and install to AppDir
-make -j$(nproc) install DESTDIR=AppImageUpdate.AppDir
-make -j$(nproc) install DESTDIR=appimageupdatetool.AppDir
+make -j$(nproc)
+make install DESTDIR=AppImageUpdate.AppDir
+make install DESTDIR=appimageupdatetool.AppDir
 
 # install resources into AppDirs
 for appdir in AppImageUpdate.AppDir appimageupdatetool.AppDir; do
