@@ -10,13 +10,13 @@ application. Please report any issues on the bug tracker.
 
 ## Try it out
 
-* Download a continuous AppImage build of Subsurface from [here](https://github.com/Subsurface-divelog/subsurface/releases/tag/continuous)
-* Wait a couple of hours/days until they have a new continuous build (happens frequently)
-* Download AppImageUpdate from [here](https://github.com/AppImage/AppImageUpdate/releases) and [make it executable](https://discourse.appimage.org/t/how-to-make-an-appimage-executable/80)
-* Run AppImageUpdate and select your "old" Subsurface AppImage
-* Only the parts that have changed since the original version are downloaded
+* Download a continuous AppImage build of Subsurface from [here](https://github.com/Subsurface-divelog/subsurface/releases/tag/continuous).
+* Wait a couple of hours/days until they have a new continuous build (happens frequently).
+* Download AppImageUpdate from [here](https://github.com/AppImage/AppImageUpdate/releases) and [make it executable](https://discourse.appimage.org/t/how-to-make-an-appimage-executable/80).
+* Run AppImageUpdate and select your "old" Subsurface AppImage.
+* Only the parts that have changed since the original version are downloaded.
 
-otice how quick the update was. Combined with fully automated continuous or nightly builds, this should make software "fluid", as users can get the latest development versions very rapidly.
+Notice how quick the update was. Combined with fully automated continuous or nightly builds, this should make software "fluid", as users can get the latest development versions very rapidly.
 
 If you have the optional appimaged daemon installed, then it can use AppImageUpdate enable right-click updates in the launcher:
 
