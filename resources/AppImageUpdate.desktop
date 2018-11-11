@@ -3,3 +3,4 @@ Name=AppImageUpdate
 Type=Application
 Icon=AppImage
 Exec=AppImageUpdate
+Comment=Update applications distributed in AppImage format
