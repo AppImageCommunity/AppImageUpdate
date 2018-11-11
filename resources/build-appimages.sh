@@ -82,6 +82,10 @@ for app in appimageupdatetool AppImageUpdate; do
 
     if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
 
+    # overwrite AppImage filename to get static filenames
+    # see https://github.com/AppImage/AppImageUpdate/issues/89
+    export OUTPUT="$app"-"$ARCH".AppImage
+
     # bundle application
     ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/AppImage.svg
 done
