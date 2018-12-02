@@ -21,19 +21,19 @@ target_include_directories(libappimageupdate-qt
 target_compile_definitions(libappimageupdate-qt PRIVATE -DQT_UI)
 
 # library with the Qt UI classes (for static linking, see #110)
-add_library(libappimageupdate-qt STATIC qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
-target_link_libraries(libappimageupdate-qt libappimageupdate Qt5::Core Qt5::Widgets)
-set_target_properties(libappimageupdate-qt
+add_library(libappimageupdate-qt_static STATIC qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
+target_link_libraries(libappimageupdate-qt_static libappimageupdate Qt5::Core Qt5::Widgets)
+set_target_properties(libappimageupdate-qt_static
     PROPERTIES
     PREFIX ""
     PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h
 )
-target_include_directories(libappimageupdate-qt
+target_include_directories(libappimageupdate-qt_static
     PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_compile_definitions(libappimageupdate-qt PRIVATE -DQT_UI)
+target_compile_definitions(libappimageupdate-qt_static PRIVATE -DQT_UI)
 
 # Qt GUI application
 add_executable(AppImageUpdate main.cpp)
