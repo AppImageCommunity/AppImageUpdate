@@ -20,6 +20,21 @@ target_include_directories(libappimageupdate-qt
 )
 target_compile_definitions(libappimageupdate-qt PRIVATE -DQT_UI)
 
+# library with the Qt UI classes (for static linking, see #110)
+add_library(libappimageupdate-qt STATIC qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
+target_link_libraries(libappimageupdate-qt libappimageupdate Qt5::Core Qt5::Widgets)
+set_target_properties(libappimageupdate-qt
+    PROPERTIES
+    PREFIX ""
+    PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h
+)
+target_include_directories(libappimageupdate-qt
+    PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_compile_definitions(libappimageupdate-qt PRIVATE -DQT_UI)
+
 # Qt GUI application
 add_executable(AppImageUpdate main.cpp)
 add_sanitizers(AppImageUpdate)
@@ -30,11 +45,12 @@ target_compile_definitions(AppImageUpdate PRIVATE -DQT_UI)
 
 # set up rpath
 set_target_properties(libappimageupdate-qt PROPERTIES INSTALL_RPATH "\$ORIGIN")
+set_target_properties(libappimageupdate-qt_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
 set_target_properties(AppImageUpdate PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
 
 # install targets
 install(
-    TARGETS libappimageupdate-qt AppImageUpdate
+    TARGETS libappimageupdate-qt libappimageupdate-qt_static AppImageUpdate
     RUNTIME DESTINATION bin COMPONENT APPIMAGEUPDATE
     LIBRARY DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE-QT
     ARCHIVE DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE-QT
