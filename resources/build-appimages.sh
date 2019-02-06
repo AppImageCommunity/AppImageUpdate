@@ -21,7 +21,7 @@ cleanup () {
 trap cleanup EXIT
 
 # store repo root as variable
-REPO_ROOT=$(readlink -f $(dirname $(dirname $0)))
+REPO_ROOT=$(readlink -f $(dirname $(dirname "$0")))
 OLD_CWD=$(readlink -f .)
 
 pushd "$BUILD_DIR"
@@ -78,7 +78,7 @@ chmod +x linuxdeploy*.AppImage
 for app in appimageupdatetool AppImageUpdate; do
     find "$app".AppDir/
 
-    export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*"$ARCH".AppImage.zsync"
+    export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*$ARCH.AppImage.zsync"
 
     if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
 
