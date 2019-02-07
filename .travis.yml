@@ -1,7 +1,7 @@
 language: cpp
 compiler: gcc
 sudo: require
-dist: trusty
+dist: xenial
 
 matrix:
   include:
@@ -9,9 +9,10 @@ matrix:
       addons:
         apt:
           sources:
-            - sourceline: "ppa:beineri/opt-qt593-trusty"
+            - sourceline: "ppa:beineri/opt-qt5.12.0-xenial"
           packages:
-            - qt59base
+            - qt512base
+            - qt512wayland
     - env: ARCH=i386
       addons:
         apt:
@@ -20,7 +21,8 @@ matrix:
           packages:
             - gcc-multilib
             - g++-multilib
-            - qt59base:i386
+            - qt512base:i386
+            - qt512wayland:i386
             - libx11-dev:i386
             - libcurl4-openssl-dev:i386
             - libgl1-mesa-dev:i386
