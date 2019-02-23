@@ -16,6 +16,10 @@ if ! which cmake 2>&1 1>/dev/null; then
     wget https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz -O- | tar -xz --strip-components=1 -C /usr
 fi
 
+if [ -f /opt/qt*/bin/qt*-env.sh ]; then
+    . /opt/qt*/bin/qt*-env.sh
+fi
+
 # install Gtk 2 platform themes
 # Gtk 2 dev files must be installed first, otherwise qmake won't be able to build the plugin (will just skip it silently)
 apt-get -y install libgtk2.0-dev
