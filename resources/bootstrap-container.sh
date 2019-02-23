@@ -22,7 +22,7 @@ fi
 
 # install Gtk 2 platform themes
 # Gtk 2 dev files must be installed first, otherwise qmake won't be able to build the plugin (will just skip it silently)
-apt-get -y install libgtk2.0-dev
+apt-get -y install libgtk2.0-dev libgl1
 
 git clone http://code.qt.io/qt/qtstyleplugins.git
 
