@@ -17,7 +17,7 @@ if ! which cmake 2>&1 1>/dev/null; then
 fi
 
 if [ -f /opt/qt*/bin/qt*-env.sh ]; then
-    . /opt/qt*/bin/qt*-env.sh
+    . /opt/qt*/bin/qt*-env.sh || true
 fi
 
 # install Gtk 2 platform themes
