@@ -224,19 +224,14 @@ namespace appimage {
 
                     auto palette = d->progressBar->palette();
 
-                    // can only validate signature once the update has finished, otherwiws
-                    Updater::ValidationState validationResult = Updater::VALIDATION_FAILED;
-                    QString validationMessage;
+                    const auto validationResult = d->updater->validateSignature();
+                    const auto validationMessage = QString::fromStdString(d->updater->signatureValidationMessage(validationResult));
 
                     // TODO: refactor this block, it's quite difficult to understand right now
                     if (d->updater->hasError()) {
                         d->label->setText("Update failed!");
                         palette.setColor(QPalette::Highlight, Qt::red);
                     } else {
-                        // can
-                        validationResult = d->updater->validateSignature();
-                        validationMessage = QString::fromStdString(d->updater->signatureValidationMessage(validationResult));
-
                         if (validationResult != d->updater->VALIDATION_PASSED) {
                             if (validationResult >= d->updater->VALIDATION_WARNING && validationResult < d->updater->VALIDATION_FAILED) {
                                 d->label->setText("Signature validation problem: " + validationMessage);
