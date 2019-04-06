@@ -4,3 +4,4 @@ Type=Application
 Terminal=true
 Icon=AppImage
 Exec=appimageupdatetool
+Categories=Utility;
