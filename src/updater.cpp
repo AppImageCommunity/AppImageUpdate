@@ -288,8 +288,8 @@ namespace appimage {
                     ifs.read(isoMagicPosData.data(), isoMagicValue.size());
                     auto isoMagicAvailable = (isoMagicPosData.data() == isoMagicValue);
 
-                    if (elfMagicAvailable && isoMagicAvailable) {
-                        issueStatusMessage("Guessing AppImage type 1");
+                    if (isoMagicAvailable) {
+                        issueStatusMessage("Guessing AppImage type 1 or ISO");
                         appImageType = 1;
                     } else {
                         // all possible methods attempted, ultimately fail here
