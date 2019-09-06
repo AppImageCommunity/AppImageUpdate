@@ -235,5 +235,42 @@ namespace appimage {
 
             return abspath(oldPath);
         };
+
+        // workaround for AppImageLauncher limitation, see https://github.com/AppImage/AppImageUpdate/issues/131
+        static std::string ailfsRealpath(const std::string& path) {
+            std::stringstream ailfsBasePath;
+            ailfsBasePath << "/run/user/" << getuid() << "/appimagelauncherfs/";
+
+            if (path.find(ailfsBasePath.str()) == std::string::npos)
+                return path;
+
+            std::stringstream mapFilePath;
+            mapFilePath << ailfsBasePath.str() << "/map";
+
+            std::ifstream ifs(mapFilePath.str());
+
+            if (!ifs)
+                throw std::runtime_error("Could not open appimagelauncherfs map file");
+
+            std::string pathFileName;
+            {
+                std::unique_ptr<char> pathCStr(strdup(path.c_str()));
+                pathFileName = basename(pathCStr.get());
+            }
+
+            std::string currentLine;
+            while (std::getline(ifs, currentLine)) {
+                const std::string delim = " -> ";
+                const auto delimiterPos = currentLine.find(delim);
+
+                const auto ailfsFileName = currentLine.substr(0, delimiterPos);
+                const auto targetFilePath = currentLine.substr(delimiterPos + delim.length());
+
+                if (ailfsFileName == pathFileName)
+                    return targetFilePath;
+            }
+
+            throw std::runtime_error("Could not resolve path in appimagelauncherfs map file");
+        }
     }; // namespace update
 } // namespace appimage

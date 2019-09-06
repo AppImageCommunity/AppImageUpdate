@@ -637,16 +637,17 @@ namespace appimage {
             // initialize data class
             d = new Updater::Private();
 
+            // workaround for AppImageLauncher filesystem
+            d->pathToAppImage = ailfsRealpath(pathToAppImage);
+            d->overwrite = overwrite;
+
             // check whether file exists, otherwise throw exception
-            std::ifstream f(pathToAppImage);
+            std::ifstream f(d->pathToAppImage);
 
             if(!f || !f.good()) {
                 auto errorMessage = std::strerror(errno);
-                throw std::invalid_argument(errorMessage + std::string(": ") + pathToAppImage);
+                throw std::invalid_argument(errorMessage + std::string(": ") + d->pathToAppImage);
             }
-
-            d->pathToAppImage = pathToAppImage;
-            d->overwrite = overwrite;
         }
 
         Updater::~Updater() {
