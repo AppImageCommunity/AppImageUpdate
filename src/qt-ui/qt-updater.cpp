@@ -67,7 +67,8 @@ namespace appimage {
                                                                   spoilerLayout(nullptr),
                                                                   spoilerLog(nullptr),
                                                                   finished(false),
-                                                                  minimumWidth(400)
+                                                                  minimumWidth(400),
+                                                                  enableRunUpdatedAppImageButton(false)
                 {
                     if (!isFile(pathToAppImage.toStdString()))
                         throw std::runtime_error("No such file or directory: " + pathToAppImage.toStdString());
