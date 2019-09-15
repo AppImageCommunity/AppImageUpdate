@@ -557,6 +557,9 @@ namespace appimage {
                         // doesn't matter which type it is exactly, they all work like the same
                         zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage, overwrite);
 
+                        // enable ranges optimizations
+                        zSyncClient->setRangesOptimizationThreshold(64 * 4096);
+
                         // make sure the new AppImage goes into the same directory as the old one
                         // unfortunately, to be able to use dirname(), one has to copy the C string first
                         auto* path = strdup(appImage->filename.c_str());
