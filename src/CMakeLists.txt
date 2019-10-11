@@ -104,7 +104,7 @@ install(
 
 
 # include Qt UI
-set(BUILD_QT_UI BOOL CACHE "Build Qt UI (widget library and demo application)" OFF)
+set(BUILD_QT_UI OFF CACHE BOOL "Build Qt UI (widget library and demo application)")
 if(BUILD_QT_UI)
     add_subdirectory(qt-ui)
 endif()
