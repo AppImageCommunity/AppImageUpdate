@@ -242,6 +242,7 @@ namespace appimage {
                             if (validationResult >= d->updater->VALIDATION_WARNING && validationResult < d->updater->VALIDATION_FAILED) {
                                 d->label->setText("Signature validation problem: " + validationMessage);
                                 palette.setColor(QPalette::Highlight, Qt::yellow);
+                                palette.setColor(QPalette::HighlightedText, Qt::black);
                             } else {
                                 d->updater->restoreOriginalFile();
                                 const QString message = "Signature validation error: " + validationMessage;
@@ -254,6 +255,7 @@ namespace appimage {
                                 newStatusMessage("Signature validation passed");
                             d->label->setText("Update successful!");
                             palette.setColor(QPalette::Highlight, Qt::green);
+                            palette.setColor(QPalette::HighlightedText, Qt::black);
                         }
                     }
 
