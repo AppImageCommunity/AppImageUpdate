@@ -247,11 +247,20 @@ int main(const int argc, const char** argv) {
         return 1;
     }
 
-    if (validationResult >= Updater::VALIDATION_WARNING)
-        cerr << "Validation warning: " << Updater::signatureValidationMessage(validationResult) << endl;
+    if (validationResult >= Updater::VALIDATION_WARNING) {
+        if (validationResult == Updater::VALIDATION_NOT_SIGNED) {
+            // copy permissions of the old AppImage to the new version
+            updater.copyPermissionsToNewFile();
+        }
 
-    if (validationResult <= Updater::VALIDATION_WARNING)
+        cerr << "Validation warning: " << Updater::signatureValidationMessage(validationResult) << endl;
+    }
+
+    if (validationResult <= Updater::VALIDATION_WARNING) {
+        // copy permissions of the old AppImage to the new version
+        updater.copyPermissionsToNewFile();
         cerr << "Signature validation passed" << endl;
+    }
 
     if (removeOldFile) {
         if (isFile(oldFilePath)) {

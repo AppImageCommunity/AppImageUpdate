@@ -116,6 +116,9 @@ namespace appimage {
 
             // Restore original file, e.g., after a signature validation error
             bool restoreOriginalFile();
+
+            // copy permissions of the original AppImage to the new version
+            void copyPermissionsToNewFile();
         };
     }
 }
