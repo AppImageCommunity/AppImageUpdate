@@ -87,7 +87,7 @@ for app in appimageupdatetool AppImageUpdate; do
     export OUTPUT="$app"-"$ARCH".AppImage
 
     # bundle application
-    ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/AppImage.svg
+    ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
 done
 
 # move AppImages to old cwd
