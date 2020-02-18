@@ -2,6 +2,6 @@
 Name=appimageupdatetool
 Type=Application
 Terminal=true
-Icon=AppImage
+Icon=appimage
 Exec=appimageupdatetool
 Categories=Utility;

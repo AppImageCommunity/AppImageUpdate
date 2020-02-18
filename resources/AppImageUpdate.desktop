@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=AppImageUpdate
 Type=Application
-Icon=AppImage
+Icon=appimage
 Exec=AppImageUpdate
 Comment=Update applications distributed in AppImage format
 Categories=Utility;
