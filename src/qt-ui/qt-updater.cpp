@@ -240,6 +240,11 @@ namespace appimage {
 
                         if (validationResult != d->updater->VALIDATION_PASSED) {
                             if (validationResult >= d->updater->VALIDATION_WARNING && validationResult < d->updater->VALIDATION_FAILED) {
+                                if (validationResult == d->updater->VALIDATION_NOT_SIGNED) {
+                                    // copy permissions of the old AppImage to the new version
+                                    d->updater->copyPermissionsToNewFile();
+                                }
+
                                 d->label->setText("Signature validation problem: " + validationMessage);
                                 palette.setColor(QPalette::Highlight, Qt::yellow);
                                 palette.setColor(QPalette::HighlightedText, Qt::black);
@@ -251,6 +256,9 @@ namespace appimage {
                                 QMessageBox::critical(this, "Error", message + "\n\nRestoring original file");
                             }
                         } else {
+                            // copy permissions of the old AppImage to the new version
+                            d->updater->copyPermissionsToNewFile();
+
                             if (validationResult == d->updater->VALIDATION_PASSED)
                                 newStatusMessage("Signature validation passed");
                             d->label->setText("Update successful!");

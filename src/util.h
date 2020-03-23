@@ -121,6 +121,25 @@ namespace appimage {
             return (bool) ifs && ifs.good();
         }
 
+        static void copyPermissions(const std::string& oldPath, const std::string& newPath) {
+            mode_t oldPerms;
+            auto errCode = zsync2::getPerms(oldPath, oldPerms);
+
+            if (errCode != 0) {
+                std::ostringstream ss;
+                ss << "Error calling stat(): " << strerror(errCode);
+#ifdef FLTK_UI
+                fl_message("%s", ss.str().c_str());
+#endif
+#ifdef QT_UI
+                QMessageBox::critical(nullptr, "Error", QString::fromStdString(ss.str()), QMessageBox::Close);
+#endif
+                exit(1);
+            }
+
+            chmod(newPath.c_str(), oldPerms);
+        }
+
         static void runApp(const std::string& path) {
             // make executable
             mode_t newPerms;

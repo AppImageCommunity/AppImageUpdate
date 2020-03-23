@@ -635,7 +635,7 @@ namespace appimage {
                 return false;
             }
         };
-        
+
         Updater::Updater(const std::string& pathToAppImage, bool overwrite) {
             // initialize data class
             d = new Updater::Private();
@@ -1086,6 +1086,21 @@ namespace appimage {
             if (oldFilePath == newFilePath) {
                 std::rename((newFilePath + ".zs-old").c_str(), newFilePath.c_str());
             }
+        }
+
+        void Updater::copyPermissionsToNewFile() {
+            std::string oldFilePath = abspath(d->pathToAppImage);
+
+            std::string newFilePath;
+
+            if (!pathToNewFile(newFilePath)) {
+                throw std::runtime_error("Failed to get path to new file");
+            }
+
+            // make sure to compare absolute, resolved paths
+            newFilePath = abspath(newFilePath);
+
+            appimage::update::copyPermissions(oldFilePath, newFilePath);
         }
     }
 }
