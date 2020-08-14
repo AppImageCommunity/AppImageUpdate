@@ -85,6 +85,9 @@ for app in appimageupdatetool AppImageUpdate; do
     # overwrite AppImage filename to get static filenames
     # see https://github.com/AppImage/AppImageUpdate/issues/89
     export OUTPUT="$app"-"$ARCH".AppImage
+    
+    # remove libqgtk3.so and other platformthemes that may lead to crashes, #150
+    rm -rf "$app".AppDir/usr/plugins/platformthemes/* || true
 
     # bundle application
     ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
