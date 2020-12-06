@@ -1,0 +1,62 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  appimage-x86_64:
+    name: AppImage x86_64
+    runs-on: ubuntu-16.04
+    env:
+      ARCH: x86_64
+      DIST: xenial
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Build AppImage in Docker
+        run: bash -ex ci/build-in-docker.sh
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: AppImage x86_64
+          path: AppImageUpdate*.AppImage*
+
+  appimage-i386:
+    name: AppImage i386
+    runs-on: ubuntu-16.04
+    env:
+      ARCH: i386
+      DIST: xenial
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Build AppImage in Docker
+        run: bash -ex ci/build-in-docker.sh
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: AppImage i386
+          path: AppImageUpdate*.AppImage*
+
+  upload:
+    name: Create release and upload artifacts
+    needs:
+      - appimage-x86_64
+      - appimage-i386
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+      - name: Inspect directory after downloading artifacts
+        run: ls -alFR
+      - name: Create release and upload artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WEBDAV_URL: ${{ secrets.WEBDAV_URL }}
+          WEBDAV_USER: ${{ secrets.WEBDAV_USER }}
+          WEBDAV_PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
+        run: |
+            wget -q https://github.com/TheAssassin/pyuploadtool/releases/download/continuous/pyuploadtool-x86_64.AppImage
+            chmod +x pyuploadtool-x86_64.AppImage
+            ./pyuploadtool-x86_64.AppImage **/appimagelauncher*.{deb,rpm,tar*,AppImage*}

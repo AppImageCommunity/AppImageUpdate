@@ -50,7 +50,7 @@ for appdir in AppImageUpdate.AppDir appimageupdatetool.AppDir; do
 done
 
 # determine Git commit ID
-# linuxdeployqt uses this for naming the file
+# appimagetool uses this for naming the file
 export VERSION=$(cd "$REPO_ROOT" && git rev-parse --short HEAD)
 
 # prepend Travis build number if possible
@@ -74,6 +74,7 @@ rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-"$ARCH".AppImage
 wget https://github.com/TheAssassin/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-"$ARCH".AppImage
 chmod +x linuxdeploy*.AppImage
+sed -i 's|AI\x02|\x00\x00\x00|' linuxdeploy*.AppImage
 
 for app in appimageupdatetool AppImageUpdate; do
     find "$app".AppDir/
