@@ -74,7 +74,14 @@ rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-"$ARCH".AppImage
 wget https://github.com/TheAssassin/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-"$ARCH".AppImage
 chmod +x linuxdeploy*.AppImage
-sed -i 's|AI\x02|\x00\x00\x00|' linuxdeploy*.AppImage
+
+patch_appimage() {
+    while [[ "$1" != "" ]]; do
+        dd if=/dev/zero of="$1" conv=notrunc bs=1 count=3 seek=8
+        shift
+    done
+}
+patch_appimage linuxdeploy*.AppImage
 
 for app in appimageupdatetool AppImageUpdate; do
     find "$app".AppDir/
