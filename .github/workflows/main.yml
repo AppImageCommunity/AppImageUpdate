@@ -19,7 +19,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: AppImage x86_64
-          path: AppImageUpdate*.AppImage*
+          path: AppImageUpdate*.AppImage* appimageupdatetool*.AppImage*
 
   appimage-i386:
     name: AppImage i386
@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: AppImage i386
-          path: AppImageUpdate*.AppImage*
+          path: AppImageUpdate*.AppImage* appimageupdatetool*.AppImage*
 
   upload:
     name: Create release and upload artifacts
