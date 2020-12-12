@@ -53,9 +53,9 @@ done
 # appimagetool uses this for naming the file
 export VERSION=$(cd "$REPO_ROOT" && git rev-parse --short HEAD)
 
-# prepend Travis build number if possible
-if [ "$TRAVIS_BUILD_NUMBER" != "" ]; then
-    export VERSION="$TRAVIS_BUILD_NUMBER-$VERSION"
+# prepend GitHub run number if possible
+if [ "$GITHUB_RUN_NUMBER" != "" ]; then
+    export VERSION="$GITHUB_RUN_NUMBER-$VERSION"
 fi
 
 
