@@ -17,8 +17,4 @@ RUN wget https://artifacts.assassinate-you.net/prebuilt-cmake/continuous/cmake-v
 COPY entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]
 
-ARG UID
-RUN adduser --system --group --uid "$UID" build
-USER build
-
 ENV APPIMAGE_EXTRACT_AND_RUN=1
