@@ -31,8 +31,7 @@ jobs:
   upload:
     name: Create release and upload artifacts
     needs:
-      - appimage-x86_64
-      - appimage-i386
+      - appimage-build
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
