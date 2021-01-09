@@ -5,7 +5,7 @@
 This section describes how to build `AppImageUpdate.AppImage` and `appimageupdatetool.AppImage`. This implies using as few -dev packages from the distribution as possible and privately bundling everything that cannot reasonably be assumed to be there in the default installation of all target systems (distributions).
 
 We generally recommend to use our pre-built AppImages if possible.
-See https://github.com/AppImage/AppImageUpdate/blob/rewrite/.travis.yml for how these get built.
+See https://github.com/AppImage/AppImageUpdate/blob/main/.github/workflows/main.yml for how these get built.
 
 ## Building the libraries
 
