@@ -15,7 +15,7 @@ This section describes how to build `libappimageupdate` and `libappimage` for co
 
 ```# Compile and install libappimageupdate
 
-sudo apt -y install wget git cmake g++ libcurl4-openssl-dev libx11-dev libz-dev
+sudo apt -y install wget git cmake g++ libcurl4-openssl-dev libx11-dev libz-dev libfuse-dev librsvg2-dev
 
 git clone --recursive https://github.com/AppImage/AppImageUpdate
 cd AppImageUpdate/
