@@ -57,7 +57,7 @@ cat /etc/redhat-release
 wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 rpm -ivh epel-release-latest-7.noarch.rpm
 
-yum install git cmake3 gcc-c++ curl-devel libX11-devel zlib-devel
+yum install git cmake3 gcc-c++ curl-devel libX11-devel zlib-devel fuse-devel librsvg2-devel cairo-devel
 
 git clone --recursive https://github.com/AppImage/AppImageUpdate
 cd AppImageUpdate/
