@@ -98,4 +98,4 @@ The sample AppImageUpdate GUI is based in part on the work of the FLTK project
 
 ## Contact
 
-If you have questions, the developers are on `#AppImage` on `irc.freenode.net`.
+If you have questions, the developers are on `#AppImage` on `irc.libera.chat`.
