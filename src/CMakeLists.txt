@@ -27,7 +27,7 @@ add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 add_library(
     libappimageupdate
     SHARED
-    ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp
+    ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp update_methods/pling_v1_zsync.cpp
     util.h
 )
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
