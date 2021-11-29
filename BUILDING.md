@@ -15,7 +15,7 @@ This section describes how to build `libappimageupdate` and `libappimage` for co
 
 ```# Compile and install libappimageupdate
 
-sudo apt -y install wget git cmake g++ libcurl4-openssl-dev libx11-dev libz-dev
+sudo apt -y install wget git cmake g++ libcurl4-openssl-dev libx11-dev libz-dev libfuse-dev librsvg2-dev
 
 git clone --recursive https://github.com/AppImage/AppImageUpdate
 cd AppImageUpdate/
@@ -57,7 +57,7 @@ cat /etc/redhat-release
 wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 rpm -ivh epel-release-latest-7.noarch.rpm
 
-yum install git cmake3 gcc-c++ curl-devel libX11-devel zlib-devel
+yum install git cmake3 gcc-c++ curl-devel libX11-devel zlib-devel fuse-devel librsvg2-devel cairo-devel
 
 git clone --recursive https://github.com/AppImage/AppImageUpdate
 cd AppImageUpdate/
