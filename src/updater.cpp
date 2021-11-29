@@ -20,6 +20,7 @@
 // local headers
 #include "appimage/update.h"
 #include "util.h"
+#include "update_methods/pling_v1_zsync.h"
 
 // convenience declaration
 typedef std::lock_guard<std::mutex> lock_guard;
@@ -66,6 +67,7 @@ namespace appimage {
                 ZSYNC_GENERIC = 0,
                 ZSYNC_GITHUB_RELEASES,
                 ZSYNC_BINTRAY,
+                ZSYNC_PLING_V1,
             };
 
             struct AppImage {
@@ -452,6 +454,12 @@ namespace appimage {
                                 <<  "information.";
                             issueStatusMessage(oss.str());
                         }
+                    } else if (methods::PlingV1Zsync::isUpdateStringAccepted(uiParts)) {
+                        uiType = ZSYNC_PLING_V1;
+                        auto updateMethod = methods::PlingV1Zsync(uiParts);
+                        auto availableDownloads = updateMethod.getAvailableDownloads();
+                        auto latestReleaseUrl = updateMethod.findLatestRelease(availableDownloads);
+                        zsyncUrl = updateMethod.resolveZsyncUrl(latestReleaseUrl);
                     } else {
                         // unknown type
                     }
@@ -553,6 +561,7 @@ namespace appimage {
 
                     if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
                         appImage->updateInformationType == ZSYNC_BINTRAY ||
+                        appImage->updateInformationType == ZSYNC_PLING_V1 ||
                         appImage->updateInformationType == ZSYNC_GENERIC) {
                         // doesn't matter which type it is exactly, they all work like the same
                         zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage, overwrite);
@@ -623,7 +632,8 @@ namespace appimage {
 
                 if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
                     appImage->updateInformationType == ZSYNC_BINTRAY ||
-                    appImage->updateInformationType == ZSYNC_GENERIC) {
+                    appImage->updateInformationType == ZSYNC_PLING_V1 ||
+                    appImage->updateInformationType == ZSYNC_GENERIC ) {
                     zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
                     return zSyncClient->checkForChanges(updateAvailable, method);
                 }
@@ -772,6 +782,8 @@ namespace appimage {
                 oss << "ZSync via Bintray";
             else if (appImage->updateInformationType == d->ZSYNC_GITHUB_RELEASES)
                 oss << "ZSync via GitHub Releases";
+            else if (appImage->updateInformationType == d->ZSYNC_PLING_V1)
+                oss << "ZSync via OCS";
             else if (appImage->updateInformationType == d->INVALID)
                 oss << "Invalid (parsing failed/no update information available)";
             else
