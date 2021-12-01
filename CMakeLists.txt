@@ -32,6 +32,8 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+option(ENABLE_SANITIZERS "Enable builds using sanitizers" off)
+
 # include external libraries
 add_subdirectory(lib)
 

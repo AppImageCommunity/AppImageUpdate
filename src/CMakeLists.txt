@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.2)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE true)
 
-# add support for sanitizers
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/lib/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
-find_package(Sanitizers REQUIRED)
-
 # required to link to correct thread library
 find_package(Threads REQUIRED)
 find_package(X11 REQUIRED)
