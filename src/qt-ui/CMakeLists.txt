@@ -37,7 +37,14 @@ target_compile_definitions(libappimageupdate-qt_static PRIVATE -DQT_UI)
 
 # Qt GUI application
 add_executable(AppImageUpdate main.cpp)
-add_sanitizers(AppImageUpdate)
+
+if (ENABLE_SANITIZERS)
+    # add support for sanitizers.  Partially broken: fix at https://github.com/arsenm/sanitizers-cmake/pull/18
+    set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/lib/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
+    find_package(Sanitizers REQUIRED)
+
+    add_sanitizers(AppImageUpdate)
+endif (ENABLE_SANITIZERS)
 
 # link libraries
 target_link_libraries(AppImageUpdate libappimageupdate libappimageupdate-qt)
