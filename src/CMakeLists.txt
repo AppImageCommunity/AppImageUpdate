@@ -57,7 +57,7 @@ target_include_directories(libappimageupdate PUBLIC
 add_library(
     libappimageupdate_static
     STATIC
-    ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp
+    ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp update_methods/pling_v1_zsync.cpp
     util.h
 )
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
