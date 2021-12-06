@@ -6,6 +6,8 @@ project(AppImageUpdate)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(USE_SYSTEM_LIBAPPIMAGE OFF CACHE BOOL "")
+
 # read Git revision ID
 # WARNING: this value will be stored in the CMake cache
 # to update it, you will have to reset the CMake cache
