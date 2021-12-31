@@ -880,7 +880,7 @@ namespace appimage {
             else if (oldSigned && !newSigned)
                 return VALIDATION_NO_LONGER_SIGNED;
 
-            // store digests and signatures in files so they can be passed to gpg2
+            // store digests and signatures in files so they can be passed to gpg
             auto oldDigestFilename = tempFile("old-digest", oldDigest);
             auto newDigestFilename = tempFile("new-digest", newDigest);
 
@@ -899,11 +899,11 @@ namespace appimage {
                 rmdir(tempDir.c_str());
             };
 
-            // find gpg2 binary
-            auto gpg2Path = findInPATH("gpg2");
-            if (gpg2Path.empty()) {
+            // find gpg binary
+            auto gpgPath = findInPATH("gpg");
+            if (gpgPath.empty()) {
                 cleanup();
-                return VALIDATION_GPG2_MISSING;
+                return VALIDATION_GPG_MISSING;
             }
 
             const auto tempKeyRingPath = tempDir + "/keyring";
@@ -912,14 +912,14 @@ namespace appimage {
             std::ofstream ofs(tempKeyRingPath);
             ofs.close();
 
-            auto importKeyFromAppImage = [&tempKeyRingPath, &gpg2Path](const std::string& path) {
+            auto importKeyFromAppImage = [&tempKeyRingPath, &gpgPath](const std::string& path) {
                 auto key = readElfSection(path, ".sig_key");
 
                 if (key.empty())
                     return false;
 
                 std::ostringstream oss;
-                oss << "'" << gpg2Path << "' "
+                oss << "'" << gpgPath << "' "
                     << "--no-default-keyring --keyring '" << tempKeyRingPath << "' --import";
 
                 auto command = oss.str();
@@ -936,13 +936,13 @@ namespace appimage {
             importKeyFromAppImage(pathToOldAppImage);
             importKeyFromAppImage(pathToNewAppImage);
 
-            auto verifySignature = [this, &gpg2Path, &tempKeyRingPath](
+            auto verifySignature = [this, &gpgPath, &tempKeyRingPath](
                 const std::string& signatureFile, const std::string& digestFile,
                 bool& keyFound, bool& goodSignature,
                 std::string& keyID, std::string& keyOwner
             ) {
                 std::ostringstream oss;
-                oss << "'" << gpg2Path << "'"
+                oss << "'" << gpgPath << "'"
                     << " --keyring '" << tempKeyRingPath << "'"
                     << " --verify '" << signatureFile << "' '" << digestFile << "' 2>&1";
 
@@ -970,7 +970,7 @@ namespace appimage {
                     trim(line, '\n');
                     trim(line);
 
-                    d->issueStatusMessage(std::string("gpg2: ") + line);
+                    d->issueStatusMessage(std::string("gpg: ") + line);
 
                     auto splitOwner = [&line]() {
                         auto parts = split(line, '"');
@@ -1012,14 +1012,14 @@ namespace appimage {
             if (oldSigned) {
                 if (!verifySignature(oldSignatureFilename, oldDigestFilename, oldKeyFound, oldSignatureGood, oldKeyID, oldKeyOwner)) {
                     cleanup();
-                    return VALIDATION_GPG2_CALL_FAILED;
+                    return VALIDATION_GPG_CALL_FAILED;
                 }
             }
 
             if (newSigned) {
                 if (!verifySignature(newSignatureFilename, newDigestFilename, newKeyFound, newSignatureGood, newKeyID, newKeyOwner)) {
                     cleanup();
-                    return VALIDATION_GPG2_CALL_FAILED;
+                    return VALIDATION_GPG_CALL_FAILED;
                 }
             }
 
@@ -1053,11 +1053,11 @@ namespace appimage {
                 // warning states
                 {VALIDATION_WARNING, "Signature validation warning"},
                 {VALIDATION_NOT_SIGNED, "AppImage not signed"},
-                {VALIDATION_GPG2_MISSING, "gpg2 command not found, please install"},
+                {VALIDATION_GPG_MISSING, "gpg command not found, please install"},
 
                 // error states
                 {VALIDATION_FAILED, "Signature validation failed"},
-                {VALIDATION_GPG2_CALL_FAILED, "Call to gpg2 failed"},
+                {VALIDATION_GPG_CALL_FAILED, "Call to gpg failed"},
                 {VALIDATION_TEMPDIR_CREATION_FAILED, "Failed to create temporary directory"},
                 {VALIDATION_NO_LONGER_SIGNED, "AppImage no longer comes with signature"},
                 {VALIDATION_BAD_SIGNATURE, "Bad signature"},
