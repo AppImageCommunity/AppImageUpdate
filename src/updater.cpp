@@ -900,10 +900,13 @@ namespace appimage {
             };
 
             // find gpg binary
-            auto gpgPath = findInPATH("gpg");
+            auto gpgPath = findInPATH("gpg2");
             if (gpgPath.empty()) {
-                cleanup();
-                return VALIDATION_GPG_MISSING;
+                gpgPath = findInPATH("gpg");
+                if (gpgPath.empty()) {
+                    cleanup();
+                    return VALIDATION_GPG_MISSING;
+                }
             }
 
             const auto tempKeyRingPath = tempDir + "/keyring";
