@@ -973,7 +973,7 @@ namespace appimage {
                     trim(line, '\n');
                     trim(line);
 
-                    d->issueStatusMessage(std::string("gpg: ") + line);
+                    d->issueStatusMessage(gpgPath + std::string(": ") + line);
 
                     auto splitOwner = [&line]() {
                         auto parts = split(line, '"');
