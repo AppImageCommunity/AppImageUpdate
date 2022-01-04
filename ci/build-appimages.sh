@@ -2,6 +2,7 @@
 
 set -x
 set -e
+set -o pipefail
 
 # use RAM disk if possible
 if [ "$CI" == "" ] && [ -d /dev/shm ]; then
@@ -10,7 +11,7 @@ else
     TEMP_BASE=/tmp
 fi
 
-BUILD_DIR=$(mktemp -d -p "$TEMP_BASE" AppImageUpdate-build-XXXXXX)
+BUILD_DIR="$(mktemp -d -p "$TEMP_BASE" AppImageUpdate-build-XXXXXX)"
 
 cleanup () {
     if [ -d "$BUILD_DIR" ]; then
@@ -21,12 +22,12 @@ cleanup () {
 trap cleanup EXIT
 
 # store repo root as variable
-REPO_ROOT=$(readlink -f $(dirname $(dirname "$0")))
-OLD_CWD=$(readlink -f .)
+REPO_ROOT="$(readlink -f "$(dirname "$(dirname "$0")")")"
+OLD_CWD="$(readlink -f .)"
 
 pushd "$BUILD_DIR"
 
-export ARCH=${ARCH:-$(uname -m)}
+export ARCH=${ARCH:-"$(uname -m)"}
 
 if [ "$ARCH" == "i386" ]; then
     EXTRA_CMAKE_ARGS=("-DCMAKE_TOOLCHAIN_FILE=$REPO_ROOT/cmake/toolchains/i386-linux-gnu.cmake")
@@ -39,7 +40,7 @@ cmake "$REPO_ROOT" \
     "${EXTRA_CMAKE_ARGS[@]}"
 
 # now, compile and install to AppDir
-make -j$(nproc)
+make -j"$(nproc)"
 make install DESTDIR=AppImageUpdate.AppDir
 make install DESTDIR=appimageupdatetool.AppDir
 
@@ -51,7 +52,8 @@ done
 
 # determine Git commit ID
 # appimagetool uses this for naming the file
-export VERSION=$(cd "$REPO_ROOT" && git rev-parse --short HEAD)
+VERSION="$(cd "$REPO_ROOT" && git rev-parse --short HEAD)"
+export VERSION
 
 # prepend GitHub run number if possible
 if [ "$GITHUB_RUN_NUMBER" != "" ]; then
