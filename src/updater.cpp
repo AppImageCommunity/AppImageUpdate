@@ -66,7 +66,6 @@ namespace appimage {
                 INVALID = -1,
                 ZSYNC_GENERIC = 0,
                 ZSYNC_GITHUB_RELEASES,
-                ZSYNC_BINTRAY,
                 ZSYNC_PLING_V1,
             };
 
@@ -395,51 +394,6 @@ namespace appimage {
                                 issueStatusMessage("Failed to parse GitHub's response.");
                             }
                         }
-                    } else if (uiParts[0] == "bintray-zsync") {
-                        // TODO: better error handling
-                        if (uiParts.size() == 5) {
-                            uiType = ZSYNC_BINTRAY;
-
-                            auto username = uiParts[1];
-                            auto repository = uiParts[2];
-                            auto packageName = uiParts[3];
-                            auto filename = uiParts[4];
-
-                            std::stringstream downloadUrl;
-                            downloadUrl << "https://dl.bintray.com/" << username << "/" << repository << "/"
-                                        << filename;
-
-                            if (downloadUrl.str().find("_latestVersion") == std::string::npos) {
-                                zsyncUrl = downloadUrl.str();
-                            } else {
-                                std::stringstream redirectorUrl;
-                                redirectorUrl << "https://bintray.com/" << username << "/" << repository << "/"
-                                              << packageName << "/_latestVersion";
-
-                                auto versionResponse = cpr::Head(redirectorUrl.str());
-                                // this request is supposed to be redirected
-                                // due to how cpr works, we can't check for a redirection status, as we get the response for
-                                // the redirected request
-                                // therefore, we check for a 2xx response, and then can inspect and compare the redirected URL
-                                if (versionResponse.status_code >= 200 && versionResponse.status_code < 400) {
-                                    auto redirectedUrl = versionResponse.url;
-
-                                    // if they're different, it's probably been successful
-                                    if (redirectorUrl.str() != redirectedUrl) {
-                                        // the last part will contain the current version
-                                        auto packageVersion = static_cast<std::string>(split(redirectedUrl, '/').back());
-                                        auto urlTemplate = downloadUrl.str();
-
-                                        // split by _latestVersion, insert correct value, compose final value
-                                        auto pos = urlTemplate.find("_latestVersion");
-
-                                        auto firstPart = urlTemplate.substr(0, pos);
-                                        auto secondPart = urlTemplate.substr(pos + std::string("_latestVersion").length());
-                                        zsyncUrl = firstPart + packageVersion + secondPart;
-                                    }
-                                }
-                            }
-                        }
                     } else if (uiParts[0] == "zsync") {
                         // validate update information
                         if (uiParts.size() == 2) {
@@ -560,7 +514,6 @@ namespace appimage {
                     }
 
                     if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
-                        appImage->updateInformationType == ZSYNC_BINTRAY ||
                         appImage->updateInformationType == ZSYNC_PLING_V1 ||
                         appImage->updateInformationType == ZSYNC_GENERIC) {
                         // doesn't matter which type it is exactly, they all work like the same
@@ -631,7 +584,6 @@ namespace appimage {
                     return false;
 
                 if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
-                    appImage->updateInformationType == ZSYNC_BINTRAY ||
                     appImage->updateInformationType == ZSYNC_PLING_V1 ||
                     appImage->updateInformationType == ZSYNC_GENERIC ) {
                     zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
@@ -778,8 +730,6 @@ namespace appimage {
 
             if (appImage->updateInformationType == d->ZSYNC_GENERIC)
                 oss << "Generic ZSync URL";
-            else if (appImage->updateInformationType == d->ZSYNC_BINTRAY)
-                oss << "ZSync via Bintray";
             else if (appImage->updateInformationType == d->ZSYNC_GITHUB_RELEASES)
                 oss << "ZSync via GitHub Releases";
             else if (appImage->updateInformationType == d->ZSYNC_PLING_V1)
