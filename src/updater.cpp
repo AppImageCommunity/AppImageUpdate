@@ -505,12 +505,12 @@ namespace appimage {
                         return;
                     }
 
-                    if (appImage->updateInformationType == ZSYNC_BINTRAY) {
-                        issueStatusMessage("Updating from Bintray via ZSync");
+                    if (appImage->updateInformationType == ZSYNC_GENERIC) {
+                        issueStatusMessage("Updating from generic server via ZSync");
                     } else if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES) {
                         issueStatusMessage("Updating from GitHub Releases via ZSync");
-                    } else if (appImage->updateInformationType == ZSYNC_GENERIC) {
-                        issueStatusMessage("Updating from generic server via ZSync");
+                    } else if (appImage->updateInformationType == ZSYNC_PLING_V1) {
+                        issueStatusMessage("Updating from Pling v1 via ZSync");
                     }
 
                     if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
