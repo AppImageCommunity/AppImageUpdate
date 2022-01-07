@@ -2,10 +2,10 @@
 #include <deque>
 #include <iostream>
 #include <libgen.h>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
-#include <unistd.h>
 
 // library headers
 #include <zsclient.h>
@@ -133,8 +133,8 @@ namespace appimage::update {
 
                 // make sure the new AppImage goes into the same directory as the old one
                 // unfortunately, to be able to use dirname(), one has to copy the C string first
-                std::shared_ptr<char> path(strdup(appImage.path().c_str()), free);
-                std::string dirPath = dirname(path.get());
+                auto path = makeBuffer(appImage.path());
+                std::string dirPath = dirname(path.data());
 
                 zSyncClient->setCwd(dirPath);
 
@@ -411,15 +411,16 @@ namespace appimage::update {
 
         std::string tempDir;
         {
-            char* buffer;
+            auto buffer = makeBuffer("/tmp/AppImageUpdate-XXXXXX");
 
-            const auto pattern = std::shared_ptr<char>(strdup("/tmp/AppImageUpdate-XXXXXX"), free);
-            if ((buffer = mkdtemp(pattern.get())) == nullptr) {
-                d->issueStatusMessage("Failed to create temporary directory");
+            if (mkdtemp(buffer.data()) == nullptr) {
+                const int error = errno;
+                const auto* errorMessage = strerror(error);
+                d->issueStatusMessage("Failed to create temporary directory: " + std::string(errorMessage));
                 return VALIDATION_TEMPDIR_CREATION_FAILED;
             }
 
-            tempDir = buffer;
+            tempDir = buffer.data();
         }
 
         auto tempFile = [&tempDir](const std::string& filename, const std::string& contents) {
