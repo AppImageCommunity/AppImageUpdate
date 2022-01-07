@@ -122,7 +122,7 @@ namespace appimage::update {
         void setUpdateInformation(std::string newUpdateInformation);
 
         // Restore original file, e.g., after a signature validation error
-        bool restoreOriginalFile();
+        void restoreOriginalFile();
 
         // copy permissions of the original AppImage to the new version
         void copyPermissionsToNewFile();
