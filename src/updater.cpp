@@ -675,4 +675,8 @@ namespace appimage::update {
     std::string Updater::updateInformation() const {
         return d->rawUpdateInformation;
     }
+
+    void Updater::setUpdateInformation(std::string newUpdateInformation) {
+        d->rawUpdateInformation = std::move(newUpdateInformation);
+    }
 }
