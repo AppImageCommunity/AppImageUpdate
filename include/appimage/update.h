@@ -108,10 +108,18 @@ namespace appimage::update {
         // Returns the size of the remote file in bytes
         bool remoteFileSize(off_t& fileSize) const;
 
-        // Returns update information string found in the AppImage
-        // return value will be empty if there's no update information in the AppImage
-        // throws std::runtime_error if AppImage can't be parsed
-        std::string updateInformation() const;
+        // Return update information
+        // If no custom update information is set, the function returns the raw update information contained in the
+        // AppImage
+        [[nodiscard]] std::string updateInformation() const;
+
+        // Set custom update information
+        // The custom update information will overwrite the one fetched from the AppImage
+        // This function is for applications that use libappimageupdate, e.g., to self-update, or implement a custom
+        // frontend like AppImageLauncher does, extending those users' possibilities
+        // Use cases include the use of custom update servers instead of relying on a built-in update information type,
+        // implement multiple update channels, etc.
+        void setUpdateInformation(std::string newUpdateInformation);
 
         // Restore original file, e.g., after a signature validation error
         bool restoreOriginalFile();
