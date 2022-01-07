@@ -637,7 +637,7 @@ namespace appimage::update {
         return "Unknown validation state";
     }
 
-    bool Updater::restoreOriginalFile() {
+    void Updater::restoreOriginalFile() {
         std::string newFilePath;
 
         if (!pathToNewFile(newFilePath)) {
