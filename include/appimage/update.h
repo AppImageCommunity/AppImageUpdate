@@ -1,8 +1,9 @@
 #pragma once
 
 // global headers
-#include <sys/types.h>
+#include <memory>
 #include <string>
+#include <sys/types.h>
 
 namespace appimage::update {
     /**
@@ -44,7 +45,7 @@ namespace appimage::update {
         // opaque private class
         // without this pattern, the header would require C++11, which is undesirable
         class Private;
-        Private* d;
+        std::unique_ptr<Private> d;
 
     private:
         // thread runner -- should be called from start() only
@@ -55,6 +56,8 @@ namespace appimage::update {
         // if overwrite is specified, old file will be overwritten, otherwise it will remain on the system
         // as-is
         explicit Updater(const std::string& pathToAppImage, bool overwrite = false);
+
+        // declared merely for unique_ptr to work
         ~Updater();
 
     public:

@@ -200,10 +200,7 @@ namespace appimage::update {
         }
     };
 
-    Updater::Updater(const std::string& pathToAppImage, bool overwrite) {
-        // initialize data class
-        d = new Updater::Private(ailfsRealpath(pathToAppImage));
-
+    Updater::Updater(const std::string& pathToAppImage, bool overwrite) : d(new Updater::Private(ailfsRealpath(pathToAppImage))) {
         // workaround for AppImageLauncher filesystem
         d->overwrite = overwrite;
 
@@ -216,9 +213,7 @@ namespace appimage::update {
         }
     }
 
-    Updater::~Updater() {
-        delete d;
-    }
+    Updater::~Updater() = default;
 
     void Updater::runUpdate() {
         // alias for private function
