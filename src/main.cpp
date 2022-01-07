@@ -109,7 +109,8 @@ int main(const int argc, const char** argv) {
 
         if (!updater.describeAppImage(description)) {
             // TODO: better description of what went wrong
-            cerr << "Failed to parse AppImage!" << endl;
+            cerr << description << endl;
+            cerr << "Failed to parse AppImage. See above for more information" << endl;
             return 1;
         }
 

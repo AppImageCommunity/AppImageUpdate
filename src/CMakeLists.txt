@@ -24,7 +24,9 @@ add_subdirectory(util)
 add_library(
     libappimageupdate
     SHARED
-    ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp update_methods/pling_v1_zsync.cpp
+    ${PROJECT_SOURCE_DIR}/include/appimage/update.h
+    updater.cpp
+    appimage.h
 )
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libappimageupdate

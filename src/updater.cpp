@@ -1,13 +1,9 @@
-// system headers+
-#include <algorithm>
-#include <chrono>
+// system headers
 #include <deque>
-#include <fnmatch.h>
-#include <fstream>
 #include <iostream>
 #include <libgen.h>
 #include <mutex>
-#include <sstream>
+#include <string>
 #include <thread>
 #include <unistd.h>
 
@@ -19,8 +15,9 @@
 
 // local headers
 #include "appimage/update.h"
+#include "updateinformation/updateinformation.h"
+#include "appimage.h"
 #include "util.h"
-#include "update_methods/pling_v1_zsync.h"
 
 // convenience declaration
 typedef std::lock_guard<std::mutex> lock_guard;
@@ -30,27 +27,27 @@ namespace appimage::update {
 
     class Updater::Private {
     public:
-        Private() : state(INITIALIZED),
-            pathToAppImage(),
+        explicit Private(const std::string& pathToAppImage) : state(INITIALIZED),
+            appImage(pathToAppImage),
             zSyncClient(nullptr),
             thread(nullptr),
             mutex(),
-            overwrite(false)
+            overwrite(false),
+            rawUpdateInformation(appImage.readRawUpdateInformation())
         {};
 
-        ~Private() {
-            delete zSyncClient;
-        }
-
     public:
-        // data
-        std::string pathToAppImage;
+        AppImage appImage;
+
+        // we call this "raw" update information to highlight the difference between strings and the new
+        // UpdateInformation infrastructure
+        std::string rawUpdateInformation;
 
         // state
         State state;
 
         // ZSync client -- will be instantiated only if necessary
-        zsync2::ZSyncClient* zSyncClient;
+        std::shared_ptr<zsync2::ZSyncClient> zSyncClient;
 
         // threading
         std::thread* thread;
@@ -63,420 +60,41 @@ namespace appimage::update {
         bool overwrite;
 
     public:
-        enum UpdateInformationType {
-            INVALID = -1,
-            ZSYNC_GENERIC = 0,
-            ZSYNC_GITHUB_RELEASES,
-            ZSYNC_PLING_V1,
-        };
-
-        struct AppImage {
-            std::string filename;
-            int appImageVersion;
-            std::string rawUpdateInformation;
-            UpdateInformationType updateInformationType;
-            std::string zsyncUrl;
-            std::string signature;
-
-            AppImage() : appImageVersion(-1), updateInformationType(INVALID) {};
-        };
-        typedef struct AppImage AppImage;
-
-    public:
         void issueStatusMessage(const std::string& message) {
             statusMessages.push_back(message);
         }
 
-        static const std::string readAppImageSignature(const std::string& pathToAppImage) {
-            return readElfSection(pathToAppImage, ".sha256_sig");
+        StatusMessageCallback makeIssueStatusMessageCallback() {
+            return [this](const std::string& message) {issueStatusMessage(message);};
         }
 
-        static const std::string hashAppImage(const std::string& pathToAppImage) {
-            // read offset and length of signature section to skip it later
-            unsigned long sigOffset = 0, sigLength = 0;
-            unsigned long keyOffset = 0, keyLength = 0;
-
-            if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sha256_sig", &sigOffset, &sigLength))
-                return "";
-
-            if (!appimage_get_elf_section_offset_and_length(pathToAppImage.c_str(), ".sig_key", &keyOffset, &keyLength))
-                return "";
-
-            std::ifstream ifs(pathToAppImage);
-
-            if (!ifs)
-                return "";
-
-            SHA256 digest;
-
-            // validate.c uses "offset" as chunk size, but that value might be quite high, and therefore uses
-            // a lot of memory
-            // TODO: use a smaller value (maybe use a prime factorization and use the biggest prime factor?)
-            const ssize_t chunkSize = 4096;
-
-            std::vector<char> buffer(chunkSize, 0);
-
-            ssize_t totalBytesRead = 0;
-
-            // bytes that should be skipped when reading the next chunk
-            // when e.g., a section that must be ignored spans over more than one chunk, this amount of bytes is
-            // being nulled & skipped before reading data from the file again
-            std::streamsize bytesToSkip = 0;
-
-            ifs.seekg(0, ifs.end);
-            const ssize_t fileSize = ifs.tellg();
-            ifs.seekg(0, ifs.beg);
-
-            while (ifs) {
-                ssize_t bytesRead = 0;
-
-                auto bytesLeftInChunk = std::min(chunkSize, (fileSize - totalBytesRead));
-
-                if (bytesLeftInChunk <= 0)
-                    break;
-
-                auto skipBytes = [&bytesRead, &bytesLeftInChunk, &buffer, &ifs, &totalBytesRead](ssize_t count) {
-                    if (count <= 0)
-                        return;
-
-                    const auto start = buffer.begin() + bytesRead;
-                    std::fill_n(start, count, '\0');
-
-                    bytesRead += count;
-                    totalBytesRead += count;
-                    bytesLeftInChunk -= count;
-                    ifs.seekg(count, std::ios::cur);
-                };
-
-                auto readBytes = [&bytesRead, &bytesLeftInChunk, &buffer, &ifs, &totalBytesRead](ssize_t count) {
-                    if (count <= 0)
-                        return;
-
-                    ifs.read(buffer.data() + bytesRead, count);
-                    bytesRead += ifs.gcount();
-                    totalBytesRead += count;
-                    bytesLeftInChunk -= bytesRead;
-                };
-
-                auto checkSkipSection = [&](const ssize_t sectionOffset, const ssize_t sectionLength) {
-                    // check whether signature starts in current chunk
-                    const ssize_t sectionOffsetDelta = sectionOffset - totalBytesRead;
-
-                    if (sectionOffsetDelta >= 0 && sectionOffsetDelta < bytesLeftInChunk) {
-                        // read until section begins
-                        readBytes(sectionOffsetDelta);
-
-                        // calculate how many bytes must be nulled in this chunk
-                        // the rest will be nulled in the following chunk(s)
-                        auto bytesLeft = sectionLength;
-                        const auto bytesToNullInCurrentChunk = std::min(bytesLeftInChunk, bytesLeft);
-
-                        // null these bytes
-                        skipBytes(bytesToNullInCurrentChunk);
-
-                        // calculate how many bytes must be nulled in future chunks
-                        bytesLeft -= bytesToNullInCurrentChunk;
-                        bytesToSkip = bytesLeft;
-                    }
-                };
-
-                // check whether bytes must be skipped from previous sections
-                if (bytesToSkip > 0) {
-                    auto bytesToSkipInCurrentChunk = std::min(chunkSize, bytesToSkip);
-                    skipBytes(bytesToSkipInCurrentChunk);
-                    bytesToSkip -= bytesToSkipInCurrentChunk;
-                }
-
-                // check whether one of the sections that must be skipped are in the current chunk, and if they
-                // are, skip those sections in the current and future sections
-                checkSkipSection(sigOffset, sigLength);
-                checkSkipSection(keyOffset, keyLength);
-
-                // read remaining bytes in chunk, given the file has still data to be read
-                if (ifs && bytesLeftInChunk > 0) {
-                    readBytes(bytesLeftInChunk);
-                }
-
-                // update hash with data from buffer
-                digest.add(buffer.data(), static_cast<size_t>(bytesRead));
-            }
-
-            return digest.getHash();
-        }
-
-        const AppImage* readAppImage(const std::string& pathToAppImage) {
-            // error state: empty AppImage path
-            if (pathToAppImage.empty()) {
-                issueStatusMessage("Path to AppImage must not be empty.");
-                return nullptr;
-            }
-
-            // check whether file exists
-            std::ifstream ifs(pathToAppImage);
-
-            // if file can't be opened, it's an error
-            if (!ifs || !ifs.good()) {
-                issueStatusMessage("Failed to access AppImage file: " + pathToAppImage);
-                return nullptr;
-            }
-
-            // read magic number
-            ifs.seekg(8, std::ios::beg);
-            std::vector<char> magicByte(4, '\0');
-            ifs.read(magicByte.data(), 3);
-
-            // validate first two bytes are A and I
-            if (magicByte[0] != 'A' && magicByte[1] != 'I') {
-                std::ostringstream oss;
-                oss << "Invalid magic bytes: " << (int) magicByte[0] << (int) magicByte[1];
-                issueStatusMessage(oss.str());
-            }
-
-            int appImageType = -1;
-            // the third byte contains the version
-            switch (magicByte[2]) {
-                case '\x01':
-                    appImageType = 1;
-                    break;
-                case '\x02':
-                    appImageType = 2;
-                    break;
-                default:
-                    // see fallback in the final else block in the next if construct
-                    break;
-            }
-
-            // read update information in the file
-            std::string updateInformation;
-
-            // also read signature in the file
-            std::string signature;
-
-            if (appImageType == 1) {
-                // update information is always at the same position, and has a fixed length
-                static constexpr auto position = 0x8373;
-                static constexpr auto length = 512;
-
-                ifs.seekg(position);
-
-                std::vector<char> rawUpdateInformation(length, 0);
-                ifs.read(rawUpdateInformation.data(), length);
-
-                updateInformation = rawUpdateInformation.data();
-            } else if (appImageType == 2) {
-                // try to read ELF section .upd_info
-                updateInformation = readElfSection(pathToAppImage, ".upd_info");
-
-                // type 2 supports signatures, so we can extract it here, too
-                signature = readAppImageSignature(pathToAppImage);
-            } else {
-                // final try: type 1 AppImages do not have to set the magic bytes, although they should
-                // if the file is both an ELF and an ISO9660 file, we'll suspect it to be a type 1 AppImage, and
-                // proceed with a warning
-
-                static constexpr int elfMagicPos = 1;
-                static const std::string elfMagicValue = "ELF";
-
-                static constexpr int isoMagicPos = 32769;
-                static const std::string isoMagicValue = "CD001";
-
-                ifs.seekg(elfMagicPos);
-                std::vector<char> elfMagicPosData(elfMagicValue.size() + 1, '\0');
-                ifs.read(elfMagicPosData.data(), elfMagicValue.size());
-                auto elfMagicAvailable = (elfMagicPosData.data() == elfMagicValue);
-
-                ifs.seekg(isoMagicPos);
-                std::vector<char> isoMagicPosData(isoMagicValue.size() + 1, '\0');
-                ifs.read(isoMagicPosData.data(), isoMagicValue.size());
-                auto isoMagicAvailable = (isoMagicPosData.data() == isoMagicValue);
-
-                if (isoMagicAvailable) {
-                    issueStatusMessage("Guessing AppImage type 1 or ISO");
-                    appImageType = 1;
-                } else {
-                    // all possible methods attempted, ultimately fail here
-                    issueStatusMessage("No such AppImage type: " + std::to_string(magicByte[2]));
-                    return nullptr;
-                }
-            }
-
-            UpdateInformationType uiType = INVALID;
-            std::string zsyncUrl;
-
-            // parse update information
-            auto uiParts = split(updateInformation, '|');
-
-            // make sure uiParts isn't empty
-            if (!uiParts.empty()) {
-                // TODO: GitHub releases type should consider pre-releases when there's no other types of releases
-                if (uiParts[0] == "gh-releases-zsync") {
-                    // validate update information
-                    if (uiParts.size() != 5) {
-                        std::ostringstream oss;
-                        oss << "Update information has invalid parameter count. Please contact the author of "
-                            << "the AppImage and ask them to revise the update information. They should consult "
-                            << "the AppImage specification, there might have been changes to the update"
-                            <<  "information.";
-                        issueStatusMessage(oss.str());
-                    } else {
-                        uiType = ZSYNC_GITHUB_RELEASES;
-
-                        auto username = uiParts[1];
-                        auto repository = uiParts[2];
-                        auto tag = uiParts[3];
-                        auto filename = uiParts[4];
-
-                        std::stringstream url;
-                        url << "https://api.github.com/repos/" << username << "/" << repository << "/releases/";
-
-                        if (tag.find("latest") != std::string::npos) {
-                            issueStatusMessage("Fetching latest release information from GitHub API");
-                            url << "latest";
-                        } else {
-                            std::ostringstream oss;
-                            oss << "Fetching release information for tag \"" << tag << "\" from GitHub API.";
-                            issueStatusMessage(oss.str());
-                            url << "tags/" << tag;
-                        }
-
-                        auto response = cpr::Get(url.str());
-
-                        // counter that will be evaluated later to give some meaningful feedback why parsing API
-                        // response might have failed
-                        int downloadUrlLines = 0;
-                        int matchingUrls = 0;
-
-                        // continue only if HTTP status is good
-                        if (response.status_code >= 200 && response.status_code < 300) {
-                            // in contrary to the original implementation, instead of converting wildcards into
-                            // all-matching regular expressions, we have the power of fnmatch() available, a real wildcard
-                            // implementation
-                            // unfortunately, this is still hoping for GitHub's JSON API to return a pretty printed
-                            // response which can be parsed like this
-                            std::stringstream responseText(response.text);
-                            std::string currentLine;
-
-                            // not ideal, but allows for returning a match for the entire line
-                            auto pattern = "*" + filename + "*";
-
-                            // iterate through all lines to find a possible download URL and compare it to the pattern
-                            while (std::getline(responseText, currentLine)) {
-                                if (currentLine.find("browser_download_url") != std::string::npos) {
-                                    downloadUrlLines++;
-                                    if (fnmatch(pattern.c_str(), currentLine.c_str(), 0) == 0) {
-                                        matchingUrls++;
-                                        auto parts = split(currentLine, '"');
-                                        zsyncUrl = parts.back();
-                                        break;
-                                    }
-                                }
-                            }
-                        } else {
-                            issueStatusMessage("GitHub API request failed!");
-                        }
-
-                        if (downloadUrlLines <= 0) {
-                            std::ostringstream oss;
-                            oss << "Could not find any artifacts in release data. "
-                                << "Please contact the author of the AppImage and tell them the files are missing "
-                                <<  "on the releases page.";
-                            issueStatusMessage(oss.str());
-                        } else if (matchingUrls <= 0) {
-                            std::ostringstream oss;
-                            oss << "None of the artifacts matched the pattern in the update information. "
-                                << "The pattern is most likely invalid, e.g., due to changes in the filenames of "
-                                << "the AppImages. Please contact the author of the AppImage and ask them to "
-                                << "revise the update information.";
-                            issueStatusMessage(oss.str());
-                        } else if (zsyncUrl.empty()) {
-                            // unlike that this code will ever be reached, the other two messages should cover all
-                            // cases in which a ZSync URL is missing
-                            // if it does, however, it's most likely that GitHub's API didn't return a URL
-                            issueStatusMessage("Failed to parse GitHub's response.");
-                        }
-                    }
-                } else if (uiParts[0] == "zsync") {
-                    // validate update information
-                    if (uiParts.size() == 2) {
-                        uiType = ZSYNC_GENERIC;
-
-                        zsyncUrl = uiParts.back();
-                    } else {
-                        std::ostringstream oss;
-                        oss << "Update information has invalid parameter count. Please contact the author of "
-                            << "the AppImage and ask them to revise the update information. They should consult "
-                            << "the AppImage specification, there might have been changes to the update"
-                            <<  "information.";
-                        issueStatusMessage(oss.str());
-                    }
-                } else if (methods::PlingV1Zsync::isUpdateStringAccepted(uiParts)) {
-                    uiType = ZSYNC_PLING_V1;
-                    auto updateMethod = methods::PlingV1Zsync(uiParts);
-                    auto availableDownloads = updateMethod.getAvailableDownloads();
-                    auto latestReleaseUrl = updateMethod.findLatestRelease(availableDownloads);
-                    zsyncUrl = updateMethod.resolveZsyncUrl(latestReleaseUrl);
-                } else {
-                    // unknown type
-                }
-            }
-
-            auto* appImage = new AppImage();
-
-            appImage->filename = pathToAppImage;
-            appImage->appImageVersion = appImageType;
-            appImage->rawUpdateInformation = updateInformation;
-            appImage->updateInformationType = uiType;
-            appImage->zsyncUrl = zsyncUrl;
-            appImage->signature = signature;
-
-            return appImage;
-        }
-
-        bool validateAppImage(AppImage const* appImage) {
-            // a null pointer is clearly a sign
-            if (appImage == nullptr) {
-                std::ostringstream oss;
-                oss << "Parsing AppImage failed. See previous message for details. "
-                    << "Are you sure the file is an AppImage?";
-                issueStatusMessage(oss.str());
-                return false;
-            }
+        void validateAppImage() {
+            const auto rawUpdateInformationFromAppImage = appImage.readRawUpdateInformation();
 
             // first check whether there's update information at all
-            if (appImage->rawUpdateInformation.empty()) {
+            if (rawUpdateInformationFromAppImage.empty()) {
                 std::ostringstream oss;
                 oss << "Could not find update information in the AppImage. "
                     << "Please contact the author of the AppImage and ask them to embed update information.";
-                issueStatusMessage(oss.str());
-                return false;
+                throw AppImageError(oss.str());
             }
+
+            const auto updateInformationPtr = makeUpdateInformation(rawUpdateInformationFromAppImage);
+            const auto zsyncUrl = updateInformationPtr->buildUrl(makeIssueStatusMessageCallback());
 
             // now check whether a ZSync URL could be composed by readAppImage
             // this is the only supported update type at the moment
-            if (appImage->zsyncUrl.empty()) {
+            if (zsyncUrl.empty()) {
                 std::ostringstream oss;
                 oss << "ZSync URL not available. See previous messages for details.";
-                issueStatusMessage(oss.str());
-                return false;
+                throw AppImageError(oss.str());
             }
-
-            // check whether update information is available
-            if (appImage->updateInformationType == INVALID) {
-                std::stringstream oss;
-                oss << "Could not detect update information type."
-                    << "Please contact the author of the AppImage and ask them whether the update information "
-                    << "is correct.";
-                issueStatusMessage(oss.str());
-                return false;
-            }
-
-            return true;
         }
 
         // thread runner
         void runUpdate() {
             // initialization
-            {
+            try {
                 lock_guard guard(mutex);
 
                 // make sure it runs only once at a time
@@ -487,64 +105,46 @@ namespace appimage::update {
                 // if there is a ZSync client (e.g., because an update check has been run), clean it up
                 // this ensures that a fresh instance will be used for the update run
                 if (zSyncClient != nullptr) {
-                    delete zSyncClient;
-                    zSyncClient = nullptr;
+                    zSyncClient.reset();
                 }
 
+                validateAppImage();
+                const auto updateInformationPtr = makeUpdateInformation(rawUpdateInformation);
 
-                // WARNING: if you don't want to shoot yourself in the foot, make sure to read in the AppImage
-                // while locking the mutex and/or before the RUNNING state to make sure readAppImage() finishes
-                // before progress() and such can be called! Otherwise, progress() etc. will return an error state,
-                // causing e.g., main(), to interrupt the thread and finish.
-                auto* appImage = readAppImage(pathToAppImage);
-
-                if (!validateAppImage(appImage)) {
-                    // cleanup
-                    delete appImage;
-
-                    state = ERROR;
-                    return;
-                }
-
-                if (appImage->updateInformationType == ZSYNC_GENERIC) {
-                    issueStatusMessage("Updating from generic server via ZSync");
-                } else if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES) {
+                if (updateInformationPtr->type() == ZSYNC_GITHUB_RELEASES) {
                     issueStatusMessage("Updating from GitHub Releases via ZSync");
-                } else if (appImage->updateInformationType == ZSYNC_PLING_V1) {
-                    issueStatusMessage("Updating from Pling v1 via ZSync");
-                }
-
-                if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
-                    appImage->updateInformationType == ZSYNC_PLING_V1 ||
-                    appImage->updateInformationType == ZSYNC_GENERIC) {
-                    // doesn't matter which type it is exactly, they all work like the same
-                    zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage, overwrite);
-
-                    // enable ranges optimizations
-                    zSyncClient->setRangesOptimizationThreshold(64 * 4096);
-
-                    // make sure the new AppImage goes into the same directory as the old one
-                    // unfortunately, to be able to use dirname(), one has to copy the C string first
-                    auto* path = strdup(appImage->filename.c_str());
-                    std::string dirPath = dirname(path);
-                    free(path);
-
-                    zSyncClient->setCwd(dirPath);
+                } else if (updateInformationPtr->type() == ZSYNC_GENERIC) {
+                    issueStatusMessage("Updating from generic server via ZSync");
+                } else if (updateInformationPtr->type() == ZSYNC_PLING_V1) {
+                    issueStatusMessage("Updating from Pling v1 server via ZSync");
                 } else {
-                    // error unsupported type
-                    issueStatusMessage("Error: update method not implemented");
-
-                    // cleanup
-                    delete appImage;
-
-                    state = ERROR;
-                    return;
+                    throw AppImageError("Unknown update information type");
                 }
 
-                // cleanup
-                delete appImage;
+                const auto zsyncUrl = updateInformationPtr->buildUrl(makeIssueStatusMessageCallback());
+
+                // doesn't matter which type it is exactly, they all work like the same
+                zSyncClient = std::make_shared<zsync2::ZSyncClient>(zsyncUrl, appImage.path(), overwrite);
+
+                // enable ranges optimizations
+                zSyncClient->setRangesOptimizationThreshold(64 * 4096);
+
+                // make sure the new AppImage goes into the same directory as the old one
+                // unfortunately, to be able to use dirname(), one has to copy the C string first
+                std::shared_ptr<char> path(strdup(appImage.path().c_str()), free);
+                std::string dirPath = dirname(path.get());
+
+                zSyncClient->setCwd(dirPath);
 
                 state = RUNNING;
+            } catch (const AppImageError& e) {
+                issueStatusMessage("Error reading AppImage: " + std::string(e.what()));
+                state = ERROR;
+                return;
+            } catch (const UpdateInformationError& e) {
+                issueStatusMessage("Failed to parse update information: " + std::string(e.what()));
+                state = ERROR;
+                return;
             }
 
             // keep state -- by default, an error (false) is assumed
@@ -576,43 +176,43 @@ namespace appimage::update {
             if (state != INITIALIZED)
                 return false;
 
-            // TODO: this code is somewhat duplicated in run()
-            // should probably be extracted to separate function
-            auto* appImage = readAppImage(pathToAppImage);
-
             // validate AppImage
-            if(!validateAppImage(appImage))
+            try {
+                validateAppImage();
+            } catch (const AppImageError& e) {
+                issueStatusMessage(e.what());
                 return false;
-
-            if (appImage->updateInformationType == ZSYNC_GITHUB_RELEASES ||
-                appImage->updateInformationType == ZSYNC_PLING_V1 ||
-                appImage->updateInformationType == ZSYNC_GENERIC ) {
-                zSyncClient = new zsync2::ZSyncClient(appImage->zsyncUrl, pathToAppImage);
-                return zSyncClient->checkForChanges(updateAvailable, method);
             }
 
-            zSyncClient = nullptr;
+            try {
+                auto updateInformationPtr = makeUpdateInformation(appImage.readRawUpdateInformation());
+                const auto zsyncUrl = updateInformationPtr->buildUrl(makeIssueStatusMessageCallback());
+                zSyncClient.reset(new zsync2::ZSyncClient(zsyncUrl, appImage.path()));
+                return zSyncClient->checkForChanges(updateAvailable, method);
+            } catch (const UpdateInformationError& e) {
+                zSyncClient.reset();
 
-            // return error in case of unknown update information
-            issueStatusMessage("Unknown update information type, aborting.");
-            return false;
+                // return error in case of unknown update information
+                issueStatusMessage(e.what());
+                issueStatusMessage("Unknown update information type, aborting.");
+                return false;
+            }
         }
     };
 
     Updater::Updater(const std::string& pathToAppImage, bool overwrite) {
         // initialize data class
-        d = new Updater::Private();
+        d = new Updater::Private(ailfsRealpath(pathToAppImage));
 
         // workaround for AppImageLauncher filesystem
-        d->pathToAppImage = ailfsRealpath(pathToAppImage);
         d->overwrite = overwrite;
 
         // check whether file exists, otherwise throw exception
-        std::ifstream f(d->pathToAppImage);
+        std::ifstream f(d->appImage.path());
 
         if(!f || !f.good()) {
             auto errorMessage = std::strerror(errno);
-            throw std::invalid_argument(errorMessage + std::string(": ") + d->pathToAppImage);
+            throw std::invalid_argument(errorMessage + std::string(": ") + d->appImage.path());
         }
     }
 
@@ -711,45 +311,55 @@ namespace appimage::update {
 
     bool Updater::describeAppImage(std::string& description) const {
         std::ostringstream oss;
+        bool success = true;
 
-        auto* appImage = d->readAppImage(d->pathToAppImage);
+        try {
+            oss << "Parsing file: " << d->appImage.path() << std::endl;
+            oss << "AppImage type: " << d->appImage.appImageType() << std::endl;
 
-        if (appImage == nullptr)
-            return false;
+            const auto rawUpdateInformation = d->appImage.readRawUpdateInformation();
 
-        oss << "Parsing file: " << appImage->filename << std::endl;
-        oss << "AppImage type: " << appImage->appImageVersion << std::endl;
+            oss << "Raw update information: ";
+            if (rawUpdateInformation.empty())
+                oss << "<empty>";
+            else
+                oss << rawUpdateInformation;
+            oss << std::endl;
 
-        oss << "Raw update information: ";
-        if (appImage->rawUpdateInformation.empty())
-            oss << "<empty>";
-        else
-            oss << appImage->rawUpdateInformation;
-        oss << std::endl;
+            auto updateInformation = makeUpdateInformation(rawUpdateInformation);
 
-        oss << "Update information type: ";
+            oss << "Update information type: ";
 
-        if (appImage->updateInformationType == d->ZSYNC_GENERIC)
-            oss << "Generic ZSync URL";
-        else if (appImage->updateInformationType == d->ZSYNC_GITHUB_RELEASES)
-            oss << "ZSync via GitHub Releases";
-        else if (appImage->updateInformationType == d->ZSYNC_PLING_V1)
-            oss << "ZSync via OCS";
-        else if (appImage->updateInformationType == d->INVALID)
-            oss << "Invalid (parsing failed/no update information available)";
-        else
-            oss << "Unknown error";
+            if (updateInformation->type() == ZSYNC_GENERIC)
+                oss << "Generic ZSync URL";
+            else if (updateInformation->type() == ZSYNC_GITHUB_RELEASES)
+                oss << "ZSync via GitHub Releases";
+            else if (updateInformation->type() == ZSYNC_PLING_V1)
+                oss << "ZSync via OCS";
+            else if (updateInformation->type() == INVALID)
+                oss << "Invalid (parsing failed/no update information available)";
+            else
+                oss << "Unknown error";
 
-        oss << std::endl;
+            try {
+                auto url = updateInformation->buildUrl(d->makeIssueStatusMessageCallback());
 
-        if (!appImage->zsyncUrl.empty())
-            oss << "Assembled ZSync URL: " << appImage->zsyncUrl << std::endl;
-        else
-            oss << "Failed to assemble ZSync URL. AppImageUpdate can not be used with this AppImage.";
+                oss << "Assembled ZSync URL: " << url << std::endl;
+
+            } catch (const UpdateInformationError& e) {
+                oss << "Failed to assemble ZSync URL. AppImageUpdate can not be used with this AppImage. "
+                << "See below for more information"
+                << std::endl
+                << e.what();
+            }
+        } catch (const UpdateInformationError& e) {
+            oss << e.what();
+            success = false;
+        }
 
         description = oss.str();
 
-        return true;
+        return success;
     }
 
     bool Updater::pathToNewFile(std::string& path) const {
@@ -775,13 +385,17 @@ namespace appimage::update {
             return VALIDATION_FAILED;
         }
 
-        auto pathToOldAppImage = abspath(d->pathToAppImage);
+        AppImage newAppImage(pathToNewAppImage);
+
+        auto pathToOldAppImage = abspath(d->appImage.path());
         if (pathToOldAppImage == pathToNewAppImage) {
             pathToOldAppImage = pathToNewAppImage + ".zs-old";
         }
 
-        auto oldSignature = d->readAppImageSignature(pathToOldAppImage);
-        auto newSignature = d->readAppImageSignature(pathToNewAppImage);
+        AppImage oldAppImage(pathToOldAppImage);
+
+        auto oldSignature = oldAppImage.readSignature();
+        auto newSignature = newAppImage.readSignature();
 
         // remove any spaces and/or newline characters there might be on the left or right of the payload
         zsync2::trim(oldSignature, '\n');
@@ -792,8 +406,8 @@ namespace appimage::update {
         auto oldSigned = !oldSignature.empty();
         auto newSigned = !newSignature.empty();
 
-        auto oldDigest = d->hashAppImage(pathToOldAppImage);
-        auto newDigest = d->hashAppImage(pathToNewAppImage);
+        auto oldDigest = oldAppImage.calculateHash();
+        auto newDigest = newAppImage.calculateHash();
 
         auto oldDigestOrig = readElfSection(pathToOldAppImage, ".sha256_sig");
         auto newDigestOrig = readElfSection(pathToNewAppImage, ".sha256_sig");
@@ -802,15 +416,13 @@ namespace appimage::update {
         {
             char* buffer;
 
-            char* pattern = strdup("/tmp/AppImageUpdate-XXXXXX");
-            if ((buffer = mkdtemp(pattern)) == nullptr) {
+            const auto pattern = std::shared_ptr<char>(strdup("/tmp/AppImageUpdate-XXXXXX"), free);
+            if ((buffer = mkdtemp(pattern.get())) == nullptr) {
                 d->issueStatusMessage("Failed to create temporary directory");
                 return VALIDATION_TEMPDIR_CREATION_FAILED;
             }
 
             tempDir = buffer;
-
-            free(pattern);
         }
 
         auto tempFile = [&tempDir](const std::string& filename, const std::string& contents) {
@@ -1025,15 +637,6 @@ namespace appimage::update {
         return "Unknown validation state";
     }
 
-    std::string Updater::updateInformation() const {
-        const auto* appImage = d->readAppImage(d->pathToAppImage);
-
-        if (appImage == nullptr)
-            throw std::runtime_error("Failed to parse AppImage");
-
-        return appImage->rawUpdateInformation;
-    }
-
     bool Updater::restoreOriginalFile() {
         std::string newFilePath;
 
@@ -1044,7 +647,7 @@ namespace appimage::update {
         // make sure to compare absolute, resolved paths
         newFilePath = abspath(newFilePath);
 
-        const auto& oldFilePath = abspath(d->pathToAppImage);
+        const auto& oldFilePath = abspath(d->appImage.path());
 
         // restore original file
         std::remove(newFilePath.c_str());
@@ -1055,7 +658,7 @@ namespace appimage::update {
     }
 
     void Updater::copyPermissionsToNewFile() {
-        std::string oldFilePath = abspath(d->pathToAppImage);
+        std::string oldFilePath = abspath(d->appImage.path());
 
         std::string newFilePath;
 
@@ -1067,5 +670,9 @@ namespace appimage::update {
         newFilePath = abspath(newFilePath);
 
         appimage::update::copyPermissions(oldFilePath, newFilePath);
+    }
+
+    std::string Updater::updateInformation() const {
+        return d->rawUpdateInformation;
     }
 }
