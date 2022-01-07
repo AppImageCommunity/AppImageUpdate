@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 
 # library with the Qt UI classes
 add_library(libappimageupdate-qt SHARED qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
-target_link_libraries(libappimageupdate-qt libappimageupdate Qt5::Core Qt5::Widgets)
+target_link_libraries(libappimageupdate-qt libappimageupdate Qt5::Core Qt5::Widgets util)
 set_target_properties(libappimageupdate-qt
     PROPERTIES
     PREFIX ""
