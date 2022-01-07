@@ -289,4 +289,12 @@ namespace appimage::update::util {
 
         throw std::runtime_error("Could not resolve path in appimagelauncherfs map file");
     }
+
+    static std::vector<char> makeBuffer(const std::string& str) {
+        std::vector<char> buffer;
+        buffer.reserve(str.size() + 1);
+        std::copy(str.begin(), str.end(), buffer.begin());
+        buffer.emplace_back('\0');
+        return buffer;
+    }
 };
