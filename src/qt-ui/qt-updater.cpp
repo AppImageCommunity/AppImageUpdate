@@ -299,9 +299,11 @@ namespace appimage {
                 appimage::update::Updater updater(d->pathToAppImage.toStdString());
 
                 try {
-                    if (updater.updateInformation().empty())
+                    if (updater.updateInformation().empty()) {
                         return -1;
-                } catch (const std::runtime_error&) {
+                    }
+                } catch (const std::runtime_error& e) {
+                    std::cerr << e.what();
                     return -1;
                 }
 
