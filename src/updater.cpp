@@ -20,7 +20,9 @@
 #include "util.h"
 
 // convenience declaration
-typedef std::lock_guard<std::mutex> lock_guard;
+namespace {
+    typedef std::lock_guard<std::mutex> lock_guard;
+}
 
 namespace appimage::update {
     using namespace util;
