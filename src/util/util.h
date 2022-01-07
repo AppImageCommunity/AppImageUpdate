@@ -24,8 +24,7 @@ extern "C" {
     #include "appimage/appimage_shared.h"
 }
 
-
-namespace appimage::update {
+namespace appimage::update::util {
     static void removeNewlineCharacters(std::string& str) {
         str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     }
@@ -290,4 +289,4 @@ namespace appimage::update {
 
         throw std::runtime_error("Could not resolve path in appimagelauncherfs map file");
     }
-}
+};

@@ -22,13 +22,13 @@ add_definitions("-DAPPIMAGEUPDATE_GIT_COMMIT=\"${GIT_COMMIT}\"")
 add_definitions("-DBUILD_DATE=\"${DATE}\"")
 add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
+add_subdirectory(util)
 
 # core library
 add_library(
     libappimageupdate
     SHARED
     ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp update_methods/pling_v1_zsync.cpp
-    util.h
 )
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libappimageupdate
@@ -42,6 +42,7 @@ target_link_libraries(libappimageupdate
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE libzsync2
     PRIVATE ${CPR_LIBRARIES}
+    PUBLIC util
 )
 # include directories, publicly
 target_include_directories(libappimageupdate PUBLIC
@@ -57,8 +58,8 @@ target_include_directories(libappimageupdate PUBLIC
 add_library(
     libappimageupdate_static
     STATIC
-    ${PROJECT_SOURCE_DIR}/include/appimage/update.h updater.cpp
-    util.h
+    ${PROJECT_SOURCE_DIR}/include/appimage/update.h
+    updater.cpp
 )
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libappimageupdate_static
@@ -73,6 +74,7 @@ target_link_libraries(libappimageupdate_static
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE libzsync2
     PRIVATE ${CPR_LIBRARIES}
+    PUBLIC util
 )
 # include directories, publicly
 target_include_directories(libappimageupdate_static PUBLIC

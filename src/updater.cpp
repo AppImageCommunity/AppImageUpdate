@@ -26,6 +26,8 @@
 typedef std::lock_guard<std::mutex> lock_guard;
 
 namespace appimage::update {
+    using namespace util;
+
     class Updater::Private {
     public:
         Private() : state(INITIALIZED),

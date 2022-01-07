@@ -15,6 +15,7 @@
 
 using namespace std;
 using namespace appimage::update;
+using namespace appimage::update::util;
 
 int main(const int argc, const char** argv) {
     args::ArgumentParser parser("AppImage companion tool taking care of updates for the commandline.");
