@@ -336,6 +336,8 @@ namespace appimage::update {
             else
                 throw std::runtime_error("unsupported update information type");
 
+            oss << std::endl;
+
             try {
                 auto url = updateInformation->buildUrl(d->makeIssueStatusMessageCallback());
 
