@@ -1,7 +1,8 @@
 cmake-build-*/
 .idea/
-*.AppImage
+*.AppImage*
 *.part
 *.zsync
 *.zs-old
 rcksum-*
+*.*swp*
