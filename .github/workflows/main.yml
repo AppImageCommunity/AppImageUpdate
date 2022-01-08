@@ -23,7 +23,7 @@ jobs:
       - name: Archive artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: AppImage build
+          name: AppImage build ${{ matrix.ARCH }}
           path: |
             AppImageUpdate*.AppImage*
             appimageupdatetool*.AppImage*
