@@ -1,3 +1,6 @@
+# INTERFACE library with source files requires CMake 3.19
+cmake_minimum_required(VERSION 3.19)
+
 add_library(util INTERFACE
     util.h
 )
