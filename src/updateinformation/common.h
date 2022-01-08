@@ -13,7 +13,6 @@ namespace appimage::update::updateinformation {
     };
 
     enum UpdateInformationType {
-        INVALID = -1,
         ZSYNC_GENERIC = 0,
         ZSYNC_GITHUB_RELEASES = 1,
         // ZSYNC_BINTRAY is deprecated

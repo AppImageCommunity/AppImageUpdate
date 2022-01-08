@@ -333,10 +333,8 @@ namespace appimage::update {
                 oss << "ZSync via GitHub Releases";
             else if (updateInformation->type() == ZSYNC_PLING_V1)
                 oss << "ZSync via OCS";
-            else if (updateInformation->type() == INVALID)
-                oss << "Invalid (parsing failed/no update information available)";
             else
-                oss << "Unknown error";
+                throw std::runtime_error("unsupported update information type");
 
             try {
                 auto url = updateInformation->buildUrl(d->makeIssueStatusMessageCallback());
