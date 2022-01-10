@@ -73,7 +73,6 @@ namespace appimage::update::updateinformation {
                 if (file_name > latestReleaseFileName) {
                     latestReleaseUrl = std::string(url);
                     latestReleaseFileName = std::string(file_name);
-                    break;
                 }
             }
 
