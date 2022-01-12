@@ -13,7 +13,7 @@ repo_root="$(readlink -f "$(dirname "$0")"/..)"
 
 # needed to keep user ID in and outside Docker in sync to be able to write to workspace directory
 image=appimageupdate-build:"$DIST"-"$ARCH"
-dockerfile=Dockerfile."$DIST"-"$ARCH"
+dockerfile=Dockerfile."$ARCH"
 
 if [ ! -f "$repo_root"/ci/"$dockerfile" ]; then
     echo "Error: $dockerfile could not be found"
@@ -21,7 +21,7 @@ if [ ! -f "$repo_root"/ci/"$dockerfile" ]; then
 fi
 
 # building local image to "cache" installed dependencies for subsequent builds
-docker build -t "$image" -f "$repo_root"/ci/"$dockerfile" "$repo_root"/ci
+docker build -t "$image" -f "$repo_root"/ci/"$dockerfile" --no-cache --build-arg DIST="$DIST" "$repo_root"/ci
 
 # run the build with the current user to
 #   a) make sure root is not required for builds

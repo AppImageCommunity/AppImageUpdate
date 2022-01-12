@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-18.04
     env:
       ARCH: ${{ matrix.ARCH }}
-      DIST: xenial
+      DIST: bionic
     steps:
       - uses: actions/checkout@v2
         with:

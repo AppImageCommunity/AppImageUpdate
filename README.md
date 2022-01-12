@@ -10,7 +10,7 @@ application. Please report any issues on the bug tracker.
 
 ## Try it out
 
-* Download a continuous AppImage build of Subsurface from [here](https://github.com/Subsurface-divelog/subsurface/releases).
+* Download an AppImage that contains update information (not all AppImages do).
 * Wait a couple of hours/days until they have a new continuous build (happens frequently).
 * Download AppImageUpdate from [here](https://github.com/AppImage/AppImageUpdate/releases) and [make it executable](https://discourse.appimage.org/t/how-to-make-an-appimage-executable/80).
 * Run AppImageUpdate and select your "old" Subsurface AppImage.

@@ -1,18 +1,19 @@
-FROM ubuntu:xenial
+ARG DIST
+FROM ubuntu:${DIST}
 
 ENV ARCH=x86_64
 
+# must repeat this after FROM, otherwise it won't be set
+ARG DIST
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends software-properties-common && \
-    add-apt-repository -y ppa:beineri/opt-qt-5.14.2-xenial && \
+    add-apt-repository -y ppa:beineri/opt-qt-5.15.2-${DIST} && \
     apt-get update && \
-    apt-get install -y qt514base qt514wayland libgl1 libdrm-dev mesa-common-dev \
+    apt-get install -y qt515base qt515wayland libgl1 libdrm-dev mesa-common-dev \
         build-essential cmake libssl-dev autoconf automake libtool \
         wget vim-common desktop-file-utils pkgconf \
         libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev wget
-
-RUN wget https://artifacts.assassinate-you.net/prebuilt-cmake/continuous/cmake-v3.19.1-ubuntu_xenial-x86_64.tar.gz -O- | \
-        tar xz -C /usr/local --strip-components=1
 
 COPY entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]
