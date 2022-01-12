@@ -153,11 +153,13 @@ namespace appimage::update {
             unsigned long sigOffset = 0, sigLength = 0;
             unsigned long keyOffset = 0, keyLength = 0;
 
-            if (!appimage_get_elf_section_offset_and_length(_path.c_str(), ".sha256_sig", &sigOffset, &sigLength))
-                return "";
+            if (!appimage_get_elf_section_offset_and_length(_path.c_str(), ".sha256_sig", &sigOffset, &sigLength)) {
+                throw AppImageError("Could not find .sha256_sig section in AppImage");
+            }
 
-            if (!appimage_get_elf_section_offset_and_length(_path.c_str(), ".sig_key", &keyOffset, &keyLength))
-                return "";
+            if (!appimage_get_elf_section_offset_and_length(_path.c_str(), ".sig_key", &keyOffset, &keyLength)) {
+                throw AppImageError("Could not find .sha256_sig section in AppImage");
+            }
 
             auto ifs = _open();
 
