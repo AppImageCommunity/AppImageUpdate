@@ -32,7 +32,7 @@ set_target_properties(libappimageupdate
 )
 # link thread libraries
 target_link_libraries(libappimageupdate
-    PUBLIC libappimage_shared
+    PRIVATE libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
     PUBLIC util
@@ -62,7 +62,7 @@ set_target_properties(libappimageupdate_static
 )
 # link thread libraries
 target_link_libraries(libappimageupdate_static
-    PUBLIC libappimage_shared
+    PRIVATE libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
     PUBLIC util
