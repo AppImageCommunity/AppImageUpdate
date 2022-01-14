@@ -9,7 +9,6 @@
 
 // library headers
 #include <zsclient.h>
-#include <hashlib/sha256.h>
 #include <cpr/cpr.h>
 #include <ftw.h>
 

@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #ifdef FLTK_UI
