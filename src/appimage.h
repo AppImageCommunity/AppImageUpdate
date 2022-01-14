@@ -1,8 +1,12 @@
 #include <utility>
 
+// library headers
+#include <zshash.h>
+
 namespace appimage::update {
     using namespace updateinformation;
     using namespace util;
+    using namespace zsync2;
 
     class AppImageError : public std::runtime_error {
         using std::runtime_error::runtime_error;
@@ -166,7 +170,7 @@ namespace appimage::update {
             if (!ifs)
                 return "";
 
-            SHA256 digest;
+            ZSyncHash<GCRY_MD_SHA256> digest;
 
             // validate.c uses "offset" as chunk size, but that value might be quite high, and therefore uses
             // a lot of memory
@@ -190,7 +194,7 @@ namespace appimage::update {
             assertIfstreamGood(ifs);
 
             while (ifs) {
-                ssize_t bytesRead = 0;
+                size_t bytesRead = 0;
 
                 auto bytesLeftInChunk = std::min(chunkSize, (fileSize - totalBytesRead));
 
@@ -201,7 +205,7 @@ namespace appimage::update {
                     if (count <= 0)
                         return;
 
-                    const auto start = buffer.begin() + bytesRead;
+                    const auto start = buffer.begin() + static_cast<long>(bytesRead);
                     std::fill_n(start, count, '\0');
 
                     bytesRead += count;
@@ -264,7 +268,7 @@ namespace appimage::update {
                 }
 
                 // update hash with data from buffer
-                digest.add(buffer.data(), static_cast<size_t>(bytesRead));
+                digest.add(buffer);
             }
 
             return digest.getHash();

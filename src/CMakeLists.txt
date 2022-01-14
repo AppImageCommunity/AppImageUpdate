@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.2)
-
 set(CMAKE_POSITION_INDEPENDENT_CODE true)
 
 # required to link to correct thread library
@@ -21,9 +19,7 @@ add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 add_subdirectory(util)
 
 # core library
-add_library(
-    libappimageupdate
-    SHARED
+add_library(libappimageupdate SHARED
     ${PROJECT_SOURCE_DIR}/include/appimage/update.h
     updater.cpp
     appimage.h
@@ -38,9 +34,9 @@ set_target_properties(libappimageupdate
 target_link_libraries(libappimageupdate
     PUBLIC libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
-    PRIVATE libzsync2
     PRIVATE ${CPR_LIBRARIES}
     PUBLIC util
+    PUBLIC libzsync2
 )
 # include directories, publicly
 target_include_directories(libappimageupdate PUBLIC
@@ -53,9 +49,7 @@ target_include_directories(libappimageupdate PUBLIC
 
 
 # core library
-add_library(
-    libappimageupdate_static
-    STATIC
+add_library(libappimageupdate_static STATIC
     ${PROJECT_SOURCE_DIR}/include/appimage/update.h
     updater.cpp
 )
@@ -70,9 +64,9 @@ set_target_properties(libappimageupdate_static
 target_link_libraries(libappimageupdate_static
     PUBLIC libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
-    PRIVATE libzsync2
     PRIVATE ${CPR_LIBRARIES}
     PUBLIC util
+    PUBLIC libzsync2
 )
 # include directories, publicly
 target_include_directories(libappimageupdate_static PUBLIC
