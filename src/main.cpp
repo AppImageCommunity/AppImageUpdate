@@ -5,9 +5,10 @@
 #include <iostream>
 #include <thread>
 #include <unistd.h>
+#include <optional>
 
 // library headers
-#include <args.hxx>
+#include <argagg/argagg.hpp>
 
 // local headers
 #include "appimage/update.h"
@@ -18,57 +19,59 @@ using namespace appimage::update;
 using namespace appimage::update::util;
 
 int main(const int argc, const char** argv) {
-    args::ArgumentParser parser("AppImage companion tool taking care of updates for the commandline.");
+    argagg::parser parser{{
+        {"help", {"-h", "--help"}, "Display this help text."},
+        {"version", {"-V", "--version"}, "Display version information."},
+        {"describe", {"-d", "--describe"}, "Parse and describe AppImage and its update information and exit."},
+        {"checkForUpdate", {"-j", "--check-for-update"}, "Check for update. Exits with code 1 if changes are available, 0 if there are not,"
+                                                         "other non-zero code in case of errors."},
+        {"overwriteOldFile", {"-O", "--overwrite"}, "Overwrite existing file. If not specified, a new file will be created, and the old one will remain untouched."},
+        {"removeOldFile", {"-r", "--remove-old"}, "Remove old AppImage after successful update."},
+        {"selfUpdate", {"--self-update"}, "Update this AppImage."},
+    }};
 
-    args::HelpFlag help(parser, "help", "", {'h', "help"});
-    args::Flag showVersion(parser, "", "Display version and exit.", {'V', "version"});
-
-    args::Flag describeAppImage(parser, "",
-        "Parse and describe AppImage and its update information and exit.",
-        {'d', "describe"}
-    );
-    args::Flag checkForUpdate(parser, "",
-        "Check for update. Exits with code 1 if changes are available, 0 if there are not,"
-            "other non-zero code in case of errors.",
-        {'j', "check-for-update"});
-    args::Flag overwriteOldFile(parser, "",
-        "Overwrite existing file. If not specified, a new file will be created, and the old one will remain untouched.",
-        {'O', "overwrite"}
-    );
-
-    args::Flag removeOldFile(parser, "", "Remove old AppImage after successful update", {'r', "remove-old"});
-
-    args::Flag selfUpdate(parser, "", "", {"self-update"});
-
-    args::Positional<std::string> pathArg(parser, "path", "path to AppImage");
+    argagg::parser_results args;
 
     try {
-        parser.ParseCLI(argc, argv);
-    } catch (args::Help&) {
-        cerr << parser;
-        return 0;
-    } catch (args::ParseError& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << parser;
-        return 1;
+        args = parser.parse(argc, argv);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
     }
 
-    if (showVersion) {
+    const auto showUsage = [argv, &parser]() {
+        std::cerr << "AppImage companion tool taking care of updates for the commandline." << endl << endl;
+        cerr << "Usage: " << argv[0] << " [options...] [<path to AppImage>]" << endl << endl;
+        cerr << parser;
+    };
+
+    if (args["help"]) {
+        showUsage();
+        return EXIT_SUCCESS;
+    }
+
+    if (args["version"]) {
         cerr << "appimageupdatetool version " << APPIMAGEUPDATE_VERSION
              << " (commit " << APPIMAGEUPDATE_GIT_COMMIT << "), "
              << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
         return 0;
     }
 
-    string pathToAppImage;
+    optional<string> pathToAppImage = [&args]() {
+        if (!args.pos.empty()) {
+            return optional<string>(args.as<string>(0));
+        }
+
+        return optional<string>();
+    }();
 
     // if a self-update is requested, check whether the path argument has been passed, and show an error
     // otherwise check whether path has been passed on the CLI, otherwise show file chooser
-    if (selfUpdate) {
-        if (pathArg) {
+    if (args["selfUpdate"]) {
+        if (pathToAppImage.has_value()) {
             cerr << "Error: --self-update does not take a path." << endl;
-            cerr << parser;
-            return 1;
+            showUsage();
+            return EXIT_FAILURE;
         } else {
             auto* APPIMAGE = getenv("APPIMAGE");
 
@@ -87,24 +90,24 @@ int main(const int argc, const char** argv) {
 
             pathToAppImage = APPIMAGE;
         }
-    }  else if (pathArg) {
-        pathToAppImage = pathArg.Get();
-    } else {
-        cerr << parser;
-        return 0;
+    }
+    
+    if (!pathToAppImage.has_value()) {
+        showUsage();
+        return EXIT_FAILURE;
     }
 
     // after checking that a path is given, check whether the file actually exists
-    if (!isFile(pathToAppImage)) {
+    if (!isFile(pathToAppImage.value())) {
         // cannot tell whether it exists or not without inspecting errno, therefore using a more generic error message
-        cerr << "Could not read file: " << pathToAppImage;
+        cerr << "Could not read file: " << pathToAppImage.value();
         return 1;
     }
 
-    Updater updater(pathToAppImage, (bool) overwriteOldFile);
+    Updater updater(pathToAppImage.value(), args["overwriteOldFile"]);
 
     // if the user just wants a description of the AppImage, parse the AppImage, print the description and exit
-    if (describeAppImage) {
+    if (args["describe"]) {
         string description;
 
         if (!updater.describeAppImage(description)) {
@@ -129,7 +132,7 @@ int main(const int argc, const char** argv) {
         return 0;
     }
 
-    if (checkForUpdate) {
+    if (args["checkForUpdate"]) {
         bool changesAvailable = false;
 
         auto result = updater.checkForChanges(changesAvailable);
@@ -237,7 +240,7 @@ int main(const int argc, const char** argv) {
     while (updater.nextStatusMessage(nextMessage))
         cout << nextMessage << endl;
 
-    auto oldFilePath = pathToOldAppImage(pathToAppImage, newFilePath);
+    auto oldFilePath = pathToOldAppImage(pathToAppImage.value(), newFilePath);
 
     if (validationResult >= Updater::VALIDATION_FAILED) {
         // validation failed, restore original file to prevent bad things from happening
@@ -264,7 +267,7 @@ int main(const int argc, const char** argv) {
         cerr << "Signature validation passed" << endl;
     }
 
-    if (removeOldFile) {
+    if (args["removeOldFile"]) {
         if (isFile(oldFilePath)) {
             cerr << "Removing old AppImage: " << oldFilePath << endl;
             unlink(oldFilePath.c_str());
@@ -274,7 +277,7 @@ int main(const int argc, const char** argv) {
     }
 
     cerr << "Update successful. "
-         << (overwriteOldFile ? "Updated existing file " : "New file created: ") << newFilePath
+         << (args["overwriteOldFile"] ? "Updated existing file " : "New file created: ") << newFilePath
          << endl;
 
     return 0;
