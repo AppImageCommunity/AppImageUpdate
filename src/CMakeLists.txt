@@ -18,6 +18,12 @@ add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
 add_subdirectory(util)
 
+if(USE_SYSTEM_LIBAPPIMAGE)
+    set(LIBAPPIMAGE_LINK_TYPE PUBLIC)
+else()
+    set(LIBAPPIMAGE_LINK_TYPE PRIVATE)
+endif()
+
 # core library
 add_library(libappimageupdate SHARED
     ${PROJECT_SOURCE_DIR}/include/appimage/update.h
@@ -32,7 +38,7 @@ set_target_properties(libappimageupdate
 )
 # link thread libraries
 target_link_libraries(libappimageupdate
-    PRIVATE libappimage_shared
+    ${LIBAPPIMAGE_LINK_TYPE} libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
     PRIVATE util
@@ -62,7 +68,7 @@ set_target_properties(libappimageupdate_static
 )
 # link thread libraries
 target_link_libraries(libappimageupdate_static
-    PRIVATE libappimage_shared
+    ${LIBAPPIMAGE_LINK_TYPE} libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
     PRIVATE util
