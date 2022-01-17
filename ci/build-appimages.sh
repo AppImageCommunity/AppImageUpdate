@@ -29,7 +29,7 @@ pushd "$BUILD_DIR"
 
 export ARCH=${ARCH:-"$(uname -m)"}
 
-if [ "$ARCH" == "i386" && "$DOCKER" == "" ]; then
+if [ "$ARCH" == "i386" ] && [ "$DOCKER" == "" ]; then
     EXTRA_CMAKE_ARGS=("-DCMAKE_TOOLCHAIN_FILE=$REPO_ROOT/cmake/toolchains/i386-linux-gnu.cmake")
 fi
 
