@@ -78,7 +78,7 @@ target_include_directories(libappimageupdate_static PUBLIC
 # CLI application
 add_executable(appimageupdatetool main.cpp)
 # link to core lib
-target_link_libraries(appimageupdatetool libappimageupdate args util)
+target_link_libraries(appimageupdatetool libappimageupdate util)
 
 # set up rpath
 set_target_properties(libappimageupdate libappimageupdate_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
