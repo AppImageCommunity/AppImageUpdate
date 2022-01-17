@@ -9,6 +9,9 @@ find_package(Sanitizers REQUIRED)
 # required to link to correct thread library
 find_package(Threads REQUIRED)
 find_package(X11 REQUIRED)
+if(USE_SYSTEM_LIBAPPIMAGE)
+    find_package(libappimage REQUIRED)
+endif()
 
 if(NOT ${X11_Xpm_FOUND})
     message(FATAL_ERROR "libxpm could not be found!")
@@ -38,7 +41,7 @@ set_target_properties(libappimageupdate
 )
 # link thread libraries
 target_link_libraries(libappimageupdate
-    PUBLIC ${APPIMAGE_LIB}
+    PUBLIC ${LIBAPPIMAGE_LIBRARIES}
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE libzsync2
     PRIVATE ${CPR_LIBRARIES}
@@ -69,7 +72,7 @@ set_target_properties(libappimageupdate_static
 )
 # link thread libraries
 target_link_libraries(libappimageupdate_static
-    PUBLIC ${APPIMAGE_LIB}
+    PUBLIC ${LIBAPPIMAGE_LIBRARIES}
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE libzsync2
     PRIVATE ${CPR_LIBRARIES}
