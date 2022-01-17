@@ -29,7 +29,7 @@ pushd "$BUILD_DIR"
 
 export ARCH=${ARCH:-"$(uname -m)"}
 
-if [ "$ARCH" == "i386" ]; then
+if [ "$ARCH" == "i386" && "$DOCKER" == "" ]; then
     EXTRA_CMAKE_ARGS=("-DCMAKE_TOOLCHAIN_FILE=$REPO_ROOT/cmake/toolchains/i386-linux-gnu.cmake")
 fi
 
@@ -64,7 +64,7 @@ fi
 # remove unnecessary binaries from AppDirs
 rm AppImageUpdate.AppDir/usr/bin/appimageupdatetool
 rm appimageupdatetool.AppDir/usr/bin/AppImageUpdate
-rm appimageupdatetool.AppDir/usr/lib/*qt*.so*
+rm appimageupdatetool.AppDir/usr/lib/*/libappimageupdate-qt.so
 
 
 # remove other unnecessary data
@@ -97,7 +97,7 @@ for app in appimageupdatetool AppImageUpdate; do
     export OUTPUT="$app"-"$ARCH".AppImage
 
     # bundle application
-    ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
+    ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
 done
 
 # move AppImages to old cwd

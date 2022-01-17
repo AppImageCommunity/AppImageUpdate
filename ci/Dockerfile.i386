@@ -13,10 +13,15 @@ RUN apt-get update && \
     apt-get install -y qt515base qt515wayland libgl1 libdrm-dev mesa-common-dev \
         build-essential libssl-dev autoconf automake libtool \
         wget vim-common desktop-file-utils pkgconf \
-        libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev wget && \
+        libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev && \
     wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.22.1-ubuntu_xenial-$ARCH.tar.gz | tar xzv -C/ --strip-components=1
+
+COPY libgcrypt.pc /usr/lib/i386-linux-gnu/pkgconfig/libgcrypt.pc
+RUN sed -i 's|x86_64|i386|g' /usr/lib/i386-linux-gnu/pkgconfig/libgcrypt.pc
 
 COPY entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]
 
 ENV APPIMAGE_EXTRACT_AND_RUN=1
+
+ENV DOCKER=1

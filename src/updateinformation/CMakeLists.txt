@@ -7,5 +7,7 @@ add_library(updateinformation INTERFACE
     updateinformation.h
     factory.h
 )
-target_include_directories(updateinformation INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(updateinformation INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
 target_link_libraries(updateinformation INTERFACE util)

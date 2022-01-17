@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <unistd.h>
 
 // library headers
 #include <zsclient.h>

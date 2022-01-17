@@ -22,6 +22,7 @@ target_include_directories(libappimageupdate-qt
     $<INSTALL_INTERFACE:include>
 )
 target_compile_definitions(libappimageupdate-qt PRIVATE -DQT_UI)
+set_target_properties(libappimageupdate-qt PROPERTIES INSTALL_RPATH "\$ORIGIN/")
 
 # library with the Qt UI classes (for static linking, see #110)
 add_library(libappimageupdate-qt_static STATIC qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
@@ -40,9 +41,13 @@ target_include_directories(libappimageupdate-qt_static
     $<INSTALL_INTERFACE:include>
 )
 target_compile_definitions(libappimageupdate-qt_static PRIVATE -DQT_UI)
+set_target_properties(libappimageupdate-qt_static PROPERTIES INSTALL_RPATH "\$ORIGIN/")
 
 # Qt GUI application
 add_executable(AppImageUpdate main.cpp)
+if(NOT USE_SYSTEM_ZSYNC2)
+    target_link_libraries(AppImageUpdate ${ZSYNC2_LIBRARY_NAME})
+endif()
 
 if (ENABLE_SANITIZERS)
     # add support for sanitizers.  Partially broken: fix at https://github.com/arsenm/sanitizers-cmake/pull/18
@@ -59,21 +64,21 @@ target_compile_definitions(AppImageUpdate PRIVATE -DQT_UI)
 # set up rpath
 set_target_properties(libappimageupdate-qt PROPERTIES INSTALL_RPATH "\$ORIGIN")
 set_target_properties(libappimageupdate-qt_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
-set_target_properties(AppImageUpdate PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
+set_target_properties(AppImageUpdate PROPERTIES INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 
 # install targets
 install(
     TARGETS libappimageupdate-qt
     EXPORT AppImageUpdateTargets
-    LIBRARY DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE-QT
-    PUBLIC_HEADER DESTINATION include/appimage/update COMPONENT LIBAPPIMAGEUPDATE-QT-DEV
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT LIBAPPIMAGEUPDATE-QT
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/appimage/update COMPONENT LIBAPPIMAGEUPDATE-QT-DEV
 )
 install(
-    TARGETS libappimageupdate-qt libappimageupdate-qt_static
-    ARCHIVE DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE-QT
-    PUBLIC_HEADER DESTINATION include/appimage/update COMPONENT LIBAPPIMAGEUPDATE-QT-DEV
+    TARGETS libappimageupdate-qt_static
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT LIBAPPIMAGEUPDATE-QT
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/appimage/update COMPONENT LIBAPPIMAGEUPDATE-QT-DEV
 )
 install(
     TARGETS AppImageUpdate
-    RUNTIME DESTINATION bin COMPONENT APPIMAGEUPDATE
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT APPIMAGEUPDATE
 )
