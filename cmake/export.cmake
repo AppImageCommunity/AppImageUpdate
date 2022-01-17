@@ -6,7 +6,7 @@ set(CMP0090 NEW)
 export(
     TARGETS libappimageupdate
     NAMESPACE AppImageUpdate::
-    FILE AppImageUpdateTargets.cmake
+    FILE ${PROJECT_BINARY_DIR}/cmake/AppImageUpdateTargets.cmake
 )
 
 # allow import from install tree
