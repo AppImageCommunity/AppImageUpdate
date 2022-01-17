@@ -49,11 +49,9 @@ if(USE_SYSTEM_LIBAPPIMAGE)
 endif()
 
 # this dependency does not come with a pkg-config file or CMake config, so we try to compile a file instead
-try_run(ARGAGG_WORKS HAVE_ARGAGG "${PROJECT_BINARY_DIR}/tests" "${PROJECT_SOURCE_DIR}/cmake/tests/try_argagg.cpp")
+try_compile(HAVE_ARGAGG "${PROJECT_BINARY_DIR}/tests" "${PROJECT_SOURCE_DIR}/cmake/tests/try_argagg.cpp")
 if(NOT HAVE_ARGAGG)
     message(FATAL_ERROR "argagg header not found on system, please install")
-elseif(ARGAGG_WORKS)
-    message(FATAL_ERROR "argagg does not seem to work")
 endif()
 
 # include external libraries
