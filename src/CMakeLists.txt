@@ -24,6 +24,14 @@ else()
     set(LIBAPPIMAGE_LINK_TYPE PRIVATE)
 endif()
 
+if(USE_SYSTEM_ZSYNC2)
+    set(ZSYNC2_LIBRARY_NAME libzsync2)
+    set(ZSYNC2_LINK_TYPE PUBLIC)
+else()
+    set(ZSYNC2_LIBRARY_NAME libzsync2_static)
+    set(ZSYNC2_LINK_TYPE PRIVATE)
+endif()
+
 # core library
 add_library(libappimageupdate SHARED
     ${PROJECT_SOURCE_DIR}/include/appimage/update.h
@@ -42,16 +50,14 @@ target_link_libraries(libappimageupdate
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
     PRIVATE util
-    PUBLIC libzsync2
+    ${ZSYNC2_LINK_TYPE} ${ZSYNC2_LIBRARY_NAME}
 )
 # include directories, publicly
 target_include_directories(libappimageupdate PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
-    # FIXME: works for now, but should be possible without these workaround
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/lib/cpr/include>
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/include>
 )
+set_target_properties(libappimageupdate PROPERTIES INSTALL_RPATH "\$ORIGIN/")
 
 
 # core library
@@ -72,7 +78,7 @@ target_link_libraries(libappimageupdate_static
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
     PRIVATE util
-    PUBLIC libzsync2
+    ${ZSYNC2_LINK_TYPE} ${ZSYNC2_LIBRARY_NAME}
 )
 # include directories, publicly
 target_include_directories(libappimageupdate_static PUBLIC
@@ -85,10 +91,13 @@ target_include_directories(libappimageupdate_static PUBLIC
 add_executable(appimageupdatetool main.cpp)
 # link to core lib
 target_link_libraries(appimageupdatetool libappimageupdate util)
+if(NOT USE_SYSTEM_ZSYNC2)
+    target_link_libraries(appimageupdatetool ${ZSYNC2_LIBRARY_NAME})
+endif()
 
 # set up rpath
 set_target_properties(libappimageupdate libappimageupdate_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
-set_target_properties(appimageupdatetool PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
+set_target_properties(appimageupdatetool PROPERTIES INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 
 # install targets
 install(

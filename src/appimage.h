@@ -1,7 +1,9 @@
+#include <fstream>
 #include <utility>
 
 // library headers
 #include <zshash.h>
+#include <appimage/appimage_shared.h>
 
 namespace appimage::update {
     using namespace updateinformation;

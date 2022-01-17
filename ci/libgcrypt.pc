@@ -1,0 +1,13 @@
+prefix=/usr
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${prefix}/lib/x86_64-linux-gnu
+host=x86_64-pc-linux-gnu
+
+Name: libgcrypt
+Description: General purpose cryptographic library
+Requires.private: gpg-error
+Version: 1.8.1
+Cflags: 
+Libs: -lgcrypt
+URL: https://www.gnupg.org/software/libgcrypt/index.html

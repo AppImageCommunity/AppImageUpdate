@@ -21,7 +21,7 @@ if [ ! -f "$repo_root"/ci/"$dockerfile" ]; then
 fi
 
 # building local image to "cache" installed dependencies for subsequent builds
-docker build -t "$image" -f "$repo_root"/ci/"$dockerfile" --no-cache --build-arg DIST="$DIST" "$repo_root"/ci
+docker build -t "$image" -f "$repo_root"/ci/"$dockerfile" --build-arg DIST="$DIST" "$repo_root"/ci
 
 # run the build with the current user to
 #   a) make sure root is not required for builds
