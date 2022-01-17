@@ -36,6 +36,18 @@ option(ENABLE_SANITIZERS "Enable builds using sanitizers" off)
 # install into proper dirs on Linux
 include(GNUInstallDirs)
 
+option(USE_SYSTEM_ZSYNC2 OFF "Use existing libzsync2 installed on system (or inside CMAKE_PREFIX_PATH)")
+if(USE_SYSTEM_ZSYNC2)
+    # note: find_package calls must be made in the same or a parent scope
+    find_package(zsync2 REQUIRED)
+endif()
+
+option(USE_SYSTEM_LIBAPPIMAGE OFF "Use existing libappimage installed on system (or inside CMAKE_PREFIX_PATH)")
+if(USE_SYSTEM_LIBAPPIMAGE)
+    # note: find_package calls must be made in the same or a parent scope
+    find_package(libappimage REQUIRED)
+endif()
+
 # this dependency does not come with a pkg-config file or CMake config, so we try to compile a file instead
 try_run(ARGAGG_WORKS HAVE_ARGAGG "${PROJECT_BINARY_DIR}/tests" "${PROJECT_SOURCE_DIR}/cmake/tests/try_argagg.cpp")
 if(NOT HAVE_ARGAGG)
