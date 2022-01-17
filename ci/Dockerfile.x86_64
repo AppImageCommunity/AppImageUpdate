@@ -14,7 +14,7 @@ RUN apt-get update && \
         build-essential libssl-dev autoconf automake libtool \
         wget vim-common desktop-file-utils pkgconf \
         libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev && \
-    wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.22.1-ubuntu_xenial-$ARCH.tar.gz | tar xzv -C/ --strip-components=1
+    wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.22.1-ubuntu_xenial-$ARCH.tar.gz | tar xzv -C/usr --strip-components=1
 
 COPY libgcrypt.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libgcrypt.pc
 

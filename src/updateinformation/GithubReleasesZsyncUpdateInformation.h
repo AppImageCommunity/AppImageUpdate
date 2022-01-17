@@ -36,7 +36,7 @@ namespace appimage::update::updateinformation {
                 url << "tags/" << tag;
             }
 
-            auto response = cpr::Get(url.str());
+            auto response = cpr::Get(cpr::Url{url.str()});
 
             // counter that will be evaluated later to give some meaningful feedback why parsing API
             // response might have failed

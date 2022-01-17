@@ -16,8 +16,6 @@ add_definitions("-DAPPIMAGEUPDATE_GIT_COMMIT=\"${GIT_COMMIT}\"")
 add_definitions("-DBUILD_DATE=\"${DATE}\"")
 add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
-add_subdirectory(util)
-
 if(USE_SYSTEM_LIBAPPIMAGE)
     set(LIBAPPIMAGE_LINK_TYPE PUBLIC)
 else()
@@ -31,6 +29,8 @@ else()
     set(ZSYNC2_LIBRARY_NAME libzsync2_static)
     set(ZSYNC2_LINK_TYPE PRIVATE)
 endif()
+
+add_subdirectory(util)
 
 # core library
 add_library(libappimageupdate SHARED

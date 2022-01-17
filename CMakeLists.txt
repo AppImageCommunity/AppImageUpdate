@@ -38,6 +38,12 @@ include(GNUInstallDirs)
 
 option(USE_SYSTEM_ZSYNC2 OFF "Use existing libzsync2 installed on system (or inside CMAKE_PREFIX_PATH)")
 if(USE_SYSTEM_ZSYNC2)
+    set(USE_SYSTEM_CPR ON)
+
+    # we use cpr in AppImageUpdate, too
+    find_package(cpr REQUIRED)
+    add_library(cpr ALIAS cpr::cpr)
+
     # note: find_package calls must be made in the same or a parent scope
     find_package(zsync2 REQUIRED)
 endif()

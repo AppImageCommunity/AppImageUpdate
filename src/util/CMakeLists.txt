@@ -8,4 +8,4 @@ add_library(util STATIC
 target_include_directories(util PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-target_link_libraries(util PRIVATE libappimage_shared libzsync2_static)
+target_link_libraries(util PRIVATE libappimage_shared ${ZSYNC2_LIBRARY_NAME} cpr)
