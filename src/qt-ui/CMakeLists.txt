@@ -7,7 +7,10 @@ set(CMAKE_AUTOMOC ON)
 
 # library with the Qt UI classes
 add_library(libappimageupdate-qt SHARED qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
-target_link_libraries(libappimageupdate-qt libappimageupdate Qt5::Core Qt5::Widgets util)
+target_link_libraries(libappimageupdate-qt
+    PUBLIC libappimageupdate Qt5::Core Qt5::Widgets
+    PRIVATE util
+)
 set_target_properties(libappimageupdate-qt
     PROPERTIES
     PREFIX ""
@@ -22,7 +25,10 @@ target_compile_definitions(libappimageupdate-qt PRIVATE -DQT_UI)
 
 # library with the Qt UI classes (for static linking, see #110)
 add_library(libappimageupdate-qt_static STATIC qt-updater.cpp spoiler.cpp ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h)
-target_link_libraries(libappimageupdate-qt_static libappimageupdate Qt5::Core Qt5::Widgets)
+target_link_libraries(libappimageupdate-qt_static
+    PUBLIC libappimageupdate Qt5::Core Qt5::Widgets
+    PRIVATE util
+)
 set_target_properties(libappimageupdate-qt_static
     PROPERTIES
     PREFIX ""
@@ -47,7 +53,7 @@ if (ENABLE_SANITIZERS)
 endif (ENABLE_SANITIZERS)
 
 # link libraries
-target_link_libraries(AppImageUpdate libappimageupdate libappimageupdate-qt)
+target_link_libraries(AppImageUpdate libappimageupdate libappimageupdate-qt util)
 target_compile_definitions(AppImageUpdate PRIVATE -DQT_UI)
 
 # set up rpath
@@ -57,9 +63,17 @@ set_target_properties(AppImageUpdate PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
 
 # install targets
 install(
-    TARGETS libappimageupdate-qt libappimageupdate-qt_static AppImageUpdate
-    RUNTIME DESTINATION bin COMPONENT APPIMAGEUPDATE
+    TARGETS libappimageupdate-qt
+    EXPORT AppImageUpdateTargets
     LIBRARY DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE-QT
+    PUBLIC_HEADER DESTINATION include/appimage/update COMPONENT LIBAPPIMAGEUPDATE-QT-DEV
+)
+install(
+    TARGETS libappimageupdate-qt libappimageupdate-qt_static
     ARCHIVE DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE-QT
     PUBLIC_HEADER DESTINATION include/appimage/update COMPONENT LIBAPPIMAGEUPDATE-QT-DEV
+)
+install(
+    TARGETS AppImageUpdate
+    RUNTIME DESTINATION bin COMPONENT APPIMAGEUPDATE
 )

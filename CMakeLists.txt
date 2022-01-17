@@ -33,6 +33,9 @@ execute_process(
 
 option(ENABLE_SANITIZERS "Enable builds using sanitizers" off)
 
+# install into proper dirs on Linux
+include(GNUInstallDirs)
+
 # include external libraries
 add_subdirectory(lib)
 
@@ -41,3 +44,6 @@ add_subdirectory(src)
 
 # packaging
 include(${PROJECT_SOURCE_DIR}/cmake/cpack-deb.cmake)
+
+# also, configure exported targets
+include(cmake/export.cmake)

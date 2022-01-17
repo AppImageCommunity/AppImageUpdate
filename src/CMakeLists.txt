@@ -35,7 +35,7 @@ target_link_libraries(libappimageupdate
     PRIVATE libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
-    PUBLIC util
+    PRIVATE util
     PUBLIC libzsync2
 )
 # include directories, publicly
@@ -65,23 +65,20 @@ target_link_libraries(libappimageupdate_static
     PRIVATE libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
-    PUBLIC util
+    PRIVATE util
     PUBLIC libzsync2
 )
 # include directories, publicly
 target_include_directories(libappimageupdate_static PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
-    # FIXME: works for now, but should be possible without these workaround
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/lib/cpr/include>
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/zsync2/include>
 )
 
 
 # CLI application
 add_executable(appimageupdatetool main.cpp)
 # link to core lib
-target_link_libraries(appimageupdatetool libappimageupdate args)
+target_link_libraries(appimageupdatetool libappimageupdate args util)
 
 # set up rpath
 set_target_properties(libappimageupdate libappimageupdate_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
@@ -89,11 +86,19 @@ set_target_properties(appimageupdatetool PROPERTIES INSTALL_RPATH "\$ORIGIN/../l
 
 # install targets
 install(
-    TARGETS libappimageupdate libappimageupdate_static appimageupdatetool
-    RUNTIME DESTINATION bin COMPONENT APPIMAGEUPDATETOOL
-    LIBRARY DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE
-    ARCHIVE DESTINATION lib COMPONENT LIBAPPIMAGEUPDATE
-    PUBLIC_HEADER DESTINATION include/appimage COMPONENT LIBAPPIMAGEUPDATE-DEV
+    TARGETS libappimageupdate
+    EXPORT AppImageUpdateTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT LIBAPPIMAGEUPDATE
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/appimage COMPONENT LIBAPPIMAGEUPDATE-DEV
+)
+install(
+    TARGETS libappimageupdate_static
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT LIBAPPIMAGEUPDATE
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/appimage COMPONENT LIBAPPIMAGEUPDATE-DEV
+)
+install(
+    TARGETS appimageupdatetool
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT APPIMAGEUPDATETOOL
 )
 
 
