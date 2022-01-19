@@ -71,17 +71,20 @@ namespace appimage::update {
         }
 
         void validateAppImage() {
-            const auto rawUpdateInformationFromAppImage = appImage.readRawUpdateInformation();
-
             // first check whether there's update information at all
-            if (rawUpdateInformationFromAppImage.empty()) {
-                std::ostringstream oss;
-                oss << "Could not find update information in the AppImage. "
+            // note that we skip this check when custom update information is set intentionally
+            if (this->rawUpdateInformation.empty()) {
+                const auto rawUpdateInformationFromAppImage = appImage.readRawUpdateInformation();
+
+                if (rawUpdateInformationFromAppImage.empty()) {
+                    std::ostringstream oss;
+                    oss << "Could not find update information in the AppImage. "
                     << "Please contact the author of the AppImage and ask them to embed update information.";
-                throw AppImageError(oss.str());
+                    throw AppImageError(oss.str());
+                }
             }
 
-            const auto updateInformationPtr = makeUpdateInformation(rawUpdateInformationFromAppImage);
+            const auto updateInformationPtr = makeUpdateInformation(rawUpdateInformation);
             const auto zsyncUrl = updateInformationPtr->buildUrl(makeIssueStatusMessageCallback());
 
             // now check whether a ZSync URL could be composed by readAppImage
