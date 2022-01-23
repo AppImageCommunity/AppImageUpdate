@@ -190,7 +190,7 @@ namespace appimage::update {
             }
 
             try {
-                auto updateInformationPtr = makeUpdateInformation(appImage.readRawUpdateInformation());
+                auto updateInformationPtr = makeUpdateInformation(rawUpdateInformation);
                 const auto zsyncUrl = updateInformationPtr->buildUrl(makeIssueStatusMessageCallback());
                 zSyncClient.reset(new zsync2::ZSyncClient(zsyncUrl, appImage.path()));
                 return zSyncClient->checkForChanges(updateAvailable, method);
