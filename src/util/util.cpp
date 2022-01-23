@@ -291,7 +291,7 @@ namespace appimage::update::util {
 
     std::vector<char> makeBuffer(const std::string& str) {
         std::vector<char> buffer;
-        buffer.reserve(str.size() + 1);
+        buffer.resize(str.size());
         std::copy(str.begin(), str.end(), buffer.begin());
         buffer.emplace_back('\0');
         return buffer;
