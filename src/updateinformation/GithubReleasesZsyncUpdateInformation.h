@@ -45,33 +45,37 @@ namespace appimage::update::updateinformation {
 
             std::string builtUrl;
 
-            // continue only if HTTP status is good
-            if (response.status_code >= 200 && response.status_code < 300) {
-                // in contrary to the original implementation, instead of converting wildcards into
-                // all-matching regular expressions, we have the power of fnmatch() available, a real wildcard
-                // implementation
-                // unfortunately, this is still hoping for GitHub's JSON API to return a pretty printed
-                // response which can be parsed like this
-                std::stringstream responseText(response.text);
-                std::string currentLine;
+            // continue only if request worked
+            if (response.error.code != cpr::ErrorCode::OK || response.status_code < 200 || response.status_code >= 300) {
+                std::ostringstream oss;
+                oss << "GitHub API request failed: HTTP status " << std::to_string(response.status_code)
+                    << ", CURL error: " << response.error.message;
+                throw UpdateInformationError(oss.str());
+            }
 
-                // not ideal, but allows for returning a match for the entire line
-                auto pattern = "*" + filename + "*";
 
-                // iterate through all lines to find a possible download URL and compare it to the pattern
-                while (std::getline(responseText, currentLine)) {
-                    if (currentLine.find("browser_download_url") != std::string::npos) {
-                        downloadUrlLines++;
-                        if (fnmatch(pattern.c_str(), currentLine.c_str(), 0) == 0) {
-                            matchingUrls++;
-                            auto parts = util::split(currentLine, '"');
-                            builtUrl = std::string(parts.back());
-                            break;
-                        }
+            // in contrary to the original implementation, instead of converting wildcards into
+            // all-matching regular expressions, we have the power of fnmatch() available, a real wildcard
+            // implementation
+            // unfortunately, this is still hoping for GitHub's JSON API to return a pretty printed
+            // response which can be parsed like this
+            std::stringstream responseText(response.text);
+            std::string currentLine;
+
+            // not ideal, but allows for returning a match for the entire line
+            auto pattern = "*" + filename + "*";
+
+            // iterate through all lines to find a possible download URL and compare it to the pattern
+            while (std::getline(responseText, currentLine)) {
+                if (currentLine.find("browser_download_url") != std::string::npos) {
+                    downloadUrlLines++;
+                    if (fnmatch(pattern.c_str(), currentLine.c_str(), 0) == 0) {
+                        matchingUrls++;
+                        auto parts = util::split(currentLine, '"');
+                        builtUrl = std::string(parts.back());
+                        break;
                     }
                 }
-            } else {
-                throw UpdateInformationError("GitHub API request failed!");
             }
 
             if (downloadUrlLines <= 0) {
