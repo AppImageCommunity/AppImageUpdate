@@ -177,7 +177,7 @@ namespace appimage::update {
             // validate.c uses "offset" as chunk size, but that value might be quite high, and therefore uses
             // a lot of memory
             // TODO: use a smaller value (maybe use a prime factorization and use the biggest prime factor?)
-            const ssize_t chunkSize = 4096;
+            const std::streamsize chunkSize = 4096;
 
             std::vector<char> buffer(chunkSize, 0);
 
@@ -196,7 +196,7 @@ namespace appimage::update {
             assertIfstreamGood(ifs);
 
             while (ifs) {
-                size_t bytesRead = 0;
+                std::streamsize bytesRead = 0;
 
                 auto bytesLeftInChunk = std::min(chunkSize, (fileSize - totalBytesRead));
 
@@ -231,7 +231,7 @@ namespace appimage::update {
                     bytesLeftInChunk -= bytesRead;
                 };
 
-                auto checkSkipSection = [&](const ssize_t sectionOffset, const ssize_t sectionLength) {
+                auto checkSkipSection = [&](const std::streamsize sectionOffset, const std::streamsize sectionLength) {
                     // check whether signature starts in current chunk
                     const auto sectionOffsetDelta = sectionOffset - totalBytesRead;
 
@@ -256,13 +256,13 @@ namespace appimage::update {
                 // check whether one of the sections that must be skipped are in the current chunk, and if they
                 // are, skip those sections in the current and future sections
                 // TODO: fix narrowing
-                checkSkipSection(sigOffset, sigLength);
-                checkSkipSection(keyOffset, keyLength);
+                checkSkipSection(static_cast<std::streamsize>(sigOffset), static_cast<std::streamsize>(sigLength));
+                checkSkipSection(static_cast<std::streamsize>(keyOffset), static_cast<std::streamsize>(keyLength));
 
                 // check whether one of the sections that must be skipped are in the current chunk, and if they
                 // are, skip those sections in the current and future sections
-                checkSkipSection(sigOffset, sigLength);
-                checkSkipSection(keyOffset, keyLength);
+                checkSkipSection(static_cast<std::streamsize>(sigOffset), static_cast<std::streamsize>(sigLength));
+                checkSkipSection(static_cast<std::streamsize>(keyOffset), static_cast<std::streamsize>(keyLength));
 
                 // read remaining bytes in chunk, given the file has still data to be read
                 if (ifs && bytesLeftInChunk > 0) {
