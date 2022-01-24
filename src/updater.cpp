@@ -409,9 +409,6 @@ namespace appimage::update {
         auto oldDigest = oldAppImage.calculateHash();
         auto newDigest = newAppImage.calculateHash();
 
-        auto oldDigestOrig = readElfSection(pathToOldAppImage, ".sha256_sig");
-        auto newDigestOrig = readElfSection(pathToNewAppImage, ".sha256_sig");
-
         std::string tempDir;
         {
             auto buffer = makeBuffer("/tmp/AppImageUpdate-XXXXXX");
