@@ -169,9 +169,6 @@ namespace appimage::update {
 
             auto ifs = _open();
 
-            if (!ifs)
-                return "";
-
             ZSyncHash<GCRY_MD_SHA256> digest;
 
             // validate.c uses "offset" as chunk size, but that value might be quite high, and therefore uses
