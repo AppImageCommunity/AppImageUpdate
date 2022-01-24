@@ -193,6 +193,12 @@ namespace appimage::update {
             assertIfstreamGood(ifs);
 
             while (ifs) {
+                // in case we read less bytes than the chunk size, we resize the vector to the number of bytes read
+                // we have to reset this upon the next iteration
+                // this should be a no-op when the size has not changed, and should not be necessary, as the only time
+                // we receive less bytes than requested should be the final read call
+                buffer.resize(chunkSize);
+
                 std::streamsize bytesRead = 0;
 
                 auto bytesLeftInChunk = std::min(chunkSize, (fileSize - totalBytesRead));
@@ -250,11 +256,12 @@ namespace appimage::update {
                     }
                 };
 
-                // check whether one of the sections that must be skipped are in the current chunk, and if they
-                // are, skip those sections in the current and future sections
-                // TODO: fix narrowing
-                checkSkipSection(static_cast<std::streamsize>(sigOffset), static_cast<std::streamsize>(sigLength));
-                checkSkipSection(static_cast<std::streamsize>(keyOffset), static_cast<std::streamsize>(keyLength));
+                // check whether bytes must be skipped from previous sections
+                if (bytesToSkip > 0) {
+                    auto bytesToSkipInCurrentChunk = std::min(chunkSize, bytesToSkip);
+                    skipBytes(bytesToSkipInCurrentChunk);
+                    bytesToSkip -= bytesToSkipInCurrentChunk;
+                }
 
                 // check whether one of the sections that must be skipped are in the current chunk, and if they
                 // are, skip those sections in the current and future sections
@@ -265,6 +272,9 @@ namespace appimage::update {
                 if (ifs && bytesLeftInChunk > 0) {
                     readBytes(bytesLeftInChunk);
                 }
+
+                // make sure the buffer has the right size
+                buffer.resize(bytesRead);
 
                 // update hash with data from buffer
                 digest.add(buffer);
