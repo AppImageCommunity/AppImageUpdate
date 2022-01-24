@@ -164,7 +164,7 @@ namespace appimage::update {
             }
 
             if (!appimage_get_elf_section_offset_and_length(_path.c_str(), ".sig_key", &keyOffset, &keyLength)) {
-                throw AppImageError("Could not find .sha256_sig section in AppImage");
+                throw AppImageError("Could not find .sig_key section in AppImage");
             }
 
             auto ifs = _open();
