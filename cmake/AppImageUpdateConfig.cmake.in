@@ -1,8 +1,19 @@
 @PACKAGE_INIT@
 
 # look up dependencies
-find_package(zsync2 REQUIRED)
-find_package(libappimage REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
+set(APPIMAGE_UPDATE_USE_SYSTEM_ZSYNC2 @USE_SYSTEM_ZSYNC2@)
+if(APPIMAGE_UPDATE_USE_SYSTEM_ZSYNC2)
+    find_package(zsync2 REQUIRED)
+endif()
+
+set(APPIMAGE_UPDATE_USE_SYSTEM_LIBAPPIMAGE @USE_SYSTEM_LIBAPPIMAGE@)
+if(APPIMAGE_UPDATE_USE_SYSTEM_LIBAPPIMAGE)
+    find_package(libappimage REQUIRED)
+endif()
+
+set(APPIMAGE_UPDATE_QT_UI @APPIMAGE_UPDATE_@BUILD_QT_UI@)
+if(APPIMAGE_UPDATE_QT_UI)
+    find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
+endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/AppImageUpdateTargets.cmake")
