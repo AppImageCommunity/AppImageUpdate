@@ -87,17 +87,19 @@ target_include_directories(libappimageupdate_static PUBLIC
 )
 
 
-# CLI application
-add_executable(appimageupdatetool main.cpp)
-# link to core lib
-target_link_libraries(appimageupdatetool libappimageupdate util)
-if(NOT USE_SYSTEM_ZSYNC2)
-    target_link_libraries(appimageupdatetool ${ZSYNC2_LIBRARY_NAME})
-endif()
+if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
+    # CLI application
+    add_executable(appimageupdatetool main.cpp)
+    # link to core lib
+    target_link_libraries(appimageupdatetool libappimageupdate util)
+    if(NOT USE_SYSTEM_ZSYNC2)
+        target_link_libraries(appimageupdatetool ${ZSYNC2_LIBRARY_NAME})
+    endif()
 
-# set up rpath
-set_target_properties(libappimageupdate libappimageupdate_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
-set_target_properties(appimageupdatetool PROPERTIES INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+    # set up rpath
+    set_target_properties(libappimageupdate libappimageupdate_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
+    set_target_properties(appimageupdatetool PROPERTIES INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
 
 # install targets
 install(
@@ -111,14 +113,15 @@ install(
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT LIBAPPIMAGEUPDATE
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/appimage COMPONENT LIBAPPIMAGEUPDATE-DEV
 )
-install(
-    TARGETS appimageupdatetool
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT APPIMAGEUPDATETOOL
-)
+if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
+    install(
+        TARGETS appimageupdatetool
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT APPIMAGEUPDATETOOL
+    )
+endif()
 
 
 # include Qt UI
-set(BUILD_QT_UI OFF CACHE BOOL "Build Qt UI (widget library and demo application)")
 if(BUILD_QT_UI)
     add_subdirectory(qt-ui)
 endif()

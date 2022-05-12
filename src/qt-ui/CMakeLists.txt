@@ -43,28 +43,32 @@ target_include_directories(libappimageupdate-qt_static
 target_compile_definitions(libappimageupdate-qt_static PRIVATE -DQT_UI)
 set_target_properties(libappimageupdate-qt_static PROPERTIES INSTALL_RPATH "\$ORIGIN/")
 
-# Qt GUI application
-add_executable(AppImageUpdate main.cpp)
-if(NOT USE_SYSTEM_ZSYNC2)
-    target_link_libraries(AppImageUpdate ${ZSYNC2_LIBRARY_NAME})
+if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
+    # Qt GUI application
+    add_executable(AppImageUpdate main.cpp)
+    if(NOT USE_SYSTEM_ZSYNC2)
+        target_link_libraries(AppImageUpdate ${ZSYNC2_LIBRARY_NAME})
+    endif()
+
+    if (ENABLE_SANITIZERS)
+        # add support for sanitizers.  Partially broken: fix at https://github.com/arsenm/sanitizers-cmake/pull/18
+        set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/lib/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
+        find_package(Sanitizers REQUIRED)
+
+        add_sanitizers(AppImageUpdate)
+    endif (ENABLE_SANITIZERS)
+
+    # link libraries
+    target_link_libraries(AppImageUpdate libappimageupdate libappimageupdate-qt util)
+    target_compile_definitions(AppImageUpdate PRIVATE -DQT_UI)
 endif()
-
-if (ENABLE_SANITIZERS)
-    # add support for sanitizers.  Partially broken: fix at https://github.com/arsenm/sanitizers-cmake/pull/18
-    set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/lib/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
-    find_package(Sanitizers REQUIRED)
-
-    add_sanitizers(AppImageUpdate)
-endif (ENABLE_SANITIZERS)
-
-# link libraries
-target_link_libraries(AppImageUpdate libappimageupdate libappimageupdate-qt util)
-target_compile_definitions(AppImageUpdate PRIVATE -DQT_UI)
 
 # set up rpath
 set_target_properties(libappimageupdate-qt PROPERTIES INSTALL_RPATH "\$ORIGIN")
 set_target_properties(libappimageupdate-qt_static PROPERTIES INSTALL_RPATH "\$ORIGIN")
-set_target_properties(AppImageUpdate PROPERTIES INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
+    set_target_properties(AppImageUpdate PROPERTIES INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
 
 # install targets
 install(
@@ -78,7 +82,9 @@ install(
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT LIBAPPIMAGEUPDATE-QT
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/appimage/update COMPONENT LIBAPPIMAGEUPDATE-QT-DEV
 )
-install(
-    TARGETS AppImageUpdate
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT APPIMAGEUPDATE
-)
+if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
+    install(
+        TARGETS AppImageUpdate
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT APPIMAGEUPDATE
+    )
+endif()

@@ -54,10 +54,15 @@ if(USE_SYSTEM_LIBAPPIMAGE)
     find_package(libappimage REQUIRED)
 endif()
 
-# this dependency does not come with a pkg-config file or CMake config, so we try to compile a file instead
-try_compile(HAVE_ARGAGG "${PROJECT_BINARY_DIR}/tests" "${PROJECT_SOURCE_DIR}/cmake/tests/try_argagg.cpp" OUTPUT_VARIABLE ARGAGG_OUT CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${CMAKE_REQUIRED_INCLUDES}")
-if(NOT HAVE_ARGAGG)
-    message(FATAL_ERROR "${ARGAGG_OUT} argagg header not found on system, please install")
+option(BUILD_QT_UI OFF "Build Qt UI (widget library and demo application)")
+option(BUILD_LIBAPPIMAGEUPDATE_ONLY OFF "Skip build of appimageupdatetool and AppImageUpdate")
+
+if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
+    # this dependency does not come with a pkg-config file or CMake config, so we try to compile a file instead
+    try_compile(HAVE_ARGAGG "${PROJECT_BINARY_DIR}/tests" "${PROJECT_SOURCE_DIR}/cmake/tests/try_argagg.cpp" OUTPUT_VARIABLE ARGAGG_OUT CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${CMAKE_REQUIRED_INCLUDES}")
+    if(NOT HAVE_ARGAGG)
+        message(FATAL_ERROR "${ARGAGG_OUT} argagg header not found on system, please install")
+    endif()
 endif()
 
 # include external libraries
