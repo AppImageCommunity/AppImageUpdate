@@ -95,19 +95,6 @@ for app in appimageupdatetool AppImageUpdate; do
     # overwrite AppImage filename to get static filenames
     # see https://github.com/AppImage/AppImageUpdate/issues/89
     export OUTPUT="$app"-"$ARCH".AppImage
-    
-    # Make absolutely sure there are no Gtk plugins,
-    # they created a LOT of hassle: #145 #149 #150 #151 #152 #161 #166
-    # https://github.com/AppImage/AppImageUpdate/issues/150#issuecomment-674013820
-    # https://github.com/AppImage/AppImageUpdate/pull/152/files
-    # Apparently linuxdeploy puts them in and there is no apparent way to disable this
-    # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/109
-    # All of the following fail because... Docker?
-    sudo apt-get remove qt5-gtk-platformtheme || true
-    sudo apt-get remove qt5-xdgdesktopportal-platformtheme || true
-    # Really desperate attempt now
-    sudo find / -name 'libqgtk*.so' -delete || true
-    sudo find / -name 'libqxdgdesktopportal.so' -delete || true
 
     # bundle application
     ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
