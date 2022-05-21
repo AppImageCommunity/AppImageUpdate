@@ -17,6 +17,7 @@ RUN apt-get update && \
     find / -name 'libqgtk*.so' -delete  ; \
     find / -name 'Qt5Gui_QGtk3ThemePlugin.cmake' -delete  ; \
     find / -name 'libqxdgdesktopportal.so' -delete ; \
+    find / -name 'Qt5Gui_QXdgDesktopPortalThemePlugin.cmake' -delete  ; \
     wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.22.1-ubuntu_xenial-$ARCH.tar.gz | tar xzv -C/usr --strip-components=1
 
 COPY libgcrypt.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libgcrypt.pc
