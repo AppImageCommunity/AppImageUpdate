@@ -95,6 +95,13 @@ for app in appimageupdatetool AppImageUpdate; do
     # overwrite AppImage filename to get static filenames
     # see https://github.com/AppImage/AppImageUpdate/issues/89
     export OUTPUT="$app"-"$ARCH".AppImage
+    
+    # Make absolutely sure there are no Gtk plugins,
+    # they created a LOT of hassle: #145 #149 #150 #151 #152 #161 #166
+    # https://github.com/AppImage/AppImageUpdate/issues/150#issuecomment-674013820
+    # https://github.com/AppImage/AppImageUpdate/pull/152/files
+    # Apparently linuxdeploy puts them in and there is no apparent way to disable this
+    sudo rm /usr/plugins/platformthemes/* || true
 
     # bundle application
     ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
