@@ -101,7 +101,9 @@ for app in appimageupdatetool AppImageUpdate; do
     # https://github.com/AppImage/AppImageUpdate/issues/150#issuecomment-674013820
     # https://github.com/AppImage/AppImageUpdate/pull/152/files
     # Apparently linuxdeploy puts them in and there is no apparent way to disable this
-    sudo rm /usr/plugins/platformthemes/* || true
+    sudo apt-get remove qt5-gtk-platformtheme || true
+    sudo apt-get remove qt5-xdgdesktopportal-platformtheme || true
+    sudo rm /usr/lib/*/qt5/plugins/platformthemes/libqgtk*.so /usr/lib/*/qt5/plugins/platformthemes/libqxdgdesktopportal.so|| true
 
     # bundle application
     ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
