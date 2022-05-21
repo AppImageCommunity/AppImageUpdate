@@ -101,9 +101,14 @@ for app in appimageupdatetool AppImageUpdate; do
     # https://github.com/AppImage/AppImageUpdate/issues/150#issuecomment-674013820
     # https://github.com/AppImage/AppImageUpdate/pull/152/files
     # Apparently linuxdeploy puts them in and there is no apparent way to disable this
-    apt-get remove qt5-gtk-platformtheme || true
-    apt-get remove qt5-xdgdesktopportal-platformtheme || true
-    rm /usr/lib/*/qt5/plugins/platformthemes/libqgtk*.so /usr/lib/*/qt5/plugins/platformthemes/libqxdgdesktopportal.so || true
+    # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/109
+    # All of the following fail because... Docker?
+    # apt-get remove qt5-gtk-platformtheme || true
+    # apt-get remove qt5-xdgdesktopportal-platformtheme || true
+    # rm /usr/lib/*/qt5/plugins/platformthemes/libqgtk*.so /usr/lib/*/qt5/plugins/platformthemes/libqxdgdesktopportal.so || true
+    # Really desperate attempt now
+    find / -name 'libqgtk*.so' -delete || true
+    find / -name 'libqxdgdesktopportal.so' -delete || true
 
     # bundle application
     ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
