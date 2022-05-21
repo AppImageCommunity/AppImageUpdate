@@ -103,12 +103,11 @@ for app in appimageupdatetool AppImageUpdate; do
     # Apparently linuxdeploy puts them in and there is no apparent way to disable this
     # https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/109
     # All of the following fail because... Docker?
-    # apt-get remove qt5-gtk-platformtheme || true
-    # apt-get remove qt5-xdgdesktopportal-platformtheme || true
-    # rm /usr/lib/*/qt5/plugins/platformthemes/libqgtk*.so /usr/lib/*/qt5/plugins/platformthemes/libqxdgdesktopportal.so || true
+    sudo apt-get remove qt5-gtk-platformtheme || true
+    sudo apt-get remove qt5-xdgdesktopportal-platformtheme || true
     # Really desperate attempt now
-    find / -name 'libqgtk*.so' -delete || true
-    find / -name 'libqxdgdesktopportal.so' -delete || true
+    sudo find / -name 'libqgtk*.so' -delete || true
+    sudo find / -name 'libqxdgdesktopportal.so' -delete || true
 
     # bundle application
     ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
