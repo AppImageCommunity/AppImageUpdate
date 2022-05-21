@@ -10,7 +10,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends software-properties-common && \
     add-apt-repository -y ppa:beineri/opt-qt-5.15.2-"${DIST}" && \
     apt-get update && \
-    apt-get install -y qt515base qt515wayland libgl1 libdrm-dev mesa-common-dev \
+    apt-get install -y sudo qt515base libgl1 libdrm-dev mesa-common-dev \
         build-essential libssl-dev autoconf automake libtool \
         wget vim-common desktop-file-utils pkgconf \
         libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev && \
