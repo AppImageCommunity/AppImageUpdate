@@ -1,3 +1,5 @@
+find_package(nlohmann_json REQUIRED)
+
 add_library(updateinformation INTERFACE
     AbstractUpdateInformation.h
     GenericZsyncUpdateInformation.h
@@ -10,4 +12,4 @@ add_library(updateinformation INTERFACE
 target_include_directories(updateinformation INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-target_link_libraries(updateinformation INTERFACE util)
+target_link_libraries(updateinformation INTERFACE util nlohmann_json::nlohmann_json)

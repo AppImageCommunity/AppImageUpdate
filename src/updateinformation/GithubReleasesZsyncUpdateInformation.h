@@ -3,6 +3,9 @@
 // system headers
 #include <fnmatch.h>
 
+// library headers
+#include <nlohmann/json.hpp>
+
 // local headers
 #include "common.h"
 
@@ -36,15 +39,17 @@ namespace appimage::update::updateinformation {
                 url << "tags/" << tag;
             }
 
+            std::cerr << url.str() << std::endl;
+
             auto response = cpr::Get(cpr::Url{url.str()});
 
-            // counter that will be evaluated later to give some meaningful feedback why parsing API
-            // response might have failed
-            int downloadUrlLines = 0;
-            int matchingUrls = 0;
+            nlohmann::json json;
 
-            std::string builtUrl;
-
+            try {
+                json = nlohmann::json::parse(response.text);
+            } catch (const std::exception& e) {
+                throw UpdateInformationError(std::string("Failed to parse GitHub response: ") + e.what());
+            }
             // continue only if request worked
             if (response.error.code != cpr::ErrorCode::OK || response.status_code < 200 || response.status_code >= 300) {
                 std::ostringstream oss;
@@ -53,52 +58,43 @@ namespace appimage::update::updateinformation {
                 throw UpdateInformationError(oss.str());
             }
 
-
-            // in contrary to the original implementation, instead of converting wildcards into
-            // all-matching regular expressions, we have the power of fnmatch() available, a real wildcard
-            // implementation
-            // unfortunately, this is still hoping for GitHub's JSON API to return a pretty printed
-            // response which can be parsed like this
-            std::stringstream responseText(response.text);
-            std::string currentLine;
-
             // not ideal, but allows for returning a match for the entire line
             auto pattern = "*" + filename + "*";
 
-            // iterate through all lines to find a possible download URL and compare it to the pattern
-            while (std::getline(responseText, currentLine)) {
-                if (currentLine.find("browser_download_url") != std::string::npos) {
-                    downloadUrlLines++;
-                    if (fnmatch(pattern.c_str(), currentLine.c_str(), 0) == 0) {
-                        matchingUrls++;
-                        auto parts = util::split(currentLine, '"');
-                        builtUrl = std::string(parts.back());
-                        break;
-                    }
-                }
-            }
+            const auto& assets = json["assets"];
 
-            if (downloadUrlLines <= 0) {
+            if (assets.empty()) {
                 std::ostringstream oss;
                 oss << "Could not find any artifacts in release data. "
                     << "Please contact the author of the AppImage and tell them the files are missing "
                     <<  "on the releases page.";
                 throw UpdateInformationError(oss.str());
-            } else if (matchingUrls <= 0) {
+            }
+
+            std::vector<std::string> matchingUrls;
+
+            for (const auto& asset : assets) {
+                const auto browserDownloadUrl = asset["browser_download_url"].get<std::string>();
+
+                if (fnmatch(pattern.c_str(), browserDownloadUrl.c_str(), 0) == 0) {
+                    matchingUrls.emplace_back(browserDownloadUrl);
+                }
+            }
+
+            if (matchingUrls.empty()) {
                 std::ostringstream oss;
                 oss << "None of the artifacts matched the pattern in the update information. "
                     << "The pattern is most likely invalid, e.g., due to changes in the filenames of "
                     << "the AppImages. Please contact the author of the AppImage and ask them to "
                     << "revise the update information.";
                 throw UpdateInformationError(oss.str());
-            } else if (builtUrl.empty()) {
-                // unlike that this code will ever be reached, the other two messages should cover all
-                // cases in which a ZSync URL is missing
-                // if it does, however, it's most likely that GitHub's API didn't return a URL
-                throw UpdateInformationError("Failed to parse GitHub's response.");
             }
 
-            return builtUrl;
+            // this _should_ ensure the first entry in the vector is the latest release in case there is more than one)
+            // (this of course depends on the stability of the naming pattern used by the AppImage vendors)
+            std::sort(matchingUrls.begin(), matchingUrls.end(), std::greater<>());
+
+            return matchingUrls[0];
         }
     };
 }
