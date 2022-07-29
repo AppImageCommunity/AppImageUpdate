@@ -39,8 +39,6 @@ namespace appimage::update::updateinformation {
                 url << "tags/" << tag;
             }
 
-            std::cerr << url.str() << std::endl;
-
             auto response = cpr::Get(cpr::Url{url.str()});
 
             nlohmann::json json;
