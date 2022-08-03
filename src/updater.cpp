@@ -484,7 +484,7 @@ namespace appimage::update {
 
             std::ostringstream oss;
             oss << "'" << gpgPath << "' "
-            << "--no-default-keyring --keyring '" << tempKeyRingPath << "' --import";
+            << "--no-default-keyring --keyring '" << tempKeyRingPath << "' --import 2>/dev/null";
 
             auto command = oss.str();
 
