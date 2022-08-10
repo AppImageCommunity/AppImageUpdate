@@ -3,7 +3,7 @@
 #include <zshash.h>
 
 // local headers
-#include "appimage.h"
+#include "updatableappimage.h"
 #include "updateinformation/updateinformation.h"
 #include "util/util.h"
 
@@ -12,20 +12,20 @@ namespace appimage::update {
     using namespace util;
     using namespace zsync2;
 
-    void AppImage::assertIfstreamGood(const std::ifstream& ifs) const {
+    void UpdatableAppImage::assertIfstreamGood(const std::ifstream& ifs) const {
         if (!ifs || !ifs.good()) {
             throw AppImageError("Error while opening/accessing/reading from AppImage: " + _path);
         }
     }
 
-    std::ifstream AppImage::_open() const  {
+    std::ifstream UpdatableAppImage::_open() const  {
         // check whether file exists
         std::ifstream ifs(_path);
         assertIfstreamGood(ifs);
         return ifs;
     }
 
-    bool AppImage::_hasElfMagicValue(std::ifstream& ifs) const {
+    bool UpdatableAppImage::_hasElfMagicValue(std::ifstream& ifs) const {
         static constexpr int elfMagicPos = 0;
         static const std::string elfMagicValue = "\7ELF";
 
@@ -40,7 +40,7 @@ namespace appimage::update {
         return elfMagicPosData.data() == elfMagicValue;
     }
 
-    bool AppImage::_hasIsoMagicValue(std::ifstream& ifs) const {
+    bool UpdatableAppImage::_hasIsoMagicValue(std::ifstream& ifs) const {
         static constexpr int isoMagicPos = 32769;
         static const std::string isoMagicValue = "CD001";
 
@@ -55,13 +55,13 @@ namespace appimage::update {
         return isoMagicPosData.data() == isoMagicValue;
     }
 
-    AppImage::AppImage(std::string path) : _path(std::move(path)) {}
+    UpdatableAppImage::UpdatableAppImage(std::string path) : _path(std::move(path)) {}
 
-    std::string AppImage::path() const {
+    std::string UpdatableAppImage::path() const {
         return _path;
     }
 
-    int AppImage::appImageType() const {
+    int UpdatableAppImage::appImageType() const {
         auto ifs = _open();
 
         // read magic number
@@ -97,7 +97,7 @@ namespace appimage::update {
         throw AppImageError("Unknown AppImage type or not an AppImage");
     }
 
-    std::string AppImage::readSignature() const {
+    std::string UpdatableAppImage::readSignature() const {
         const auto type = appImageType();
 
         if (type != 2) {
@@ -107,7 +107,7 @@ namespace appimage::update {
         return readElfSection(_path, ".sha256_sig");
     }
 
-    std::string AppImage::readSigningKey() const {
+    std::string UpdatableAppImage::readSigningKey() const {
         const auto type = appImageType();
 
         if (type != 2) {
@@ -117,7 +117,7 @@ namespace appimage::update {
         return readElfSection(_path, ".sig_key");
     }
 
-    std::string AppImage::readRawUpdateInformation() const {
+    std::string UpdatableAppImage::readRawUpdateInformation() const {
         auto ifs = _open();
 
         int type;
@@ -156,7 +156,7 @@ namespace appimage::update {
         throw AppImageError("Reading update information not supported for type " + std::to_string(type));
     }
 
-    std::string AppImage::calculateHash() const {
+    std::string UpdatableAppImage::calculateHash() const {
         // read offset and length of signature section to skip it later
         unsigned long sigOffset = 0, sigLength = 0;
         unsigned long keyOffset = 0, keyLength = 0;

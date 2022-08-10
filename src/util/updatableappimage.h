@@ -9,7 +9,7 @@ namespace appimage::update {
         using std::runtime_error::runtime_error;
     };
 
-    class AppImage {
+    class UpdatableAppImage {
     private:
         std::string _path;
 
@@ -23,7 +23,7 @@ namespace appimage::update {
         bool _hasIsoMagicValue(std::ifstream& ifs) const;
 
     public:
-        explicit AppImage(std::string path);
+        explicit UpdatableAppImage(std::string path);
 
         [[nodiscard]] std::string path() const;
 

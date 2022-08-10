@@ -17,7 +17,7 @@
 // local headers
 #include "appimage/update.h"
 #include "updateinformation/updateinformation.h"
-#include "appimage/appimage.h"
+#include "util/updatableappimage.h"
 #include "util/util.h"
 #include "zsutil.h"
 
@@ -42,7 +42,7 @@ namespace appimage::update {
         {};
 
     public:
-        AppImage appImage;
+        UpdatableAppImage appImage;
 
         // we call this "raw" update information to highlight the difference between strings and the new
         // UpdateInformation infrastructure
@@ -388,14 +388,14 @@ namespace appimage::update {
             return VALIDATION_FAILED;
         }
 
-        AppImage newAppImage(pathToNewAppImage);
+        UpdatableAppImage newAppImage(pathToNewAppImage);
 
         auto pathToOldAppImage = abspath(d->appImage.path());
         if (pathToOldAppImage == pathToNewAppImage) {
             pathToOldAppImage = pathToNewAppImage + ".zs-old";
         }
 
-        AppImage oldAppImage(pathToOldAppImage);
+        UpdatableAppImage oldAppImage(pathToOldAppImage);
 
         auto oldSignature = oldAppImage.readSignature();
         auto newSignature = newAppImage.readSignature();
