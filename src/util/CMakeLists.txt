@@ -5,7 +5,8 @@ add_library(util STATIC
     util.cpp
     util.h
 )
-target_include_directories(util PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+# include the complete source to force the use of project-relative include paths
+target_include_directories(util
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/src
 )
 target_link_libraries(util PRIVATE libappimage_shared ${ZSYNC2_LIBRARY_NAME} cpr)

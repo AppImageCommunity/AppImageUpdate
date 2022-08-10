@@ -5,8 +5,9 @@ else()
 endif()
 
 add_library(appimage STATIC appimage.cpp)
+# include the complete source to force the use of project-relative include paths
 target_include_directories(appimage
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/src
 )
 target_link_libraries(appimage
     ${LIBAPPIMAGE_LINK_TYPE} libappimage_shared

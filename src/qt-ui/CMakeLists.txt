@@ -17,9 +17,8 @@ set_target_properties(libappimageupdate-qt
     PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h
 )
 target_include_directories(libappimageupdate-qt
-    PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    PUBLIC $<INSTALL_INTERFACE:include>
 )
 target_compile_definitions(libappimageupdate-qt PRIVATE -DQT_UI)
 set_target_properties(libappimageupdate-qt PROPERTIES INSTALL_RPATH "\$ORIGIN/")
@@ -36,9 +35,8 @@ set_target_properties(libappimageupdate-qt_static
     PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/include/appimage/update/qt-ui.h
 )
 target_include_directories(libappimageupdate-qt_static
-    PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    PUBLIC $<INSTALL_INTERFACE:include>
 )
 target_compile_definitions(libappimageupdate-qt_static PRIVATE -DQT_UI)
 set_target_properties(libappimageupdate-qt_static PROPERTIES INSTALL_RPATH "\$ORIGIN/")

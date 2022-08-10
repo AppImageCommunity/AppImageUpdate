@@ -4,8 +4,8 @@
 
 // local headers
 #include "appimage.h"
-#include "updateinformation.h"
-#include "util.h"
+#include "updateinformation/updateinformation.h"
+#include "util/util.h"
 
 namespace appimage::update {
     using namespace updateinformation;

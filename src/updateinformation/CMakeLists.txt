@@ -8,8 +8,9 @@ add_library(updateinformation STATIC
     updateinformation.cpp
     factory.cpp
 )
+# include the complete source to force the use of project-relative include paths
 target_include_directories(updateinformation
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/src
 )
 target_link_libraries(updateinformation
     PRIVATE util

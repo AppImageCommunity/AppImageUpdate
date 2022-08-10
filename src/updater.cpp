@@ -17,8 +17,8 @@
 // local headers
 #include "appimage/update.h"
 #include "updateinformation/updateinformation.h"
-#include "appimage.h"
-#include "util.h"
+#include "appimage/appimage.h"
+#include "util/util.h"
 #include "zsutil.h"
 
 // convenience declaration

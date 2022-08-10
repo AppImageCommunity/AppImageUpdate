@@ -48,9 +48,9 @@ target_link_libraries(libappimageupdate
     ${ZSYNC2_LINK_TYPE} ${ZSYNC2_LIBRARY_NAME}
 )
 # include directories, publicly
-target_include_directories(libappimageupdate PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+target_include_directories(libappimageupdate
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    PUBLIC $<INSTALL_INTERFACE:include>
 )
 set_target_properties(libappimageupdate PROPERTIES INSTALL_RPATH "\$ORIGIN/")
 
@@ -76,9 +76,9 @@ target_link_libraries(libappimageupdate_static
     ${ZSYNC2_LINK_TYPE} ${ZSYNC2_LIBRARY_NAME}
 )
 # include directories, publicly
-target_include_directories(libappimageupdate_static PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+target_include_directories(libappimageupdate_static
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    PUBLIC $<INSTALL_INTERFACE:include>
 )
 
 

@@ -13,7 +13,7 @@
 // local headers
 #include "appimage/update.h"
 #include "appimage/update/qt-ui.h"
-#include "util.h"
+#include "util/util.h"
 
 using namespace std;
 using namespace appimage::update;

@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 // local headers
-#include "util.h"
+#include "util/util.h"
 
 namespace appimage::update::updateinformation {
     class UpdateInformationError : public std::runtime_error {

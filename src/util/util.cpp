@@ -23,7 +23,7 @@ extern "C" {
 }
 
 // local header
-#include <util.h>
+#include "util/util.h"
 
 namespace appimage::update::util {
 
