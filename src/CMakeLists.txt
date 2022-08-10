@@ -16,12 +16,6 @@ add_definitions("-DAPPIMAGEUPDATE_GIT_COMMIT=\"${GIT_COMMIT}\"")
 add_definitions("-DBUILD_DATE=\"${DATE}\"")
 add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
-if(USE_SYSTEM_LIBAPPIMAGE)
-    set(LIBAPPIMAGE_LINK_TYPE PUBLIC)
-else()
-    set(LIBAPPIMAGE_LINK_TYPE PRIVATE)
-endif()
-
 if(USE_SYSTEM_ZSYNC2)
     set(ZSYNC2_LIBRARY_NAME libzsync2)
     set(ZSYNC2_LINK_TYPE PUBLIC)
@@ -31,12 +25,13 @@ else()
 endif()
 
 add_subdirectory(util)
+add_subdirectory(updateinformation)
+add_subdirectory(appimage)
 
 # core library
 add_library(libappimageupdate SHARED
     ${PROJECT_SOURCE_DIR}/include/appimage/update.h
     updater.cpp
-    appimage.h
 )
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libappimageupdate
@@ -46,10 +41,10 @@ set_target_properties(libappimageupdate
 )
 # link thread libraries
 target_link_libraries(libappimageupdate
-    ${LIBAPPIMAGE_LINK_TYPE} libappimage_shared
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
     PRIVATE util
+    PRIVATE appimage
     ${ZSYNC2_LINK_TYPE} ${ZSYNC2_LIBRARY_NAME}
 )
 # include directories, publicly
@@ -74,7 +69,7 @@ set_target_properties(libappimageupdate_static
 )
 # link thread libraries
 target_link_libraries(libappimageupdate_static
-    ${LIBAPPIMAGE_LINK_TYPE} libappimage_shared
+    PRIVATE appimage
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE ${CPR_LIBRARIES}
     PRIVATE util

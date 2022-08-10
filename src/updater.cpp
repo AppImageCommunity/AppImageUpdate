@@ -1,4 +1,5 @@
 // system headers
+#include <cstring>
 #include <deque>
 #include <iostream>
 #include <libgen.h>
@@ -18,6 +19,7 @@
 #include "updateinformation/updateinformation.h"
 #include "appimage.h"
 #include "util.h"
+#include "zsutil.h"
 
 // convenience declaration
 namespace {
@@ -26,6 +28,7 @@ namespace {
 
 namespace appimage::update {
     using namespace util;
+    using namespace updateinformation;
 
     class Updater::Private {
     public:

@@ -2,22 +2,14 @@
 
 // local headers
 #include "common.h"
+#include "AbstractUpdateInformation.h"
 
 namespace appimage::update::updateinformation {
     class GenericZsyncUpdateInformation : public AbstractUpdateInformation {
     public:
-        explicit GenericZsyncUpdateInformation(const std::vector<std::string>& updateInformationComponents) :
-            AbstractUpdateInformation(updateInformationComponents, ZSYNC_GENERIC)
-        {
-            // validation
-            assertParameterCount(_updateInformationComponents, 2);
-        }
+        explicit GenericZsyncUpdateInformation(const std::vector<std::string>& updateInformationComponents);
 
     public:
-        [[nodiscard]] std::string buildUrl(const StatusMessageCallback& issueStatusMessage) const override {
-            (void) issueStatusMessage;
-
-            return _updateInformationComponents.back();
-        }
+        [[nodiscard]] std::string buildUrl(const StatusMessageCallback& issueStatusMessage) const override;
     };
 }

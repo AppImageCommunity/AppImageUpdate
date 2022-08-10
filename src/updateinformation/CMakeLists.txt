@@ -1,15 +1,18 @@
 find_package(nlohmann_json REQUIRED)
 
-add_library(updateinformation INTERFACE
-    AbstractUpdateInformation.h
-    GenericZsyncUpdateInformation.h
-    GithubReleasesZsyncUpdateInformation.h
-    PlingV1UpdateInformation.h
-    common.h
-    updateinformation.h
-    factory.h
+add_library(updateinformation STATIC
+    AbstractUpdateInformation.cpp
+    GenericZsyncUpdateInformation.cpp
+    GithubReleasesZsyncUpdateInformation.cpp
+    PlingV1UpdateInformation.cpp
+    updateinformation.cpp
+    factory.cpp
 )
-target_include_directories(updateinformation INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+target_include_directories(updateinformation
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-target_link_libraries(updateinformation INTERFACE util nlohmann_json::nlohmann_json)
+target_link_libraries(updateinformation
+    PRIVATE util
+    PRIVATE nlohmann_json::nlohmann_json
+    PRIVATE ${CPR_LIBRARIES}
+)
