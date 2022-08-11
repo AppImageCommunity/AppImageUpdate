@@ -55,36 +55,6 @@ namespace appimage::update::util {
         return rtrim(s, to_trim) && ltrim_result;
     }
 
-    bool callProgramAndGrepForLine(const std::string& command, const std::string& pattern, std::string& output) {
-        FILE *stream = popen(command.c_str(), "r");
-
-        if (stream == nullptr)
-            return false;
-
-        char *line;
-        size_t lineSize = 0;
-        while(getline(&line, &lineSize, stream)) {
-            // check whether line matches pattern
-            std::string lineString = line;
-            if (lineString.find(pattern) != std::string::npos) {
-                if (pclose(stream) != 0) {
-                    free(line);
-                    return false;
-                }
-                output = line;
-                removeNewlineCharacters(output);
-                return true;
-            }
-        }
-
-        if (pclose(stream) != 0) {
-            free(line);
-            return false;
-        }
-
-        return false;
-    }
-
     std::vector<std::string> split(const std::string& s, char delim) {
         std::vector<std::string> result;
 
@@ -96,6 +66,21 @@ namespace appimage::update::util {
         }
 
         return result;
+    }
+
+    std::string join(const std::vector<std::string>& strings, const std::string& delim) {
+        if (strings.empty()) {
+            return {};
+        }
+
+        std::stringstream oss;
+        oss << strings.front();
+
+        for (auto it = strings.begin() + 1; it != strings.end(); ++it) {
+            oss << delim << *it;
+        }
+
+        return oss.str();
     }
 
     std::string toLower(std::string s) {

@@ -15,6 +15,7 @@ target_link_libraries(libappimageupdate
     PRIVATE ${CPR_LIBRARIES}
     PRIVATE util
     PRIVATE updateinformation
+    PRIVATE signing
     ${ZSYNC2_LINK_TYPE} ${ZSYNC2_LIBRARY_NAME}
 )
 # include directories, publicly
@@ -43,6 +44,7 @@ target_link_libraries(libappimageupdate_static
     PRIVATE ${CPR_LIBRARIES}
     PRIVATE util
     PRIVATE updateinformation
+    PRIVATE signing
     ${ZSYNC2_LINK_TYPE} ${ZSYNC2_LIBRARY_NAME}
 )
 # include directories, publicly

@@ -26,6 +26,7 @@ endif()
 
 add_subdirectory(util)
 add_subdirectory(updateinformation)
+add_subdirectory(signing)
 add_subdirectory(updater)
 
 if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)

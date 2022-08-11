@@ -16,6 +16,7 @@
 
 // local headers
 #include "appimage/update.h"
+#include "signing/signaturevalidator.h"
 #include "updateinformation/updateinformation.h"
 #include "util/updatableappimage.h"
 #include "util/util.h"
@@ -29,6 +30,7 @@ namespace {
 namespace appimage::update {
     using namespace util;
     using namespace updateinformation;
+    using namespace signing;
 
     class Updater::Private {
     public:
@@ -397,219 +399,52 @@ namespace appimage::update {
 
         UpdatableAppImage oldAppImage(pathToOldAppImage);
 
-        auto oldSignature = oldAppImage.readSignature();
-        auto newSignature = newAppImage.readSignature();
-
-        // remove any spaces and/or newline characters there might be on the left or right of the payload
-        zsync2::trim(oldSignature, '\n');
-        zsync2::trim(newSignature, '\n');
-        zsync2::trim(oldSignature);
-        zsync2::trim(newSignature);
-
-        auto oldSigned = !oldSignature.empty();
-        auto newSigned = !newSignature.empty();
-
-        auto oldDigest = oldAppImage.calculateHash();
-        auto newDigest = newAppImage.calculateHash();
-
-        std::string tempDir;
-        {
-            auto buffer = makeBuffer("/tmp/AppImageUpdate-XXXXXX");
-
-            if (mkdtemp(buffer.data()) == nullptr) {
-                const int error = errno;
-                const auto* errorMessage = strerror(error);
-                d->issueStatusMessage("Failed to create temporary directory: " + std::string(errorMessage));
-                return VALIDATION_TEMPDIR_CREATION_FAILED;
-            }
-
-            tempDir = buffer.data();
-        }
-
-        auto tempFile = [&tempDir](const std::string& filename, const std::string& contents) {
-            std::stringstream path;
-            path << tempDir << "/" << filename;
-
-            auto x = path.str();
-
-            std::ofstream ofs(path.str());
-            ofs.write(contents.c_str(), contents.size());
-
-            return path.str();
-        };
-
-        if (!oldSigned && !newSigned)
+        if (oldAppImage.readSignature().empty() && newAppImage.readSignature().empty()) {
             return VALIDATION_NOT_SIGNED;
-
-        else if (oldSigned && !newSigned)
+        } else if (!oldAppImage.readSignature().empty() && newAppImage.readSignature().empty()) {
             return VALIDATION_NO_LONGER_SIGNED;
-
-        // store digests and signatures in files so they can be passed to gpg
-        auto oldDigestFilename = tempFile("old-digest", oldDigest);
-        auto newDigestFilename = tempFile("new-digest", newDigest);
-
-        auto oldSignatureFilename = tempFile("old-signature", oldSignature);
-        auto newSignatureFilename = tempFile("new-signature", newSignature);
-
-        auto cleanup = [&tempDir]() {
-            // cleanup
-            auto unlinkCb = [](const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
-                int rv = remove(fpath);
-                if (rv)
-                    perror(fpath);
-                return rv;
-            };
-            nftw(tempDir.c_str(), unlinkCb, 64, FTW_DEPTH | FTW_PHYS);
-            rmdir(tempDir.c_str());
-        };
-
-        // find gpg binary
-        auto gpgPath = findInPATH("gpg2");
-        if (gpgPath.empty()) {
-            gpgPath = findInPATH("gpg");
-            if (gpgPath.empty()) {
-                cleanup();
-                return VALIDATION_GPG_MISSING;
-            }
         }
 
-        const auto tempKeyRingPath = tempDir + "/keyring";
+        // we can re-use the same validation context to validate the signatures of both AppImages
+        SignatureValidator validator;
 
-        // create keyring file, otherwise GPG will complain
-        std::ofstream ofs(tempKeyRingPath);
-        ofs.close();
+        const auto oldAppImageValidationResult = validator.validate(oldAppImage);
+        d->issueStatusMessage("Old AppImage signature validation report:\n" + oldAppImageValidationResult.message());
 
-        auto importKeyFromAppImage = [&tempKeyRingPath, &gpgPath](const std::string& path) {
-            auto key = readElfSection(path, ".sig_key");
-
-            if (key.empty())
-                return false;
-
-            std::ostringstream oss;
-            oss << "'" << gpgPath << "' "
-            << "--no-default-keyring --keyring '" << tempKeyRingPath << "' --import 2>/dev/null";
-
-            auto command = oss.str();
-
-            auto proc = popen(oss.str().c_str(), "w");
-
-            fwrite(key.c_str(), key.size(), sizeof(char), proc);
-
-            auto retval = pclose(proc);
-
-            return retval == 0;
-        };
-
-        importKeyFromAppImage(pathToOldAppImage);
-        importKeyFromAppImage(pathToNewAppImage);
-
-        auto verifySignature = [this, &gpgPath, &tempKeyRingPath](
-            const std::string& signatureFile, const std::string& digestFile,
-            bool& keyFound, bool& goodSignature,
-            std::string& keyID, std::string& keyOwner
-            ) {
-            std::ostringstream oss;
-            oss << "'" << gpgPath << "'"
-            << " --keyring '" << tempKeyRingPath << "'"
-            << " --verify '" << signatureFile << "' '" << digestFile << "' 2>&1";
-
-            auto command = oss.str();
-
-            // make sure output is in English
-            setenv("LANGUAGE", "C", 1);
-            setenv("LANG", "C", 1);
-            setenv("LC_ALL", "C", 1);
-
-            auto* proc = popen(command.c_str(), "r");
-
-            if (proc == nullptr)
-                return false;
-
-            char* currentLine = nullptr;
-            size_t lineSize = 0;
-
-            keyFound = true;
-            goodSignature = false;
-
-            while (getline(&currentLine, &lineSize, proc) != -1) {
-                std::string line = currentLine;
-
-                trim(line, '\n');
-                trim(line);
-
-                d->issueStatusMessage(gpgPath + std::string(": ") + line);
-
-                auto splitOwner = [&line]() {
-                    auto parts = split(line, '"');
-
-                    if (parts.size() < 2)
-                        return std::string();
-
-                    auto skip = parts[0].length();
-
-                    return line.substr(skip + 1, line.length() - skip - 2);
-                };
-
-                if (stringStartsWith(line, "gpg: Signature made")) {
-                    // extract key
-                    auto parts = split(line);
-
-                    if (*(parts.end() - 3) == "key" && *(parts.end() - 2) == "ID")
-                        keyID = parts.back();
-
-                } else if (stringStartsWith(line, "gpg: Good signature from")) {
-                    goodSignature = true;
-                    keyOwner = splitOwner();
-                } else if (stringStartsWith(line, "gpg: BAD signature from")) {
-                    goodSignature = false;
-                    keyOwner = splitOwner();
-                } else if (stringStartsWith(line, "gpg: Can't check signature: No public key")) {
-                    keyFound = false;
-                }
-            }
-
-            auto rv = pclose(proc);
-
-            return true;
-        };
-
-        bool oldKeyFound = false, newKeyFound = false, oldSignatureGood = false, newSignatureGood = false;
-        std::string oldKeyID, newKeyID, oldKeyOwner, newKeyOwner;
-
-        if (oldSigned) {
-            if (!verifySignature(oldSignatureFilename, oldDigestFilename, oldKeyFound, oldSignatureGood, oldKeyID, oldKeyOwner)) {
-                cleanup();
-                return VALIDATION_GPG_CALL_FAILED;
-            }
-        }
-
-        if (newSigned) {
-            if (!verifySignature(newSignatureFilename, newDigestFilename, newKeyFound, newSignatureGood, newKeyID, newKeyOwner)) {
-                cleanup();
-                return VALIDATION_GPG_CALL_FAILED;
-            }
-        }
-
-        if (!oldKeyFound || !newKeyFound) {
-            // if the keys haven't been embedded in the AppImages, we treat them as not signed
-            // see https://github.com/AppImage/AppImageUpdate/issues/16#issuecomment-370932698 for details
-            cleanup();
-            return VALIDATION_NOT_SIGNED;
-        }
-
-        if (!oldSignatureGood || !newSignatureGood) {
-            cleanup();
+        if (oldAppImageValidationResult.type() == SignatureValidationResult::ResultType::ERROR) {
             return VALIDATION_BAD_SIGNATURE;
         }
 
-        if (oldSigned && newSigned) {
-            if (oldKeyID != newKeyID) {
-                cleanup();
-                return VALIDATION_KEY_CHANGED;
-            }
+        const auto newAppImageValidationResult = validator.validate(newAppImage);
+        d->issueStatusMessage("New AppImage signature validation report:\n" + oldAppImageValidationResult.message());
+
+        if (newAppImageValidationResult.type() == SignatureValidationResult::ResultType::ERROR) {
+            return VALIDATION_BAD_SIGNATURE;
         }
 
-        cleanup();
+        const auto& newFps = newAppImageValidationResult.keyFingerprints();
+
+        bool signedBySameKey = std::any_of(
+            newFps.begin(),
+            newFps.end(),
+            [&oldAppImageValidationResult](const std::string& newKey) {
+                const auto& oldFps = oldAppImageValidationResult.keyFingerprints();
+
+                return std::find(oldFps.begin(), oldFps.end(), newKey) != oldFps.end();
+            }
+        );
+
+        if (!signedBySameKey) {
+            return VALIDATION_KEY_CHANGED;
+        }
+
+        if (
+            oldAppImageValidationResult.type() == SignatureValidationResult::ResultType::WARNING ||
+            newAppImageValidationResult.type() == SignatureValidationResult::ResultType::WARNING
+        ) {
+            return VALIDATION_WARNING;
+        }
+
         return VALIDATION_PASSED;
     }
 
@@ -620,12 +455,9 @@ namespace appimage::update {
             // warning states
             {VALIDATION_WARNING, "Signature validation warning"},
             {VALIDATION_NOT_SIGNED, "AppImage not signed"},
-            {VALIDATION_GPG_MISSING, "gpg2 command not found, please install"},
 
             // error states
             {VALIDATION_FAILED, "Signature validation failed"},
-            {VALIDATION_GPG_CALL_FAILED, "Call to gpg2 failed"},
-            {VALIDATION_TEMPDIR_CREATION_FAILED, "Failed to create temporary directory"},
             {VALIDATION_NO_LONGER_SIGNED, "AppImage no longer comes with signature"},
             {VALIDATION_BAD_SIGNATURE, "Bad signature"},
             {VALIDATION_KEY_CHANGED, "Key changed for signing AppImages"},

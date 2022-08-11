@@ -12,10 +12,9 @@ namespace appimage::update::util {
 
     bool trim(std::string& s, char to_trim = ' ');
 
-    bool callProgramAndGrepForLine(const std::string& command, const std::string& pattern,
-                                          std::string& output);
-
     std::vector<std::string> split(const std::string& s, char delim = ' ');
+
+    std::string join(const std::vector<std::string>& strings, const std::string& delim = " ");
 
     std::string toLower(std::string s);
 
