@@ -30,5 +30,6 @@ uid="$(id -u)"
 # mount workspace read-only, trying to make sure the build doesn't ever touch the source code files
 # of course, this only works reliably if you don't run this script from that directory
 # but it's still not the worst idea to do so
-docker run --user "$uid" --rm -i -e ARCH -e GITHUB_RUN_NUMBER -e CI=1 -v "$repo_root":/ws:ro -v "$cwd":/out "$image" \
+docker run --platform "$ARCH" \
+    --user "$uid" --rm -i -e ARCH -e GITHUB_RUN_NUMBER -e CI=1 -v "$repo_root":/ws:ro -v "$cwd":/out "$image" \
     bash -xec 'cd /out && bash -xe /ws/ci/build-appimages.sh'
