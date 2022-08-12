@@ -1,5 +1,6 @@
 find_package(PkgConfig)
-pkg_check_modules(gpgme gpgme>=1.10 IMPORTED_TARGET)
+
+pkg_check_modules(gpgme gpgme>=1.10.0 REQUIRED IMPORTED_TARGET)
 
 add_library(signing STATIC signaturevalidator.cpp)
 target_link_libraries(signing
