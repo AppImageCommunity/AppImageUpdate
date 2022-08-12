@@ -1,5 +1,10 @@
 find_package(nlohmann_json REQUIRED)
 
+# compatibility with Ubuntu 18.04's nlohmann-json-dev
+if(TARGET nlohmann_json AND NOT TARGET nlohmann_json::nlohmann_json)
+    add_library(nlohmann_json::nlohmann_json ALIAS nlohmann_json)
+endif()
+
 add_library(updateinformation STATIC
     AbstractUpdateInformation.cpp
     GenericZsyncUpdateInformation.cpp
