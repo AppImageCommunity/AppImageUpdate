@@ -73,9 +73,15 @@ rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 
 
 # get linuxdeploy and its qt plugin
+checkrt_arch="$ARCH"
+if [[ "$checkrt_arch" == "i386" ]]; then
+    checkrt_arch=i686
+fi
+
 wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-"$ARCH".AppImage
 wget https://github.com/TheAssassin/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-"$ARCH".AppImage
-chmod +x linuxdeploy*.AppImage
+wget https://github.com/linuxdeploy/linuxdeploy-plugin-checkrt/releases/download/continuous/linuxdeploy-plugin-checkrt-"$checkrt_arch".sh
+chmod +x linuxdeploy*.AppImage linuxdeploy-plugin-checkrt*.sh
 
 patch_appimage() {
     while [[ "$1" != "" ]]; do
@@ -97,7 +103,7 @@ for app in appimageupdatetool AppImageUpdate; do
     export OUTPUT="$app"-"$ARCH".AppImage
 
     # bundle application
-    ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png
+    ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png --plugin checkrt
 done
 
 # move AppImages to old cwd

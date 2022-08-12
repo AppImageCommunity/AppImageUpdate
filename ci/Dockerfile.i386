@@ -25,3 +25,9 @@ ENTRYPOINT ["/entrypoint.sh"]
 ENV APPIMAGE_EXTRACT_AND_RUN=1
 
 ENV DOCKER=1
+
+# this lets us build with proper C++17 support (mostly required so we can use std::filesystem)
+# however, this requires linuxdeploy-plugin-checkrt
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
+    apt-get install -y g++-10
+ENV CXX=g++-10
