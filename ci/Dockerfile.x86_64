@@ -16,7 +16,7 @@ RUN apt-get update && \
         libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev nlohmann-json-dev && \
     wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.22.1-ubuntu_xenial-$ARCH.tar.gz | tar xzv -C/usr --strip-components=1
 
-COPY libgcrypt.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libgcrypt.pc
+COPY pkgconfig/*.pc /usr/lib/x86_64-linux-gnu/pkgconfig/
 
 COPY entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]

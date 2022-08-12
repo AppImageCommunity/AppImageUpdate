@@ -1,0 +1,15 @@
+prefix=/usr
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${prefix}/lib/x86_64-linux-gnu
+host=x86_64-pc-linux-gnu
+api_version=2
+
+Name: libassuan
+Description: IPC library for the GnuPG components
+Requires.private: gpg-error
+Version: 2.5.1
+Cflags: -I${includedir} 
+Libs: -L${libdir} -lassuan
+Libs.private: 
+URL: https://www.gnupg.org/related_software/libassuan/index.html
