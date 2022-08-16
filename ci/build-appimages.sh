@@ -39,13 +39,12 @@ cmake "$REPO_ROOT" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     "${EXTRA_CMAKE_ARGS[@]}"
 
-# now, compile and install to AppDir
+# next step is to build the binaries
 make -j"$(nproc)"
-make install DESTDIR=AppImageUpdate.AppDir
-make install DESTDIR=appimageupdatetool.AppDir
 
-# install resources into AppDirs
-for appdir in AppImageUpdate.AppDir appimageupdatetool.AppDir; do
+# set up the AppDirs initially
+for appdir in {appimageupdatetool,AppImageUpdate,validate}.AppDir; do
+    make install DESTDIR="$appdir"
     mkdir -p "$appdir"/resources
     cp -v "$REPO_ROOT"/resources/*.xpm "$appdir"/resources/
 done
@@ -63,12 +62,16 @@ fi
 
 # remove unnecessary binaries from AppDirs
 rm AppImageUpdate.AppDir/usr/bin/appimageupdatetool
+rm AppImageUpdate.AppDir/usr/bin/validate
 rm appimageupdatetool.AppDir/usr/bin/AppImageUpdate
-rm appimageupdatetool.AppDir/usr/lib/*/libappimageupdate-qt.so
+rm appimageupdatetool.AppDir/usr/bin/validate
+rm appimageupdatetool.AppDir/usr/lib/*/libappimageupdate-qt*.so*
+rm validate.AppDir/usr/bin/{AppImageUpdate,appimageupdatetool}
+rm validate.AppDir/usr/lib/*/libappimageupdate*.so*
 
 
 # remove other unnecessary data
-find {appimageupdatetool,AppImageUpdate}.AppDir -type f -iname '*.a' -delete
+find {appimageupdatetool,AppImageUpdate,validate}.AppDir -type f -iname '*.a' -delete
 rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 
 
@@ -91,22 +94,26 @@ patch_appimage() {
 }
 patch_appimage linuxdeploy*.AppImage
 
-for app in appimageupdatetool AppImageUpdate; do
+for app in appimageupdatetool AppImageUpdate validate; do
     find "$app".AppDir/
 
     export UPD_INFO="gh-releases-zsync|AppImage|AppImageUpdate|continuous|$app-*$ARCH.AppImage.zsync"
 
-    if [ "$app" == "AppImageUpdate" ]; then export EXTRA_FLAGS=("--plugin" "qt"); fi
+    # note that we need to overwrite this in every iteration, otherwise the value will leak into the following iterationso
+    extra_flags=()
+    if [ "$app" == "AppImageUpdate" ]; then
+        extra_flags=("--plugin" "qt");
+    fi
 
     # overwrite AppImage filename to get static filenames
     # see https://github.com/AppImage/AppImageUpdate/issues/89
     export OUTPUT="$app"-"$ARCH".AppImage
 
     # bundle application
-    ./linuxdeploy-"$ARCH".AppImage -v0 --appdir "$app".AppDir --output appimage "${EXTRA_FLAGS[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png --plugin checkrt
+    ./linuxdeploy-"$ARCH".AppImage --appdir "$app".AppDir --output appimage "${extra_flags[@]}" -d "$REPO_ROOT"/resources/"$app".desktop -i "$REPO_ROOT"/resources/appimage.png --plugin checkrt
 done
 
 # move AppImages to old cwd
-mv {appimageupdatetool,AppImageUpdate}*.AppImage* "$OLD_CWD"/
+mv {appimageupdatetool,AppImageUpdate,validate}*.AppImage* "$OLD_CWD"/
 
 popd

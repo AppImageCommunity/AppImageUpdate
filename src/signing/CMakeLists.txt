@@ -15,4 +15,10 @@ target_include_directories(signing
 # "demonstration" application
 # used to be located within AppImageKit, but there is no sense in maintaining two implementations
 add_executable(validate validate_main.cpp)
-target_link_libraries(validate signing)
+target_link_libraries(validate signing ${CMAKE_THREAD_LIBS_INIT})
+
+# install target
+install(
+    TARGETS validate
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT validate
+)

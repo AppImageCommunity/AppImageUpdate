@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=AppImageUpdate
+Type=Application
+Icon=appimage
+Exec=validate
+Comment=Validate the built-in signature of AppImages
+Categories=Utility;
+Terminal=true
+NoDisplay=true

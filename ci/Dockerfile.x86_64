@@ -13,8 +13,8 @@ RUN apt-get update && \
     apt-get install -y qt515base qt515wayland libgl1 libdrm-dev mesa-common-dev \
         build-essential libssl-dev autoconf automake libtool \
         wget vim-common desktop-file-utils pkgconf libgpgme-dev \
-        libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev nlohmann-json-dev && \
-    wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.22.1-ubuntu_xenial-$ARCH.tar.gz | tar xzv -C/usr --strip-components=1
+        libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev && \
+    wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.24.0-ubuntu_"$DIST"-"$ARCH".tar.gz | tar xzv -C/usr --strip-components=1
 
 COPY pkgconfig/*.pc /usr/lib/x86_64-linux-gnu/pkgconfig/
 
@@ -25,11 +25,17 @@ ENV APPIMAGE_EXTRACT_AND_RUN=1
 
 ENV DOCKER=1
 
-# make sure nlohmann_json can be found
-ENV CMAKE_PREFIX_PATH=/usr/lib/cmake
-
 # this lets us build with proper C++17 support (mostly required so we can use std::filesystem)
 # however, this requires linuxdeploy-plugin-checkrt
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
     apt-get install -y g++-10
 ENV CXX=g++-10
+
+RUN git clone https://github.com/nlohmann/json.git -b v3.11.2 --depth=1 && \
+    cd json && \
+    mkdir build && \
+    cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
+    make -j "$(nproc --ignore=1)" install && \
+    cd ../.. && \
+    rm -rf json/
