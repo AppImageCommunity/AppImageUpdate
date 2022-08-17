@@ -43,3 +43,7 @@ RUN git clone https://github.com/nlohmann/json.git -b v3.11.2 --depth=1 && \
 
 # gpgme was built with this flag, so we need to enable it for i386 builds
 ENV CXXFLAGS=-D_FILE_OFFSET_BITS=64 CFLAGS=-D_FILE_OFFSET_BITS=64
+
+# work around bug in FindCURL.cmake, which does not parse the pkg-config provided protocols and features into lists causing
+# the comparison in the loop to yield false negative results
+RUN rm /usr/lib/i386-linux-gnu/pkgconfig/libcurl.pc
