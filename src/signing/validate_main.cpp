@@ -45,6 +45,11 @@ int main(int argc, char** argv) {
 
     UpdatableAppImage appImage(args.pos.front());
 
+    if (appImage.readSignature().empty()) {
+        std::cerr << "Error: AppImage not signed" << std::endl;
+        return 1;
+    }
+
     SignatureValidator validator;
     const auto result = validator.validate(appImage);
 
