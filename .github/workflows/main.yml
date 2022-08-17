@@ -27,6 +27,7 @@ jobs:
           path: |
             AppImageUpdate*.AppImage*
             appimageupdatetool*.AppImage*
+            validate*.AppImage*
 
   upload:
     name: Create release and upload artifacts
