@@ -47,16 +47,20 @@ int main(int argc, char** argv) {
 
     if (appImage.readSignature().empty()) {
         std::cerr << "Error: AppImage not signed" << std::endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     SignatureValidator validator;
     const auto result = validator.validate(appImage);
 
+    // being pessimistic
+    auto exitCode = EXIT_FAILURE;
+
     std::cerr << "Validation result: ";
     switch (result.type()) {
         case SignatureValidationResult::ResultType::SUCCESS: {
             std::cerr << "validation successful";
+            exitCode = EXIT_SUCCESS;
             break;
         }
         case SignatureValidationResult::ResultType::WARNING: {
@@ -79,5 +83,5 @@ int main(int argc, char** argv) {
     std::cerr << "Validator report:" << std::endl
               << result.message() << std::endl;
 
-    return EXIT_SUCCESS;
+    return exitCode;
 }
