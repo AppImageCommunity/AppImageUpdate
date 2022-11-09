@@ -62,12 +62,15 @@ fi
 
 # remove unnecessary binaries from AppDirs
 rm AppImageUpdate.AppDir/usr/bin/appimageupdatetool
-rm AppImageUpdate.AppDir/usr/bin/validate
+rm AppImageUpdate.AppDir/usr/bin/appimagegpgvalidate
 rm appimageupdatetool.AppDir/usr/bin/AppImageUpdate
-rm appimageupdatetool.AppDir/usr/bin/validate
+rm appimageupdatetool.AppDir/usr/bin/appimagegpgvalidate
 rm appimageupdatetool.AppDir/usr/lib/*/libappimageupdate-qt*.so*
 rm validate.AppDir/usr/bin/{AppImageUpdate,appimageupdatetool}
 rm validate.AppDir/usr/lib/*/libappimageupdate*.so*
+
+# AppDir data expects old name, which is fine for an AppImage
+mv validate.AppDir/usr/bin/appimagegpgvalidate validate.AppDir/usr/bin/validate
 
 
 # remove other unnecessary data
