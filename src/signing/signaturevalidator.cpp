@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <sstream>
 
 // library headers
 #include <gpgme.h>
