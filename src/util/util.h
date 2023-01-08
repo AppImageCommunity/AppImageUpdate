@@ -2,6 +2,7 @@
 
 // system headers
 #include <string>
+#include <vector>
 
 namespace appimage::update::util {
     void removeNewlineCharacters(std::string& str);
