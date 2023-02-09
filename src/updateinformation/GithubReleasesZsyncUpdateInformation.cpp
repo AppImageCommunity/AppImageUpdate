@@ -47,7 +47,7 @@ namespace appimage::update::updateinformation {
         }
 
         // not ideal, but allows for returning a match for the entire line
-        auto pattern = "*" + filename + "*";
+        auto pattern = "*" + filename;
 
         const auto& assets = json["assets"];
 
