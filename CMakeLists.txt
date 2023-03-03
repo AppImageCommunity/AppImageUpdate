@@ -52,6 +52,18 @@ option(USE_SYSTEM_LIBAPPIMAGE OFF "Use existing libappimage installed on system 
 if(USE_SYSTEM_LIBAPPIMAGE)
     # note: find_package calls must be made in the same or a parent scope
     find_package(libappimage REQUIRED)
+else()
+    function(import_libappimage)
+        include(FetchContent)
+
+        FetchContent_Declare(libappimage
+            GIT_REPOSITORY https://github.com/AppImageCommunity/libappimage
+            GIT_TAG 3467b20
+        )
+        FetchContent_MakeAvailable(libappimage)
+    endfunction()
+
+    import_libappimage()
 endif()
 
 option(BUILD_QT_UI OFF "Build Qt UI (widget library and demo application)")
