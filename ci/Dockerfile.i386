@@ -16,6 +16,9 @@ RUN apt-get update && \
         libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev libboost-dev && \
     wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.24.0-ubuntu_"$DIST"-"$ARCH".tar.gz | tar xzv -C/usr --strip-components=1
 
+COPY ./install-gtest.sh /
+RUN bash /install-gtest.sh
+
 COPY pkgconfig/*.pc /usr/lib/i386-linux-gnu/pkgconfig/
 RUN sed -i 's|x86_64|i386|g' /usr/lib/i386-linux-gnu/pkgconfig/*.pc
 
