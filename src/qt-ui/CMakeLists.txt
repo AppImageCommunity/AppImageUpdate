@@ -48,13 +48,39 @@ if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
         target_link_libraries(AppImageUpdate ${ZSYNC2_LIBRARY_NAME})
     endif()
 
-    if (ENABLE_SANITIZERS)
+    if(ENABLE_SANITIZERS)
+        message(STATUS "Sanitizers enabled")
+
         # add support for sanitizers.  Partially broken: fix at https://github.com/arsenm/sanitizers-cmake/pull/18
-        set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/lib/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
-        find_package(Sanitizers REQUIRED)
+        function(import_sanitizers)
+            set(ARGS_MAIN_PROJECT OFF)
+            set(ARGS_BUILD_EXAMPLE OFF)
+            set(ARGS_BUILD_UNITTESTS OFF)
+
+            include(FetchContent)
+
+            FetchContent_Declare(args
+                GIT_REPOSITORY https://github.com/arsenm/sanitizers-cmake
+                GIT_TAG c3dc841
+            )
+
+            # the sanitizers CMake script incorrectly uses CMAKE_SOURCE_PATH instead of PROJECT_SOURCE_PATH to include
+            # the modules, so we need to manually fetch the target dir path from FetchContent and set up the module
+            # path with it
+            # we use FetchContent_Populate instead of FetchContent_MakeAvailable because we do not want CMake to call
+            # add_subdirectory(...) automatically
+            FetchContent_Populate(args)
+            FetchContent_GetProperties(args SOURCE_DIR args_source_dir)
+
+            set(CMAKE_MODULE_PATH "${args_source_dir}/cmake;${CMAKE_MODULE_PATH}")
+
+            find_package(Sanitizers REQUIRED)
+        endfunction()
+
+        import_sanitizers()
 
         add_sanitizers(AppImageUpdate)
-    endif (ENABLE_SANITIZERS)
+    endif(ENABLE_SANITIZERS)
 
     # link libraries
     target_link_libraries(AppImageUpdate libappimageupdate libappimageupdate-qt util)
