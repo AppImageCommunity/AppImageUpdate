@@ -36,6 +36,8 @@ option(ENABLE_SANITIZERS "Enable builds using sanitizers" off)
 # install into proper dirs on Linux
 include(GNUInstallDirs)
 
+include(FetchContent)
+
 option(USE_SYSTEM_ZSYNC2 OFF "Use existing libzsync2 installed on system (or inside CMAKE_PREFIX_PATH)")
 if(USE_SYSTEM_ZSYNC2)
     set(USE_SYSTEM_CPR ON)
@@ -46,12 +48,32 @@ if(USE_SYSTEM_ZSYNC2)
 
     # note: find_package calls must be made in the same or a parent scope
     find_package(zsync2 REQUIRED)
+else()
+    function(import_zsync2)
+        FetchContent_Declare(zsync2
+            GIT_REPOSITORY https://github.com/AppImageCommunity/zsync2
+            GIT_TAG 2.0.0-alpha-1-20230304
+        )
+        FetchContent_MakeAvailable(zsync2)
+    endfunction()
+
+    import_zsync2()
 endif()
 
 option(USE_SYSTEM_LIBAPPIMAGE OFF "Use existing libappimage installed on system (or inside CMAKE_PREFIX_PATH)")
 if(USE_SYSTEM_LIBAPPIMAGE)
     # note: find_package calls must be made in the same or a parent scope
     find_package(libappimage REQUIRED)
+else()
+    function(import_libappimage)
+        FetchContent_Declare(libappimage
+            GIT_REPOSITORY https://github.com/AppImageCommunity/libappimage
+            GIT_TAG 3467b20
+        )
+        FetchContent_MakeAvailable(libappimage)
+    endfunction()
+
+    import_libappimage()
 endif()
 
 option(BUILD_QT_UI OFF "Build Qt UI (widget library and demo application)")
@@ -64,9 +86,6 @@ if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
         message(FATAL_ERROR "${ARGAGG_OUT} argagg header not found on system, please install")
     endif()
 endif()
-
-# include external libraries
-add_subdirectory(lib)
 
 # core source directory, contains its own CMakeLists.txt
 add_subdirectory(src)

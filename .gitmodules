@@ -1,6 +1,3 @@
-[submodule "lib/zsync2"]
-	path = lib/zsync2
-	url = https://github.com/AppImage/zsync2
 [submodule "lib/fltk"]
 	path = lib/fltk
 	url = https://github.com/TheAssassin/fltk-1.3.4
@@ -10,9 +7,3 @@
 [submodule "lib/--force"]
 	path = lib/--force
 	url = https://github.com/arsenm/sanitizers-cmake
-[submodule "lib/sanitizers-cmake"]
-	path = lib/sanitizers-cmake
-	url = https://github.com/arsenm/sanitizers-cmake
-[submodule "lib/libappimage"]
-	path = lib/libappimage
-	url = https://github.com/AppImage/libappimage.git
