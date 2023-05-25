@@ -12,7 +12,7 @@ set_target_properties(libappimageupdate
 # link thread libraries
 target_link_libraries(libappimageupdate
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
-    PRIVATE ${CPR_LIBRARIES}
+    PRIVATE cpr
     PRIVATE util
     PRIVATE updateinformation
     PRIVATE signing
@@ -41,7 +41,7 @@ set_target_properties(libappimageupdate_static
 # link thread libraries
 target_link_libraries(libappimageupdate_static
     PRIVATE ${CMAKE_THREAD_LIBS_INIT}
-    PRIVATE ${CPR_LIBRARIES}
+    PRIVATE cpr
     PRIVATE util
     PRIVATE updateinformation
     PRIVATE signing

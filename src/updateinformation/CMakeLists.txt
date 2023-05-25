@@ -20,5 +20,5 @@ target_include_directories(updateinformation
 target_link_libraries(updateinformation
     PRIVATE util
     PRIVATE nlohmann_json::nlohmann_json
-    PRIVATE ${CPR_LIBRARIES}
+    PRIVATE cpr
 )
