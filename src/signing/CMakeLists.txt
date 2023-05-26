@@ -11,14 +11,3 @@ target_link_libraries(signing
 target_include_directories(signing
     PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/src
 )
-
-# "demonstration" application
-# used to be located within AppImageKit, but there is no sense in maintaining two implementations
-add_executable(validate validate_main.cpp)
-target_link_libraries(validate signing ${CMAKE_THREAD_LIBS_INIT})
-
-# install target
-install(
-    TARGETS validate
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT validate
-)

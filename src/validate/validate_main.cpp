@@ -5,7 +5,7 @@
 #include <argagg/argagg.hpp>
 
 // local headers
-#include "signaturevalidator.h"
+#include "signing/signaturevalidator.h"
 #include "util/updatableappimage.h"
 #include "util/util.h"
 

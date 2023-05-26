@@ -31,6 +31,7 @@ add_subdirectory(updater)
 
 if(NOT BUILD_LIBAPPIMAGEUPDATE_ONLY)
     add_subdirectory(cli)
+    add_subdirectory(validate)
 endif()
 
 # include Qt UI
