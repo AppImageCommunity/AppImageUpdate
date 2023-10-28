@@ -25,7 +25,7 @@ If you have the optional appimaged daemon installed, then it can use AppImageUpd
 ## Components
 
 * `AppImageUpdate`: GUI application to update AppImages with
-* `appimageupdatetool`: A command line tool that does the same but in the terminal
+* `appimageupdatetool`: Command line tool to update AppImages with (does the same as the above)
 * `validate`: A tool to check signed AppImages (AppImageUpdate has this built in)
 
 ## Motivation
