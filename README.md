@@ -22,6 +22,12 @@ If you have the optional appimaged daemon installed, then it can use AppImageUpd
 
 ![screenshot from 2016-10-15 16-37-05](https://cloud.githubusercontent.com/assets/2480569/19410850/0390fe9c-92f6-11e6-9882-3ca6d360a190.jpg)
 
+## Components
+
+* `AppImageUpdate`: The GUI application
+* `appimageupdatetool`: A command line tool that does the same but in the terminal
+* `validate`: A tool to check signed AppImages (AppImageUpdate has this built in)
+
 ## Motivation
 
 ### Use cases
