@@ -7,6 +7,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <algorithm>
 #include <unistd.h>
 
 // library headers
