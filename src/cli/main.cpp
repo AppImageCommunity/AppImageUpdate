@@ -60,7 +60,9 @@ int main(const int argc, const char** argv) {
 
     optional<string> pathToAppImage = [&args]() {
         if (!args.pos.empty()) {
-            return optional<string>(args.as<string>(0));
+            // calculate absolute path to normalize the path for when it's
+            // checked back from Updater::pathToNewFile
+            return optional<string>(abspath(args.as<string>(0)));
         }
 
         return optional<string>();
@@ -239,6 +241,9 @@ int main(const int argc, const char** argv) {
         cerr << "Fatal error: could not determine path to new file!" << endl;
         return 1;
     }
+
+    // normalize against pathToAppImage - so they follow the same format
+    newFilePath = abspath(newFilePath);
 
     auto validationResult = updater.validateSignature();
 
