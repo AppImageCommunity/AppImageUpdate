@@ -38,7 +38,7 @@ include(GNUInstallDirs)
 
 include(FetchContent)
 
-option(USE_SYSTEM_ZSYNC2 OFF "Use existing libzsync2 installed on system (or inside CMAKE_PREFIX_PATH)")
+option(USE_SYSTEM_ZSYNC2 "Use existing libzsync2 installed on system (or inside CMAKE_PREFIX_PATH)" OFF)
 if(USE_SYSTEM_ZSYNC2)
     set(USE_SYSTEM_CPR ON)
 
@@ -52,7 +52,7 @@ else()
     function(import_zsync2)
         FetchContent_Declare(zsync2
             GIT_REPOSITORY https://github.com/AppImageCommunity/zsync2
-            GIT_TAG 2.0.0-alpha-1-20230304
+            GIT_TAG 2.0.0-alpha-1-20241016
         )
         FetchContent_MakeAvailable(zsync2)
     endfunction()
