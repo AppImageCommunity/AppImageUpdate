@@ -1,0 +1,39 @@
+name: Build AppImageUpdate and AppImageKit
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt -y update
+          sudo apt -y install wget git cmake g++ libcurl4-openssl-dev libx11-dev libz-dev libfuse-dev librsvg2-dev libssl-dev libinotifytools0-dev libarchive-dev liblzma-dev
+
+      - name: Build AppImageUpdate
+        run: |
+          git clone --recursive https://github.com/AppImage/AppImageUpdate
+          cd AppImageUpdate/
+          mkdir build/
+          cd build/
+          cmake -DBUILD_QT_UI=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
+          make -j$(nproc)
+          sudo make install
+          cd ..
+
+      - name: Build AppImageKit
+        run: |
+          git clone --recursive https://github.com/AppImage/AppImageKit
+          cd AppImageKit/
+          mkdir build/
+          cd build/
+          cmake -DUSE_SYSTEM_XZ=ON -DUSE_SYSTEM_INOTIFY_TOOLS=ON -DUSE_SYSTEM_LIBARCHIVE=ON -DUSE_SYSTEM_GTEST=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
+          make -j$(nproc)
+          sudo make install
