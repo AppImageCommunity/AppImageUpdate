@@ -20,7 +20,7 @@ jobs:
 
       - name: Install CMake
         run: |
-          wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.24.0-ubuntu_focal-x86_64.tar.gz | tar xzv -C/usr --strip-components=1
+          wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.24.0-ubuntu_focal-x86_64.tar.gz | sudo tar xzv -C/usr --strip-components=1
 
       - name: Copy pkgconfig files
         run: |
