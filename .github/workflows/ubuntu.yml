@@ -1,9 +1,7 @@
 name: Build AppImageUpdate and AppImageKit
 
 on:
-  push:
-    branches:
-      - main
+  pull_request
 
 jobs:
   build:
