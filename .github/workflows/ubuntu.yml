@@ -35,10 +35,6 @@ jobs:
           cd ../..
           rm -rf json/
 
-      - name: Remove libcurl.pc
-        run: |
-          rm /usr/lib/x86_64-linux-gnu/pkgconfig/libcurl.pc
-
       - name: Build project
         run: |
           export CXX=g++-10
