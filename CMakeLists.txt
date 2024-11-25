@@ -68,7 +68,7 @@ else()
     function(import_libappimage)
         FetchContent_Declare(libappimage
             GIT_REPOSITORY https://github.com/AppImageCommunity/libappimage
-            GIT_TAG e56c21b5387fde92cbb91c835e7aa16ab60b3879
+            GIT_TAG a0967b29d671e9647ef128b74364defc2153e3ed
         )
         FetchContent_MakeAvailable(libappimage)
     endfunction()
