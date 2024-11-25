@@ -24,7 +24,7 @@ jobs:
 
       - name: Copy pkgconfig files
         run: |
-          cp pkgconfig/*.pc /usr/lib/x86_64-linux-gnu/pkgconfig/
+          # cp pkgconfig/*.pc /usr/lib/x86_64-linux-gnu/pkgconfig/
 
       - name: Install GCC 10
         run: |
