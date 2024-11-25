@@ -13,7 +13,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt -y update
-          sudo apt -y install wget git cmake g++ libcurl4-openssl-dev libx11-dev libz-dev libfuse-dev librsvg2-dev libssl-dev libinotifytools0-dev libarchive-dev liblzma-dev
+          sudo apt -y install wget git cmake g++ libcurl4-openssl-dev libx11-dev libz-dev libfuse-dev librsvg2-dev libssl-dev libinotifytools0-dev libarchive-dev liblzma-dev libboost-dev
 
       - name: Build AppImageUpdate
         run: |
