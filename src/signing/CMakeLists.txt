@@ -18,6 +18,6 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     # https://www.gnupg.org/documentation/manuals/gpgme/Largefile-Support-_0028LFS_0029.html
     message(WARNING "Building on 32-bit system, adding special gpgme definitions")
     target_compile_definitions(signing
-        PUBLIC -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE
+        PRIVATE -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE
     )
 endif()
