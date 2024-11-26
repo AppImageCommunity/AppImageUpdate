@@ -12,13 +12,10 @@ target_include_directories(signing
     PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/src
 )
 
-# won't work before project()! https://stackoverflow.com/a/39258832
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    # GPGME requires this on 32-bit systems
-    # https://www.gnupg.org/documentation/manuals/gpgme/Largefile-Support-_0028LFS_0029.html
-    # probably an oversight by the distribution, it doesn't list these flags in gpgme.pc
-    message(WARNING "Building on 32-bit system, adding special gpgme definitions")
-    target_compile_definitions(signing
-        PRIVATE -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE
-    )
-endif()
+# GPGME requires this on 32-bit systems
+# https://www.gnupg.org/documentation/manuals/gpgme/Largefile-Support-_0028LFS_0029.html
+# probably an oversight by the distribution, it doesn't list these flags in gpgme.pc
+message(WARNING "Building on 32-bit system, enabling largefile support")
+target_compile_definitions(signing
+    PRIVATE -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE
+)
