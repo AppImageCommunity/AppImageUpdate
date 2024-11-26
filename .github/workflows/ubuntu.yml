@@ -40,7 +40,7 @@ jobs:
           export CXX=g++-10
           mkdir build
           cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+          cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=OFF
           make -j$(nproc)
           sudo make install
           cd ..
