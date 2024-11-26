@@ -17,13 +17,9 @@ jobs:
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo add-apt-repository -y ppa:beineri/opt-qt-5.15.2-focal
           sudo apt-get update
-          sudo apt-get install -y g++-10 qt515base qt515wayland libgl1 libdrm-dev mesa-common-dev build-essential libssl-dev autoconf automake libtool wget vim-common desktop-file-utils pkgconf libgpgme-dev libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev libboost-dev libarchive-dev libzstd-dev nlohmann-json3-dev
+          sudo apt-get install -y g++-10 qt515base qt515wayland libgl1 libdrm-dev mesa-common-dev build-essential libssl-dev autoconf automake libtool wget vim-common desktop-file-utils pkgconf libgpgme-dev libglib2.0-dev libcairo2-dev librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev libboost-dev libarchive-dev libzstd-dev nlohmann-json3-dev cmake
 
-      - name: Install CMake
-        run: |
-          wget -qO- https://artifacts.assassinate-you.net/prebuilt-cmake/cmake-v3.24.0-ubuntu_focal-x86_64.tar.gz | sudo tar xzv -C/usr --strip-components=1
-
-      - name: Build project
+      - name: Build
         run: |
           export CXX=g++-10
           mkdir build
