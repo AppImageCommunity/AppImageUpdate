@@ -4,84 +4,30 @@
 
 This section describes how to build `AppImageUpdate.AppImage` and `appimageupdatetool.AppImage`. This implies using as few -dev packages from the distribution as possible and privately bundling everything that cannot reasonably be assumed to be there in the default installation of all target systems (distributions).
 
-We generally recommend to use our pre-built AppImages if possible.
-See https://github.com/AppImage/AppImageUpdate/blob/main/.github/workflows/main.yml for how these get built.
+## Building the library
 
-## Building the libraries
+This section describes how to build `libappimageupdate` for consumption in distribution packaging. This implies using as many -dev packages from the distribution as possible.
 
-This section describes how to build `libappimageupdate` and `libappimage` for consumption in distribution packaging. This implies using as many -dev packages from the distribution as possible.
-
-### Ubuntu 18.04
-
-```# Compile and install libappimageupdate
-
-sudo apt -y install wget git cmake g++ libcurl4-openssl-dev libx11-dev libz-dev libfuse-dev librsvg2-dev
-
-git clone --recursive https://github.com/AppImage/AppImageUpdate
-cd AppImageUpdate/
-
-mkdir build/
-cd build/
-
-cmake -DBUILD_QT_UI=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
-make -j$(nproc)
-
-sudo make install
-
-cd ..
-
-# Also compile and install libappimage
-
-sudo apt -y install libssl-dev libinotifytools0-dev libarchive-dev libfuse-dev liblzma-dev 
-
-git clone --recursive https://github.com/AppImage/AppImageKit
-cd AppImageKit/
-
-mkdir build/
-cd build/
-
-cmake -DUSE_SYSTEM_XZ=ON -DUSE_SYSTEM_INOTIFY_TOOLS=ON -DUSE_SYSTEM_LIBARCHIVE=ON -DUSE_SYSTEM_GTEST=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
-make -j$(nproc)
-
-sudo make install
-```
-
-### CentOS 7
+### Ubuntu-20.04
 
 ```
-cat /etc/redhat-release 
-# CentOS Linux release 7.2.1511 (Core) 
+# Install dependencies
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends software-properties-common
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo add-apt-repository -y ppa:beineri/opt-qt-5.15.2-focal
+sudo apt-get update
+sudo apt-get install -y g++-10 qt515base qt515wayland libgl1 libdrm-dev mesa-common-dev build-essential libssl-dev \
+autoconf automake libtool wget vim-common desktop-file-utils pkgconf libgpgme-dev libglib2.0-dev libcairo2-dev \
+librsvg2-dev libfuse-dev git libcurl4-openssl-dev argagg-dev libgcrypt20-dev libboost-dev libarchive-dev \
+libzstd-dev nlohmann-json3-dev cmake
 
-# Compile and install libappimageupdate
-
-wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-rpm -ivh epel-release-latest-7.noarch.rpm
-
-yum install git cmake3 gcc-c++ curl-devel libX11-devel zlib-devel fuse-devel librsvg2-devel cairo-devel
-
-git clone --recursive https://github.com/AppImage/AppImageUpdate
-cd AppImageUpdate/
-
-mkdir build/
-cd build/
-
-cmake3 -DBUILD_QT_UI=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
-make -j$(nproc)
-
-sudo make install
-
-cd ..
-
-# Also compile libappimage; work in progress
-
-git clone https://github.com/AppImage/AppImageKit
-cd AppImageKit/
-
+# Build
+export CXX=g++-10
 mkdir build
 cd build
-cmake3 -DUSE_SYSTEM_XZ=ON -DUSE_SYSTEM_INOTIFY_TOOLS=ON -DUSE_SYSTEM_LIBARCHIVE=ON -DUSE_SYSTEM_GTEST=ON ..
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=OFF
 make -j$(nproc)
-
-# Section to be completed
-
+sudo make install
+cd ..
 ```
