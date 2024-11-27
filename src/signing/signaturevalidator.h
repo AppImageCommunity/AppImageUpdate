@@ -5,7 +5,7 @@
 #include <filesystem>
 
 // library headers
-#include <gpgme.h>
+#include <gpg-error.h>
 
 // local headers
 #include "util/updatableappimage.h"
