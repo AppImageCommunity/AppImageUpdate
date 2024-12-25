@@ -31,28 +31,18 @@ CMAKE_ARCH="${CMAKE_ARCH:-"$ARCH"}"
 cwd="$PWD"
 repo_root="$(readlink -f "$(dirname "$0")"/..)"
 
-image=ghcr.io/appimage/appimageupdate-build
-cache_image="${image}-cache"
+# use docker image tag provided by GitHub actions if possible
+DOCKER_TAG="${DOCKER_TAG:-ghcr.io/appimage/appimageupdate-build:local-build}"
 
-# push only on default branch
-if [[ "${GITHUB_ACTIONS:-}" ]]; then
-    echo "Building on GitHub actions, checking if on default branch"
-    if [[ "refs/heads/${GITHUB_HEAD_REF}" == "${GITHUB_DEFAULT_BRANCH}" ]]; then
-        echo "Building on default branch, pushing to cache"
-        cache_build_args+=(
-            --cache-to type="registry,ref=$cache_image"
-            --push
-        )
-    fi
-else
-    echo "Not building on GitHub actions, not publishing cache"
-fi
+default_branch_tag="${echo "$DOCKER_TAG" | cut -d: -f1):$(echo "$GITHUB_DEFAULT_BRANCH" | rev | cut -d/ -f1 | rev)"
 
 # building local image to "cache" installed dependencies for subsequent builds
 docker build \
-    --cache-from "type=registry,ref=$cache_image" \
+    --cache-to inline \
+    --cache-from "type=registry,ref=${DOCKER_TAG}" \
+    --cache-from "type=registry,ref=${default_branch_tag}" \
     --platform "$docker_platform" \
-    -t "$image" \
+    -t "$DOCKER_TAG" \
     --build-arg ARCH="$ARCH" \
     --build-arg CMAKE_ARCH="$CMAKE_ARCH" \
     "$repo_root"/ci
