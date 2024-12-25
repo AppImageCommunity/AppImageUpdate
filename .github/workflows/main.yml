@@ -14,6 +14,8 @@ jobs:
     env:
       ARCH: ${{ matrix.ARCH }}
       DIST: bionic
+      # not provided by GitHub by default
+      GITHUB_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
       - uses: actions/checkout@v4
         with:
