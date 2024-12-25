@@ -34,7 +34,7 @@ repo_root="$(readlink -f "$(dirname "$0")"/..)"
 # use docker image tag provided by GitHub actions if possible
 DOCKER_TAG="${DOCKER_TAG:-ghcr.io/appimage/appimageupdate-build:local-build}"
 
-default_branch_tag="${echo "$DOCKER_TAG" | cut -d: -f1):$(echo "$GITHUB_DEFAULT_BRANCH" | rev | cut -d/ -f1 | rev)"
+default_branch_tag="$(echo "$DOCKER_TAG" | cut -d: -f1):$(echo "$GITHUB_DEFAULT_BRANCH" | rev | cut -d/ -f1 | rev)"
 
 # building local image to "cache" installed dependencies for subsequent builds
 docker build \
@@ -68,5 +68,5 @@ docker run \
     -v "$cwd":/out \
     -w /out \
     --user "$uid" \
-    "$image" \
+    "$DOCKER_TAG" \
     bash /ws/ci/build-appimages.sh
