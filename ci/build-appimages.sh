@@ -76,15 +76,10 @@ rm -rf {appimageupdatetool,AppImageUpdate}.AppDir/usr/include
 
 
 # get linuxdeploy and its qt plugin
-checkrt_arch="$ARCH"
-if [[ "$checkrt_arch" == "i386" ]]; then
-    checkrt_arch=i686
-fi
-
 wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-"$CMAKE_ARCH".AppImage
 wget https://github.com/TheAssassin/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-"$CMAKE_ARCH".AppImage
-wget https://github.com/linuxdeploy/linuxdeploy-plugin-checkrt/releases/download/continuous/linuxdeploy-plugin-checkrt-"$checkrt_arch".sh
-chmod +x linuxdeploy*.AppImage linuxdeploy-plugin-checkrt*.sh
+wget https://github.com/darealshinji/linuxdeploy-plugin-checkrt/releases/download/continuous/linuxdeploy-plugin-checkrt.sh
+chmod +x linuxdeploy*.AppImage linuxdeploy-plugin-checkrt.sh
 
 patch_appimage() {
     while [[ "$1" != "" ]]; do
