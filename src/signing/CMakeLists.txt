@@ -15,7 +15,7 @@ target_include_directories(signing
 # GPGME requires this on 32-bit systems
 # https://www.gnupg.org/documentation/manuals/gpgme/Largefile-Support-_0028LFS_0029.html
 # probably an oversight by the distribution, it doesn't list these flags in gpgme.pc
-message(WARNING "Building on 32-bit system, enabling largefile support")
+message(STATUS "Enabling largefile support for signing library")
 target_compile_definitions(signing
     PRIVATE -D_FILE_OFFSET_BITS=64 -DLARGEFILE_SOURCE
 )
