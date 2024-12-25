@@ -31,11 +31,26 @@ CMAKE_ARCH="${CMAKE_ARCH:-"$ARCH"}"
 cwd="$PWD"
 repo_root="$(readlink -f "$(dirname "$0")"/..)"
 
-# needed to keep user ID in and outside Docker in sync to be able to write to workspace directory
-image=appimageupdate-build
+image=ghcr.io/appimage/appimageupdate-build
+cache_image="${image}-cache"
+
+# push only on default branch
+if [[ "${GITHUB_ACTIONS:-}" ]]; then
+    echo "Building on GitHub actions, checking if on default branch"
+    if [[ "refs/heads/${GITHUB_HEAD_REF}" == "${GITHUB_DEFAULT_BRANCH}" ]]; then
+        echo "Building on default branch, pushing to cache"
+        cache_build_args+=(
+            --cache-to type="registry,ref=$cache_image"
+            --push
+        )
+    fi
+else
+    echo "Not building on GitHub actions, not publishing cache"
+fi
 
 # building local image to "cache" installed dependencies for subsequent builds
 docker build \
+    --cache-from "type=registry,ref=$cache_image" \
     --platform "$docker_platform" \
     -t "$image" \
     --build-arg ARCH="$ARCH" \
