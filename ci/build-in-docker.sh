@@ -39,13 +39,12 @@ default_branch_tag="$(cut -d: -f1 <<<"$docker_tag"):$(echo "${GITHUB_DEFAULT_BRA
 extra_build_args=()
 
 if [[ "${GITHUB_ACTIONS:-}" != "" ]]; then
-    echo "Building on GitHub actions, pushing cache"
+    echo "Building on GitHub actions, storing cache on registry"
     extra_build_args+=(
-        --output "type=registry,ref=${docker_tag}"
-        --push
+        --cache-to "type=registry,ref=${docker_tag}"
     )
 else
-    echo "Local build, not pushing cache"
+    echo "Local build, not storing cache on registry"
 fi
 
 # building local image to "cache" installed dependencies for subsequent builds
