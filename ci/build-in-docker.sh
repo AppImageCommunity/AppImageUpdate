@@ -50,10 +50,10 @@ fi
 
 # building local image to "cache" installed dependencies for subsequent builds
 docker buildx build \
+    --platform "$docker_platform" \
     "${extra_build_args[@]}" \
     --cache-from "type=registry,ref=${docker_tag}" \
     --cache-from "type=registry,ref=${default_branch_tag}" \
-    --platform "$docker_platform" \
     -t "$docker_tag" \
     --build-arg ARCH="$ARCH" \
     --build-arg CMAKE_ARCH="$CMAKE_ARCH" \
@@ -71,6 +71,7 @@ if [ -t 0 ]; then tty_args+=("-t"); fi
 # of course, this only works reliably if you don't run this script from that directory
 # but it's still not the worst idea to do so
 docker run \
+    --platform "$docker_platform" \
     --rm \
     -i \
     "${tty_args[@]}" \
