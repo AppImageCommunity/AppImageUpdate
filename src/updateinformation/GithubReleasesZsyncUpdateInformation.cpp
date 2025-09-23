@@ -63,8 +63,9 @@ namespace appimage::update::updateinformation {
 
         for (const auto& asset : assets) {
             const auto browserDownloadUrl = asset["browser_download_url"].get<std::string>();
+            const auto name = asset["name"].get<std::string>();
 
-            if (fnmatch(pattern.c_str(), browserDownloadUrl.c_str(), 0) == 0) {
+            if (fnmatch(pattern.c_str(), name.c_str(), 0) == 0) {
                 matchingUrls.emplace_back(browserDownloadUrl);
             }
         }
