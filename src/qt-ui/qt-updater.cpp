@@ -210,7 +210,7 @@ namespace appimage {
 
                 d->progressBar->setValue(int(progress * 100));
 
-                off_t fileSize;
+                long long fileSize;
                 if (d->updater->remoteFileSize(fileSize)) {
                     double downloadedSize = progress * fileSize;
                     std::stringstream ss;
