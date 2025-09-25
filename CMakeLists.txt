@@ -52,7 +52,7 @@ else()
     function(import_zsync2)
         FetchContent_Declare(zsync2
             GIT_REPOSITORY https://github.com/AppImageCommunity/zsync2
-            GIT_TAG 2.0.0-alpha-1-20241016
+            GIT_TAG 2.0.0-alpha-1-20250925
         )
         FetchContent_MakeAvailable(zsync2)
     endfunction()
@@ -68,7 +68,7 @@ else()
     function(import_libappimage)
         FetchContent_Declare(libappimage
             GIT_REPOSITORY https://github.com/AppImageCommunity/libappimage
-            GIT_TAG a0967b29d671e9647ef128b74364defc2153e3ed
+            GIT_TAG d326d15c8a9299d3f135be8282f6545b32805996
         )
         FetchContent_MakeAvailable(libappimage)
     endfunction()
