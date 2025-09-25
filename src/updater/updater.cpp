@@ -376,7 +376,7 @@ namespace appimage::update {
         return false;
     }
 
-    bool Updater::remoteFileSize(off_t& fileSize) const {
+    bool Updater::remoteFileSize(long long& fileSize) const {
         // only available update method is via ZSync
         if (d->zSyncClient != nullptr)
             return d->zSyncClient->remoteFileSize(fileSize);

@@ -52,7 +52,7 @@ else()
     function(import_zsync2)
         FetchContent_Declare(zsync2
             GIT_REPOSITORY https://github.com/AppImageCommunity/zsync2
-            GIT_TAG 2.0.0-alpha-1-20250925
+            GIT_TAG 2.0.0-alpha-1-20250926
         )
         FetchContent_MakeAvailable(zsync2)
     endfunction()

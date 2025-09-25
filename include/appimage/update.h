@@ -106,7 +106,7 @@ namespace appimage::update {
         static std::string signatureValidationMessage(const ValidationState& state);
 
         // Returns the size of the remote file in bytes
-        bool remoteFileSize(off_t& fileSize) const;
+        bool remoteFileSize(long long& fileSize) const;
 
         // Return update information
         // If no custom update information is set, the function returns the raw update information contained in the

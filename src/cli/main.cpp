@@ -211,7 +211,7 @@ int main(const int argc, const char** argv) {
         if (!updater.progress(progress))
             return 1;
 
-        off_t fileSize = 0;
+        long long fileSize = 0;
         if (!updater.remoteFileSize(fileSize))
             fileSize = -1;
 
