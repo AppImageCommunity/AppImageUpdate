@@ -17,7 +17,7 @@ execute_process(
 )
 
 # set version and build number
-set(VERSION 1-alpha)
+set(VERSION 2.0.0-alpha-1-20251018)
 if("$ENV{GITHUB_RUN_NUMBER}" STREQUAL "")
     set(BUILD_NUMBER "<local dev build>")
 else()
