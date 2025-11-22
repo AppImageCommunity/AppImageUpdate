@@ -246,11 +246,14 @@ namespace appimage {
                                 if (validationResult == d->updater->VALIDATION_NOT_SIGNED) {
                                     // copy permissions of the old AppImage to the new version
                                     d->updater->copyPermissionsToNewFile();
+                                    d->label->setText("Update completed with warning: " + validationMessage);
+                                    palette.setColor(QPalette::Highlight, Qt::gray);
+                                    palette.setColor(QPalette::HighlightedText, Qt::black);
+                                } else {
+                                    d->label->setText("Signature validation problem: " + validationMessage);
+                                    palette.setColor(QPalette::Highlight, Qt::yellow);
+                                    palette.setColor(QPalette::HighlightedText, Qt::black);
                                 }
-
-                                d->label->setText("Signature validation problem: " + validationMessage);
-                                palette.setColor(QPalette::Highlight, Qt::yellow);
-                                palette.setColor(QPalette::HighlightedText, Qt::black);
                             } else {
                                 d->updater->restoreOriginalFile();
                                 const QString message = "Signature validation error: " + validationMessage;
