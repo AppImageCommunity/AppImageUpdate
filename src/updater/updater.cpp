@@ -417,7 +417,7 @@ namespace appimage::update {
         }
 
         const auto newAppImageValidationResult = validator.validate(newAppImage);
-        d->issueStatusMessage("New AppImage signature validation report:\n" + oldAppImageValidationResult.message());
+        d->issueStatusMessage("New AppImage signature validation report:\n" + newAppImageValidationResult.message());
 
         if (newAppImageValidationResult.type() == SignatureValidationResult::ResultType::ERROR) {
             return VALIDATION_BAD_SIGNATURE;
