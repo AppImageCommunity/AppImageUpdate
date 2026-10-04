@@ -60,6 +60,7 @@ namespace appimage::update {
         // threading
         std::thread* thread;
         std::mutex mutex;
+        std::mutex statusMutex;
 
         // status messages
         std::deque<std::string> statusMessages;
@@ -69,6 +70,7 @@ namespace appimage::update {
 
     public:
         void issueStatusMessage(const std::string& message) {
+            lock_guard guard(statusMutex);
             statusMessages.push_back(message);
         }
 
@@ -115,9 +117,7 @@ namespace appimage::update {
 
                 // if there is a ZSync client (e.g., because an update check has been run), clean it up
                 // this ensures that a fresh instance will be used for the update run
-                if (zSyncClient != nullptr) {
-                    zSyncClient.reset();
-                }
+                std::atomic_store(&zSyncClient, std::shared_ptr<zsync2::ZSyncClient>{});
 
                 validateAppImage();
                 const auto updateInformationPtr = makeUpdateInformation(rawUpdateInformation);
@@ -135,25 +135,29 @@ namespace appimage::update {
                 const auto zsyncUrl = updateInformationPtr->buildUrl(makeIssueStatusMessageCallback());
 
                 // doesn't matter which type it is exactly, they all work like the same
-                zSyncClient = std::make_shared<zsync2::ZSyncClient>(zsyncUrl, appImage.path(), overwrite);
+                auto client = std::make_shared<zsync2::ZSyncClient>(zsyncUrl, appImage.path(), overwrite);
 
                 // enable ranges optimizations
-                zSyncClient->setRangesOptimizationThreshold(64 * 4096);
+                client->setRangesOptimizationThreshold(64 * 4096);
 
                 // make sure the new AppImage goes into the same directory as the old one
                 // unfortunately, to be able to use dirname(), one has to copy the C string first
                 auto path = makeBuffer(appImage.path());
                 std::string dirPath = dirname(path.data());
 
-                zSyncClient->setCwd(dirPath);
+                client->setCwd(dirPath);
+
+                std::atomic_store(&zSyncClient, std::move(client));
 
                 state = RUNNING;
             } catch (const AppImageError& e) {
                 issueStatusMessage("Error reading AppImage: " + std::string(e.what()));
+                lock_guard guard(mutex);
                 state = ERROR;
                 return;
             } catch (const UpdateInformationError& e) {
                 issueStatusMessage("Failed to parse update information: " + std::string(e.what()));
+                lock_guard guard(mutex);
                 state = ERROR;
                 return;
             }
@@ -164,8 +168,9 @@ namespace appimage::update {
             // run phase
             {
                 // check whether it's a zsync operation
-                if (zSyncClient != nullptr) {
-                    result = zSyncClient->run();
+                auto client = std::atomic_load(&zSyncClient);
+                if (client != nullptr) {
+                    result = client->run();
                 }
             }
 
@@ -198,10 +203,11 @@ namespace appimage::update {
             try {
                 auto updateInformationPtr = makeUpdateInformation(rawUpdateInformation);
                 const auto zsyncUrl = updateInformationPtr->buildUrl(makeIssueStatusMessageCallback());
-                zSyncClient.reset(new zsync2::ZSyncClient(zsyncUrl, appImage.path()));
-                return zSyncClient->checkForChanges(updateAvailable, method);
+                auto client = std::make_shared<zsync2::ZSyncClient>(zsyncUrl, appImage.path());
+                std::atomic_store(&zSyncClient, client);
+                return client->checkForChanges(updateAvailable, method);
             } catch (const UpdateInformationError& e) {
-                zSyncClient.reset();
+                std::atomic_store(&zSyncClient, std::shared_ptr<zsync2::ZSyncClient>{});
 
                 // return error in case of unknown update information
                 issueStatusMessage(e.what());
@@ -274,8 +280,9 @@ namespace appimage::update {
             return true;
         }
 
-        if (d->zSyncClient != nullptr) {
-            progress = d->zSyncClient->progress();
+        auto client = std::atomic_load(&d->zSyncClient);
+        if (client != nullptr) {
+            progress = client->progress();
             return true;
         }
 
@@ -288,16 +295,20 @@ namespace appimage::update {
 
     bool Updater::nextStatusMessage(std::string& message) {
         // first, check own message queue
-        if (!d->statusMessages.empty()) {
-            message = d->statusMessages.front();
-            d->statusMessages.pop_front();
-            return true;
+        {
+            lock_guard guard(d->statusMutex);
+            if (!d->statusMessages.empty()) {
+                message = d->statusMessages.front();
+                d->statusMessages.pop_front();
+                return true;
+            }
         }
 
         // next, check zsync client for a message
-        if (d->zSyncClient != nullptr) {
+        auto client = std::atomic_load(&d->zSyncClient);
+        if (client != nullptr) {
             std::string zsyncMessage;
-            if (!d->zSyncClient->nextStatusMessage(zsyncMessage))
+            if (!client->nextStatusMessage(zsyncMessage))
                 return false;
             // show that the message is coming from zsync2
             message = "zsync2: " + zsyncMessage;
@@ -308,6 +319,7 @@ namespace appimage::update {
     }
 
     Updater::State Updater::state() {
+        lock_guard guard(d->mutex);
         return d->state;
     }
 
@@ -370,16 +382,18 @@ namespace appimage::update {
 
     bool Updater::pathToNewFile(std::string& path) const {
         // only available update method is via ZSync
-        if (d->zSyncClient)
-            return d->zSyncClient->pathToNewFile(path);
+        auto client = std::atomic_load(&d->zSyncClient);
+        if (client)
+            return client->pathToNewFile(path);
 
         return false;
     }
 
     bool Updater::remoteFileSize(long long& fileSize) const {
         // only available update method is via ZSync
-        if (d->zSyncClient != nullptr)
-            return d->zSyncClient->remoteFileSize(fileSize);
+        auto client = std::atomic_load(&d->zSyncClient);
+        if (client != nullptr)
+            return client->remoteFileSize(fileSize);
 
         return false;
     }
