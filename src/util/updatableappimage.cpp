@@ -74,7 +74,7 @@ namespace appimage::update {
         assertIfstreamGood(ifs);
 
         // validate first two bytes are A and I
-        if (magicByte[0] != 'A' && magicByte[1] != 'I') {
+        if (magicByte[0] != 'A' || magicByte[1] != 'I') {
             std::ostringstream oss;
             oss << "Invalid magic bytes: " << (int) magicByte[0] << (int) magicByte[1];
             throw AppImageError(oss.str());
