@@ -168,9 +168,8 @@ namespace appimage::update {
             // run phase
             {
                 // check whether it's a zsync operation
-                auto client = std::atomic_load(&zSyncClient);
-                if (client != nullptr) {
-                    result = client->run();
+                if (zSyncClient != nullptr) {
+                    result = zSyncClient->run();
                 }
             }
 
@@ -280,9 +279,8 @@ namespace appimage::update {
             return true;
         }
 
-        auto client = std::atomic_load(&d->zSyncClient);
-        if (client != nullptr) {
-            progress = client->progress();
+        if (d->zSyncClient != nullptr) {
+            progress = d->zSyncClient->progress();
             return true;
         }
 
