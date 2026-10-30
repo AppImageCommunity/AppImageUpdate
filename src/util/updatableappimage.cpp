@@ -233,7 +233,7 @@ namespace appimage::update {
                 assertIfstreamGood(ifs);
 
                 totalBytesRead += count;
-                bytesLeftInChunk -= bytesRead;
+                bytesLeftInChunk -= count;
             };
 
             auto checkSkipSection = [&](const std::streamsize sectionOffset, const std::streamsize sectionLength) {
